@@ -1,0 +1,1 @@
+include ':riru-core', ':riru-module-template'

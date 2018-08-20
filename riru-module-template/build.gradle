@@ -1,0 +1,26 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion rootProject.ext.targetSdkVersion
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+
+        externalNativeBuild {
+            ndkBuild {
+                abiFilters 'arm64-v8a', 'armeabi-v7a'
+                arguments "NDK_PROJECT_PATH=jni/"
+            }
+        }
+    }
+    externalNativeBuild {
+        ndkBuild {
+            path 'jni/Android.mk'
+        }
+    }
+}
+
+task zip(type: Exec) {
+    workingDir '..'
+    commandLine 'sh', 'build.sh', project.name, 'v1'
+}

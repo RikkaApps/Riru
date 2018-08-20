@@ -1,0 +1,7 @@
+id=riru-module-template
+name=Riru - Module template
+version=v1
+versionCode=1
+author=Rikka
+description=Riru module template. Require Riru - Core installed.
+minMagisk=1500

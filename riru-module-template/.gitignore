@@ -1,0 +1,7 @@
+/.externalNativeBuild
+/build
+/libs
+/obj
+/release
+/magisk-module/system
+/magisk-module/*.zip
