@@ -89,9 +89,9 @@ void signalHandler(int signum) {
     init();
 }
 
-std::vector<module> modules;
+std::vector<module*> modules;
 
-std::vector<module> get_modules() {
+std::vector<module*> get_modules() {
     return modules;
 }
 
@@ -117,30 +117,35 @@ void load_modules(JavaVM *javaVM, JNIEnv *jniEnv) {
 
             snprintf(path, 256, MODULE_PATH_FMT, entry->d_name);
 
+            if (access(path, F_OK) != 0) {
+                PLOGE("access %s", path);
+                continue;
+            }
+
             handle = dlopen(path, RTLD_LAZY | RTLD_LOCAL);
             if (!handle) {
                 PLOGE("dlopen %s", path);
                 continue;
             }
 
-            module module;
-            module.closed = 0;
-            module.handle = handle;
-            module.name = strdup(entry->d_name);
-            module.moduleLoaded = dlsym(handle, "moduleLoaded");
-            module.forkAndSpecializePre = dlsym(handle, "nativeForkAndSpecializePre");
-            module.forkAndSpecializePost = dlsym(handle, "nativeForkAndSpecializePost");
-            module.forkSystemServerPre = dlsym(handle, "nativeForkSystemServerPre");
-            module.forkSystemServerPost = dlsym(handle, "nativeForkSystemServerPost");
+            module* module = new struct module();
+            module->closed = 0;
+            module->handle = handle;
+            module->name = strdup(entry->d_name);
+            module->moduleLoaded = dlsym(handle, "moduleLoaded");
+            module->forkAndSpecializePre = dlsym(handle, "nativeForkAndSpecializePre");
+            module->forkAndSpecializePost = dlsym(handle, "nativeForkAndSpecializePost");
+            module->forkSystemServerPre = dlsym(handle, "nativeForkSystemServerPre");
+            module->forkSystemServerPost = dlsym(handle, "nativeForkSystemServerPost");
 
             modules.push_back(module);
 
-            LOGI("loaded module: %s", module.name);
+            LOGI("loaded module: %s", module->name);
 
-            if (module.moduleLoaded) {
-                LOGV("calling loaded from module %s", module.name);
+            if (module->moduleLoaded) {
+                LOGV("calling loaded from module %s", module->name);
 
-                ((loaded_t) module.moduleLoaded)(javaVM, jniEnv);
+                ((loaded_t) module->moduleLoaded)(javaVM, jniEnv);
             }
         }
     }

@@ -10,11 +10,16 @@
 #include "init.h"
 #include "module.h"
 
-void unload(module& module) {
-    module.closed = 1;
+void unload(module *module) {
+    if (module->closed)
+        return;
 
-    if (dlclose(module.handle) != 0)
-        LOGE("dlclose %s: %s", module.name, dlerror());
+    int res;
+    if ((res = dlclose(module->handle)) != 0)
+        LOGE("dlclose %s: %s", module->name, dlerror());
+
+    if (res == 0)
+        module->closed = 1;
 }
 
 void nativeForkAndSpecialize_pre(JNIEnv *env, jclass clazz, jint uid, jint gid,
@@ -24,17 +29,16 @@ void nativeForkAndSpecialize_pre(JNIEnv *env, jclass clazz, jint uid, jint gid,
                                  jintArray fdsToClose, jintArray fdsToIgnore,
                                  jboolean is_child_zygote,
                                  jstring instructionSet, jstring appDataDir) {
-    for (auto &module : get_modules()) {
-        if (module.closed || !module.forkAndSpecializePre)
+    for (auto module : get_modules()) {
+        if (module->closed || !module->forkAndSpecializePre)
             continue;
 
-        LOGV("calling forkAndSpecializePre from module %s", module.name);
-        ((nativeForkAndSpecialize_pre_t) module.forkAndSpecializePre)(env, clazz, uid, gid,
-                                                                      gids,
-                                                                      runtime_flags, rlimits,
-                                                                      mount_external, se_info,
-                                                                      se_name, fdsToClose,
-                                                                      fdsToIgnore,
+        LOGV("calling forkAndSpecializePre from module %s", module->name);
+        ((nativeForkAndSpecialize_pre_t) module->forkAndSpecializePre)(env, clazz, uid, gid,
+                                                                      gids, runtime_flags,
+                                                                      rlimits, mount_external,
+                                                                      se_info, se_name,
+                                                                      fdsToClose, fdsToIgnore,
                                                                       is_child_zygote,
                                                                       instructionSet,
                                                                       appDataDir);
@@ -42,13 +46,17 @@ void nativeForkAndSpecialize_pre(JNIEnv *env, jclass clazz, jint uid, jint gid,
 }
 
 void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint res) {
-    for (auto &module : get_modules()) {
-        if (module.closed || !module.forkAndSpecializePost)
+    for (auto module : get_modules()) {
+        if (module->closed || !module->forkAndSpecializePost) {
+            if (!res) unload(module);
             continue;
+        }
 
-        LOGV("calling forkAndSpecializePost from module %s", module.name);
-        int c = ((nativeForkAndSpecialize_post_t) module.forkAndSpecializePost)(env, clazz, res);
-        if (!res && c) {
+        LOGV("calling forkAndSpecializePost from module %s", module->name);
+        int unload_module = ((nativeForkAndSpecialize_post_t)
+                module->forkAndSpecializePost)(env, clazz, res);
+
+        if (!res && unload_module) {
             unload(module);
         }
     }
@@ -57,12 +65,12 @@ void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint res) {
 void nativeForkSystemServer_pre(JNIEnv *env, jclass clazz, uid_t uid, gid_t gid, jintArray gids,
                                 jint debug_flags, jobjectArray rlimits, jlong permittedCapabilities,
                                 jlong effectiveCapabilities) {
-    for (auto &module : get_modules()) {
-        if (module.closed || !module.forkSystemServerPre)
+    for (auto module : get_modules()) {
+        if (module->closed || !module->forkSystemServerPre)
             continue;
 
-        LOGV("calling forkSystemServerPre from module %s", module.name);
-        ((nativeForkSystemServer_pre_t) module.forkSystemServerPre)(env, clazz, uid, gid, gids,
+        LOGV("calling forkSystemServerPre from module %s", module->name);
+        ((nativeForkSystemServer_pre_t) module->forkSystemServerPre)(env, clazz, uid, gid, gids,
                                                                     debug_flags, rlimits,
                                                                     permittedCapabilities,
                                                                     effectiveCapabilities);
@@ -70,13 +78,16 @@ void nativeForkSystemServer_pre(JNIEnv *env, jclass clazz, uid_t uid, gid_t gid,
 }
 
 void nativeForkSystemServer_post(JNIEnv *env, jclass clazz, jint res) {
-    for (auto &module : get_modules()) {
-        if (module.closed || !module.forkSystemServerPost)
+    for (auto module : get_modules()) {
+        if (module->closed || !module->forkSystemServerPost) {
+            if (!res) unload(module);
             continue;
+        }
 
-        LOGV("calling forkSystemServerPost from module %s", module.name);
-        int c = ((nativeForkSystemServer_post_t) module.forkSystemServerPost)(env, clazz, res);
-        if (!res && c) {
+        LOGV("calling forkSystemServerPost from module %s", module->name);
+        int unload_module = ((nativeForkSystemServer_post_t)
+                module->forkSystemServerPost)(env, clazz, res);
+        if (!res && unload_module) {
             unload(module);
         }
     }
@@ -84,10 +95,8 @@ void nativeForkSystemServer_post(JNIEnv *env, jclass clazz, jint res) {
 
 
 jint nativeForkAndSpecialize_marshmallow(JNIEnv *env, jclass clazz, jint uid, jint gid,
-                                         jintArray gids,
-                                         jint debug_flags, jobjectArray rlimits,
-                                         jint mount_external, jstring se_info,
-                                         jstring se_name,
+                                         jintArray gids, jint debug_flags, jobjectArray rlimits,
+                                         jint mount_external, jstring se_info, jstring se_name,
                                          jintArray fdsToClose, jstring instructionSet,
                                          jstring appDataDir) {
     nativeForkAndSpecialize_pre(env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external,
@@ -108,12 +117,11 @@ jint nativeForkAndSpecialize_marshmallow(JNIEnv *env, jclass clazz, jint uid, ji
     return res;
 }
 
-jint nativeForkAndSpecialize_oreo(JNIEnv *env, jclass clazz, jint uid, jint gid,
-                                  jintArray gids,
-                                  jint debug_flags, jobjectArray rlimits,
-                                  jint mount_external, jstring se_info, jstring se_name,
-                                  jintArray fdsToClose, jintArray fdsToIgnore,
-                                  jstring instructionSet, jstring appDataDir) {
+jint nativeForkAndSpecialize_oreo(JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids,
+                                  jint debug_flags, jobjectArray rlimits, jint mount_external,
+                                  jstring se_info, jstring se_name, jintArray fdsToClose,
+                                  jintArray fdsToIgnore, jstring instructionSet,
+                                  jstring appDataDir) {
     nativeForkAndSpecialize_pre(env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external,
                                 se_info, se_name, fdsToClose, fdsToIgnore, 0, instructionSet,
                                 appDataDir);
@@ -129,12 +137,10 @@ jint nativeForkAndSpecialize_oreo(JNIEnv *env, jclass clazz, jint uid, jint gid,
     return res;
 }
 
-jint nativeForkAndSpecialize_p(JNIEnv *env, jclass clazz, jint uid, jint gid,
-                               jintArray gids,
-                               jint runtime_flags, jobjectArray rlimits,
-                               jint mount_external, jstring se_info, jstring se_name,
-                               jintArray fdsToClose, jintArray fdsToIgnore,
-                               jboolean is_child_zygote,
+jint nativeForkAndSpecialize_p(JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids,
+                               jint runtime_flags, jobjectArray rlimits, jint mount_external,
+                               jstring se_info, jstring se_name, jintArray fdsToClose,
+                               jintArray fdsToIgnore, jboolean is_child_zygote,
                                jstring instructionSet, jstring appDataDir) {
     nativeForkAndSpecialize_pre(env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external,
                                 se_info, se_name, fdsToClose, fdsToIgnore, is_child_zygote,

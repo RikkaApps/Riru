@@ -1,4 +1,4 @@
-#define VERSION 3
+#define VERSION 4
 
 extern "C" {
 __attribute__((visibility("default"))) int get_version(void) {
