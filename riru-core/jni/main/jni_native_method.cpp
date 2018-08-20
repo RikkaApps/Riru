@@ -11,10 +11,10 @@
 #include "module.h"
 
 void unload(module& module) {
-    if (dlclose(module.handle) != 0) {
-        module.closed = 1;
+    module.closed = 1;
+
+    if (dlclose(module.handle) != 0)
         LOGE("dlclose %s: %s", module.name, dlerror());
-    }
 }
 
 void nativeForkAndSpecialize_pre(JNIEnv *env, jclass clazz, jint uid, jint gid,
@@ -43,11 +43,8 @@ void nativeForkAndSpecialize_pre(JNIEnv *env, jclass clazz, jint uid, jint gid,
 
 void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint res) {
     for (auto &module : get_modules()) {
-        if (module.closed || !module.forkAndSpecializePost) {
-            if (!res)
-                unload(module);
+        if (module.closed || !module.forkAndSpecializePost)
             continue;
-        }
 
         LOGV("calling forkAndSpecializePost from module %s", module.name);
         int c = ((nativeForkAndSpecialize_post_t) module.forkAndSpecializePost)(env, clazz, res);
@@ -74,11 +71,8 @@ void nativeForkSystemServer_pre(JNIEnv *env, jclass clazz, uid_t uid, gid_t gid,
 
 void nativeForkSystemServer_post(JNIEnv *env, jclass clazz, jint res) {
     for (auto &module : get_modules()) {
-        if (module.closed || !module.forkSystemServerPost) {
-            if (!res)
-                unload(module);
+        if (module.closed || !module.forkSystemServerPost)
             continue;
-        }
 
         LOGV("calling forkSystemServerPost from module %s", module.name);
         int c = ((nativeForkSystemServer_post_t) module.forkSystemServerPost)(env, clazz, res);

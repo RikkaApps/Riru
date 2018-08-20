@@ -40,9 +40,9 @@ LATESTARTSERVICE=false
 # Set what you want to show when installing your mod
 
 print_modname() {
-  ui_print "*************************************"
-  ui_print " Riru - Core "
-  ui_print "*************************************"
+  ui_print "***********"
+  ui_print "Riru - Core"
+  ui_print "***********"
 }
 
 ##########################################################################################
