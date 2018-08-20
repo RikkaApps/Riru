@@ -27,7 +27,7 @@ ssize_t fdgets(char *buf, const size_t size, int fd) {
     return len;
 }
 
-int get_proc_name(int pid, char* name, size_t _size) {
+int get_proc_name(int pid, char *name, size_t _size) {
     int fd;
     ssize_t __size;
 
@@ -55,67 +55,15 @@ int get_proc_name(int pid, char* name, size_t _size) {
     return 0;
 }
 
-unsigned char* memsearch(const unsigned char *addr_start, const unsigned char *addr_end,
-                         const unsigned char *s, size_t size) {
-    unsigned char* _addr_start = (unsigned char*) addr_start;
+void *memsearch(const uintptr_t addr_start, const uintptr_t addr_end, const void *s, size_t size) {
+    uintptr_t _addr_start = addr_start;
     while (1) {
         if (_addr_start + size >= addr_end)
             return NULL;
 
-        if (memcmp(_addr_start, s, size) == 0)
-            return _addr_start;
+        if (memcmp((const void *) _addr_start, s, size) == 0)
+            return (void *) _addr_start;
 
         _addr_start += 1;
     }
-}
-
-int mkdirs(const char *pathname, mode_t mode) {
-    char *path = strdup(pathname), *p;
-    errno = 0;
-    for (p = path + 1; *p; ++p) {
-        if (*p == '/') {
-            *p = '\0';
-            if (mkdir(path, mode) == -1) {
-                if (errno != EEXIST)
-                    return -1;
-            }
-            *p = '/';
-        }
-    }
-    if (mkdir(path, mode) == -1) {
-        if (errno != EEXIST)
-            return -1;
-    }
-    free(path);
-    return 0;
-}
-
-int switch_mnt_ns(int pid) {
-    char mnt[32];
-    snprintf(mnt, sizeof(mnt), "/proc/%d/ns/mnt", pid);
-    if (access(mnt, R_OK) == -1) return -1; // Maybe process died..
-
-    int fd, res;
-    fd = _open(mnt, O_RDONLY);
-    if (fd < 0) return -1;
-    // Switch to its namespace
-    res = _setns(fd, 0);
-    close(fd);
-    return res;
-}
-
-int read_namespace(const int pid, char* target, const size_t size) {
-    char path[32];
-    snprintf(path, sizeof(path), "/proc/%d/ns/mnt", pid);
-    if (access(path, R_OK) == -1)
-        return 1;
-    _readlink(path, target, size);
-    return 0;
-}
-
-int ensure_dir(const char *path, mode_t mode) {
-    if (access(path, R_OK) == -1)
-        return _mkdirs(path, mode);
-
-    return 0;
 }

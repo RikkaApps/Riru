@@ -19,6 +19,7 @@
 #include "logging.h"
 #include "wrap.h"
 #include "module.h"
+#include "JNIHelper.h"
 
 #define CONFIG_DIR "/data/misc/riru"
 
@@ -37,10 +38,11 @@
 
 #define SYM_JAVAVM "_ZN7android14AndroidRuntime7mJavaVME"
 
-static void* android_runtime_handle = dlopen(ANDROID_RUNTIME_LIBRARY, RTLD_NOW | RTLD_GLOBAL);
-static JavaVM* javaVM;
+static void *android_runtime_handle = dlopen(ANDROID_RUNTIME_LIBRARY, RTLD_NOW | RTLD_GLOBAL);
+static JavaVM *javaVM;
 
 extern "C" void con() __attribute__((constructor));
+
 extern void init();
 
 #define WAIT_MAX 360
@@ -52,7 +54,7 @@ static void check(pid_t pid) {
     get_proc_name(pid, buf, 63);
 
     if (strncmp(ZYGOTE_NAME, buf, strlen(ZYGOTE_NAME)) == 0) {
-        void* p = dlsym(android_runtime_handle, SYM_JAVAVM);
+        void *p = dlsym(android_runtime_handle, SYM_JAVAVM);
         if (!p) {
             LOGE("symbol " SYM_JAVAVM " not found.");
             return;
@@ -60,7 +62,7 @@ static void check(pid_t pid) {
 
         int count = 0;
         do {
-            if (*(void**)p) {
+            if ((javaVM = (JavaVM *) (*(void **) p))) {
                 break;
             }
 
@@ -77,7 +79,6 @@ static void check(pid_t pid) {
 
         LOGD("AndroidRuntime::mJavaVM: %p", p ? p : 0);
 
-        javaVM = (JavaVM *)*(void**)p;
         LOGI(ZYGOTE_NAME ", calling init...");
 
         kill(pid, SIGUSR2);
@@ -155,7 +156,8 @@ void con() {
 
     char buf[64];
     get_proc_name(getpid(), buf, 63);
-    if (strncmp(ZYGOTE_NAME, buf, strlen(ZYGOTE_NAME)) != 0 && strncmp(APP_PROCESS_NAME, buf, strlen(APP_PROCESS_NAME)) != 0) {
+    if (strncmp(ZYGOTE_NAME, buf, strlen(ZYGOTE_NAME)) != 0 &&
+        strncmp(APP_PROCESS_NAME, buf, strlen(APP_PROCESS_NAME)) != 0) {
         return;
     }
 
@@ -165,22 +167,27 @@ void con() {
 }
 
 static int init_called = 0;
-static JNINativeMethod gMethods[] = {{NULL, NULL, NULL}, {NULL, NULL, NULL}};
+static JNINativeMethod gMethods[] = {{NULL, NULL, NULL},
+                                     {NULL, NULL, NULL}};
 
 const std::thread::id MAIN_THREAD_ID = std::this_thread::get_id();
 
-void* _nativeForkAndSpecialize = NULL;
-void* _nativeForkSystemServer = NULL;
+void *_nativeForkAndSpecialize = NULL;
+void *_nativeForkSystemServer = NULL;
 
-JNINativeMethod* search_method(int endian, std::vector<std::pair<unsigned long, unsigned long>> addresses, const char* name, size_t len) {
-    // Step 1: search for "nativeForkAndSpecialize"
-    unsigned char* str_addr = NULL;
-    for (std::pair<unsigned long, unsigned long> address : addresses) {
-        unsigned char* res = memsearch((const unsigned char *) address.first, (const unsigned char *) address.second,
-                                       reinterpret_cast<const unsigned char *>(name), len);
+JNINativeMethod *search_method(int endian, std::vector<std::pair<uintptr_t, uintptr_t>> addresses,
+                               const char *name, size_t len) {
+    // Step 1: search for name
+    uintptr_t str_addr = 0;
+    for (auto address : addresses) {
+        void *res = memsearch(address.first, address.second, (const void *) name, len);
         if (res) {
-            str_addr = res;
-            LOGI("found \"%s\" at 0x%lx", (char *) str_addr, (unsigned long) str_addr);
+            str_addr = (uintptr_t) res;
+#ifdef __LP64__
+            LOGI("found \"%s\" at 0x%lx", (char *) str_addr, str_addr);
+#else
+            LOGI("found \"%s\" at 0x%x", (char *) str_addr, str_addr);
+#endif
             break;
         }
     }
@@ -191,19 +198,25 @@ JNINativeMethod* search_method(int endian, std::vector<std::pair<unsigned long, 
     }
 
     // Step 2: search JNINativeMethod with str_addr's address
-    int size = sizeof(unsigned long *);
-    unsigned char* data = new unsigned char[size];
+    size_t size = sizeof(uintptr_t);
+    unsigned char *data = new unsigned char[size];
 
     for (size_t i = 0; i < size; i++)
-        data[endian == ELFDATA2LSB ? i : size - i - 1] = (unsigned char) (((unsigned long) 0xff << i * 8 & (unsigned long) str_addr) >> i * 8);
+        data[endian == ELFDATA2LSB ? i : size - i - 1] = (unsigned char) (
+                ((uintptr_t) 0xff << i * 8 & str_addr) >> i * 8);
 
     JNINativeMethod *method = NULL;
-    for (std::pair<unsigned long, unsigned long> address : addresses) {
-        unsigned char* res = memsearch((const unsigned char *) address.first, (const unsigned char *) address.second,
-                                       data, static_cast<size_t>(size));
+    for (auto address : addresses) {
+        void *res = memsearch(address.first, address.second, data, size);
         if (res) {
             method = (JNINativeMethod *) res;
-            LOGI("found {\"%s\", \"%s\", %p} at 0x%lx\n", method->name, method->signature, method->fnPtr, (unsigned long) method);
+#ifdef __LP64__
+            LOGI("found {\"%s\", \"%s\", %p} at 0x%lx\n", method->name, method->signature,
+                 method->fnPtr, (uintptr_t) method);
+#else
+            LOGI("found {\"%s\", \"%s\", %p} at 0x%x\n", method->name, method->signature,
+                 method->fnPtr, (uintptr_t) method);
+#endif
             break;
         }
     }
@@ -224,9 +237,11 @@ void init() {
     // Step 0: read elf header for endian
     int endian;
 
-    FILE* file = fopen(ANDROID_RUNTIME_LIBRARY, "r");
+    FILE *file = fopen(ANDROID_RUNTIME_LIBRARY, "r");
     if (!file) {
-        LOGE("fopen " ANDROID_RUNTIME_LIBRARY " failed.");
+        LOGE("fopen "
+                     ANDROID_RUNTIME_LIBRARY
+                     " failed.");
         return;
     }
 
@@ -241,7 +256,7 @@ void init() {
     fclose(file);
 
     // Step 1: get libandroid_runtime.so address
-    std::vector<std::pair<unsigned long, unsigned long>> addresses;
+    std::vector<std::pair<uintptr_t, uintptr_t>> addresses;
 
     int fd = open("/proc/self/maps", O_RDONLY);
     if (fd == -1) {
@@ -249,23 +264,31 @@ void init() {
         return;
     }
 
+#if __LP64__
+    const char *s = "%lx-%lx %s %*s %*s %*s %s";
+#else
+    const char *s = "%x-%x %s %*s %*s %*s %s";
+#endif
+
     char buf[512];
     while (fdgets(buf, 512, fd) > 0) {
-        unsigned long start = 0, end = 0;
+        uintptr_t start = 0, end = 0;
         char flags[5], filename[128];
-        if (sscanf(buf, "%lx-%lx %s %*s %*s %*s %s", &start, &end, flags, filename) != 4)
+        if (sscanf(buf, s, &start, &end, flags, filename) != 4)
             continue;
 
         if (strcmp(ANDROID_RUNTIME_LIBRARY, filename) == 0) {
-            addresses.push_back(std::pair<unsigned long, unsigned long>(start, end));
+            addresses.push_back(std::pair<uintptr_t, uintptr_t>(start, end));
             LOGD("%lx %lx %s %s\n", start, end, flags, filename);
         }
     }
     close(fd);
 
-    JNINativeMethod* method[2];
-    method[0] = search_method(endian, addresses, NATIVE_FORK_AND_SPECIALIZE_METHOD, strlen(NATIVE_FORK_AND_SPECIALIZE_METHOD) + 1);
-    method[1] = search_method(endian, addresses, NATIVE_FORK_SYSTEM_SERVER_METHOD, strlen(NATIVE_FORK_SYSTEM_SERVER_METHOD) + 1);
+    JNINativeMethod *method[2];
+    method[0] = search_method(endian, addresses, NATIVE_FORK_AND_SPECIALIZE_METHOD,
+                              strlen(NATIVE_FORK_AND_SPECIALIZE_METHOD) + 1);
+    method[1] = search_method(endian, addresses, NATIVE_FORK_SYSTEM_SERVER_METHOD,
+                              strlen(NATIVE_FORK_SYSTEM_SERVER_METHOD) + 1);
 
     if (!method[0] || !method[1]) {
         LOGE("JNINativeMethod not found.");
@@ -277,15 +300,19 @@ void init() {
     _nativeForkSystemServer = method[1]->fnPtr;
 
     // nativeForkAndSpecialize
-    if (strncmp(nativeForkAndSpecialize_marshmallow_sig, method[0]->signature, strlen(nativeForkAndSpecialize_marshmallow_sig)) == 0)
+    if (strncmp(nativeForkAndSpecialize_marshmallow_sig, method[0]->signature,
+                strlen(nativeForkAndSpecialize_marshmallow_sig)) == 0)
         gMethods[0].fnPtr = (void *) nativeForkAndSpecialize_marshmallow;
-    else if (strncmp(nativeForkAndSpecialize_oreo_sig, method[0]->signature, strlen(nativeForkAndSpecialize_oreo_sig)) == 0)
+    else if (strncmp(nativeForkAndSpecialize_oreo_sig, method[0]->signature,
+                     strlen(nativeForkAndSpecialize_oreo_sig)) == 0)
         gMethods[0].fnPtr = (void *) nativeForkAndSpecialize_oreo;
-    else if (strncmp(nativeForkAndSpecialize_p_sig, method[0]->signature, strlen(nativeForkAndSpecialize_p_sig)) == 0)
+    else if (strncmp(nativeForkAndSpecialize_p_sig, method[0]->signature,
+                     strlen(nativeForkAndSpecialize_p_sig)) == 0)
         gMethods[0].fnPtr = (void *) nativeForkAndSpecialize_p;
 
     // nativeForkSystemServer
-    if (strncmp(nativeForkSystemServer_sig, method[1]->signature, strlen(nativeForkSystemServer_sig)) == 0)
+    if (strncmp(nativeForkSystemServer_sig, method[1]->signature,
+                strlen(nativeForkSystemServer_sig)) == 0)
         gMethods[1].fnPtr = (void *) nativeForkSystemServer;
 
     if (!gMethods[0].fnPtr || !gMethods[1].fnPtr) {
@@ -304,8 +331,8 @@ void init() {
         return;
     }
 
-    JNIEnv* jniEnv = NULL;
-    jint getEnvStat = javaVM->GetEnv((void **)&jniEnv, JNI_VERSION_1_6);
+    JNIEnv *jniEnv = NULL;
+    jint getEnvStat = javaVM->GetEnv((void **) &jniEnv, JNI_VERSION_1_6);
 
     if (getEnvStat != JNI_OK) {
         LOGE("jniEnv not ok");
@@ -317,13 +344,13 @@ void init() {
     // Step 4: replace native method with RegisterNatives
     init_called = 1;
 
-    jclass clazz = jniEnv->FindClass("com/android/internal/os/Zygote");
+    jclass clazz = JNI_FindClass(jniEnv, "com/android/internal/os/Zygote");
     if (!clazz) {
         LOGE("class com/android/internal/os/Zygote not found");
         return;
     }
 
-    jint res = jniEnv->RegisterNatives(clazz, gMethods, 2);
+    jint res = JNI_RegisterNatives(jniEnv, clazz, gMethods, 2);
 
     if (res != JNI_OK) {
         LOGE("RegisterNatives failed");
