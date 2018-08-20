@@ -61,7 +61,7 @@ fi
 
 # zip
 mkdir -p release
-ZIP_NAME=magisk-$MODULE_NAME-arm-"$VERSION".zip
+ZIP_NAME=magisk-$MODULE_NAME-arm-arm64-"$VERSION".zip
 rm -f release/$ZIP_NAME
 rm -f $TMP_DIR_MAGISK/$ZIP_NAME
 (cd $TMP_DIR_MAGISK; zip -r $ZIP_NAME * > /dev/null)
