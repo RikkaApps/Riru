@@ -2,6 +2,8 @@
 
 Riru 是一个简单但有用的东西。仅需要替换一个系统文件，就可以让 Riru 模块们进入应用进程或系统服务进程并执行他们的代码。
 
+Riru 这个名字是来自 https://www.pixiv.net/member_illust.php?mode=medium&illust_id=56169989
+
 ## 需求
 
 * Root 过的 Android 6.0+ 设备 
@@ -11,9 +13,9 @@ Riru 是一个简单但有用的东西。仅需要替换一个系统文件，就
 
 简而言之，替换一个会被 zygote 进程加载的共享库。
 
-首先，我们需要找到那个共享库。那个共享库要越简单越好，所以我们找到了只有 10 个导出函数的 libmemtrack。然后我们就可以提供一个叫 libmemtrack 也提供原本全部函数的库，这样原本的功能不会受到影响，我们也可以进去 zygote 进程。
+首先要找到那个共享库，而且那个共享库要越简单越好，所以就盯上了只有 10 个导出函数的 libmemtrack。然后就可以自己提供一个叫 libmemtrack 并且也提供了原来的函数们的库，这样就可以进去 zygote 进程也不会发生爆炸。
 
-接着就是下一个问题，如何或者我们现在已经在一个应用进程或者系统服务进程。JNI 函数 (`com.android.internal.os.Zygote#nativeForkAndSpecialize` & `com.android.internal.os.Zygote#nativeForkSystemServer`) 会在应用进程或者系统服务进程被 fork 出来的时候被调用。所以只要把这两个函数换成自己的。这部分很暴力（，是凄惨搜内存。最后可以找到这些方法对应的 `JNINativeMethod`，就可以再调用 `RegisterNatives` 来替换他们。
+接着就是下一个问题，如何获知已经在一个应用进程或者系统服务进程里面。JNI 函数 (`com.android.internal.os.Zygote#nativeForkAndSpecialize` & `com.android.internal.os.Zygote#nativeForkSystemServer`) 会在应用进程或者系统服务进程被 fork 出来的时候被调用。所以只要把这两个函数换成自己的。这部分很暴力（，是凄惨搜内存。最后可以找到这些方法对应的 `JNINativeMethod`，就可以再调用 `RegisterNatives` 来替换他们。
 
 ## 为什么要做出 Riru 呢？
 
