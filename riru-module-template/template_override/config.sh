@@ -115,7 +115,7 @@ copy_files() {
   unzip -o "$ZIP" 'data/*' -d $MODPATH >&2
 
   TARGET="/data/misc/riru/modules"
-    
+  
   [ -d $TARGET ] || mkdir -p $TARGET || fail "- Can't mkdir -p $TARGET"
   cp -af "$MODPATH$TARGET/." "$TARGET" || fail "- Can't cp -af $MODPATH$TARGET/. $TARGET"
   

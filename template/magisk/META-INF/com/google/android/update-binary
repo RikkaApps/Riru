@@ -114,8 +114,8 @@ unzip -o "$ZIP" 'system/*' -d $MODPATH >&2
 # Remove placeholder
 rm -f $MODPATH/system/placeholder 2>/dev/null
 
-# Copy file from system
-copy_file
+# Extra copy file function
+copy_files
 
 # Handle replace folders
 for TARGET in $REPLACE; do

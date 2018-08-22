@@ -124,7 +124,9 @@ copy_file_from() {
   return 0
 }
 
-copy_file() {
+copy_files() {
+  mkdir -p "/data/misc/riru/modules"
+
   if [ $IS64BIT = true ]; then
     copy_file_from lib64
   else
