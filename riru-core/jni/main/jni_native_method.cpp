@@ -10,14 +10,12 @@
 #include "init.h"
 #include "module.h"
 
-void unload(module *module) {
+void unload(module *module, const char* from) {
     if (module->closed)
         return;
 
-    int res;
-    if ((res = dlclose(module->handle)) != 0)
-        LOGE("dlclose %s: %s", module->name, dlerror());
-
+    int res = dlclose(module->handle);
+    LOGD("%s: dlcose: %s, res=%d", module->name, from, res);
     if (res == 0)
         module->closed = 1;
 }
@@ -29,11 +27,15 @@ void nativeForkAndSpecialize_pre(JNIEnv *env, jclass clazz, jint uid, jint gid,
                                  jintArray fdsToClose, jintArray fdsToIgnore,
                                  jboolean is_child_zygote,
                                  jstring instructionSet, jstring appDataDir) {
+    // only app process
+    int id = uid % 100000;
+    if (id < 10000 || id > 19999) return;
+
     for (auto module : get_modules()) {
         if (module->closed || !module->forkAndSpecializePre)
             continue;
 
-        LOGV("calling forkAndSpecializePre from module %s", module->name);
+        LOGV("%s: forkAndSpecializePre", module->name);
         ((nativeForkAndSpecialize_pre_t) module->forkAndSpecializePre)(env, clazz, uid, gid,
                                                                       gids, runtime_flags,
                                                                       rlimits, mount_external,
@@ -45,19 +47,23 @@ void nativeForkAndSpecialize_pre(JNIEnv *env, jclass clazz, jint uid, jint gid,
     }
 }
 
-void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint res) {
+void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, jint res) {
+    // only app process
+    int id = uid % 100000;
+    if (id < 10000 || id > 19999) return;
+
     for (auto module : get_modules()) {
         if (module->closed || !module->forkAndSpecializePost) {
-            if (!res) unload(module);
+            if (!res) unload(module, "no forkAndSpecializePost");
             continue;
         }
 
-        LOGV("calling forkAndSpecializePost from module %s", module->name);
+        LOGV("%s: forkAndSpecializePost", module->name);
         int unload_module = ((nativeForkAndSpecialize_post_t)
                 module->forkAndSpecializePost)(env, clazz, res);
 
         if (!res && unload_module) {
-            unload(module);
+            unload(module, "forkAndSpecializePost returns 1");
         }
     }
 }
@@ -69,7 +75,7 @@ void nativeForkSystemServer_pre(JNIEnv *env, jclass clazz, uid_t uid, gid_t gid,
         if (module->closed || !module->forkSystemServerPre)
             continue;
 
-        LOGV("calling forkSystemServerPre from module %s", module->name);
+        LOGV("%s: forkSystemServerPre", module->name);
         ((nativeForkSystemServer_pre_t) module->forkSystemServerPre)(env, clazz, uid, gid, gids,
                                                                     debug_flags, rlimits,
                                                                     permittedCapabilities,
@@ -80,15 +86,15 @@ void nativeForkSystemServer_pre(JNIEnv *env, jclass clazz, uid_t uid, gid_t gid,
 void nativeForkSystemServer_post(JNIEnv *env, jclass clazz, jint res) {
     for (auto module : get_modules()) {
         if (module->closed || !module->forkSystemServerPost) {
-            if (!res) unload(module);
+            if (!res) unload(module, "no forkSystemServerPost");
             continue;
         }
 
-        LOGV("calling forkSystemServerPost from module %s", module->name);
+        LOGV("%s: forkSystemServerPost", module->name);
         int unload_module = ((nativeForkSystemServer_post_t)
                 module->forkSystemServerPost)(env, clazz, res);
         if (!res && unload_module) {
-            unload(module);
+            unload(module, "forkSystemServerPost returns 1");
         }
     }
 }
@@ -113,7 +119,7 @@ jint nativeForkAndSpecialize_marshmallow(JNIEnv *env, jclass clazz, jint uid, ji
                                                                                   fdsToClose,
                                                                                   instructionSet,
                                                                                   appDataDir);
-    nativeForkAndSpecialize_post(env, clazz, res);
+    nativeForkAndSpecialize_post(env, clazz, uid, res);
     return res;
 }
 
@@ -133,7 +139,7 @@ jint nativeForkAndSpecialize_oreo(JNIEnv *env, jclass clazz, jint uid, jint gid,
                                                                            fdsToIgnore,
                                                                            instructionSet,
                                                                            appDataDir);
-    nativeForkAndSpecialize_post(env, clazz, res);
+    nativeForkAndSpecialize_post(env, clazz, uid, res);
     return res;
 }
 
@@ -152,7 +158,7 @@ jint nativeForkAndSpecialize_p(JNIEnv *env, jclass clazz, jint uid, jint gid, ji
                                                                         fdsToIgnore,
                                                                         is_child_zygote,
                                                                         instructionSet, appDataDir);
-    nativeForkAndSpecialize_post(env, clazz, res);
+    nativeForkAndSpecialize_post(env, clazz, uid, res);
     return res;
 }
 

@@ -13,6 +13,7 @@
 #include <elf.h>
 #include <string>
 #include <dirent.h>
+#include <xhook/xhook.h>
 
 #include "misc.h"
 #include "jni_native_method.h"
@@ -36,62 +37,11 @@
 #define NATIVE_FORK_AND_SPECIALIZE_METHOD "nativeForkAndSpecialize"
 #define NATIVE_FORK_SYSTEM_SERVER_METHOD "nativeForkSystemServer"
 
-#define SYM_JAVAVM "_ZN7android14AndroidRuntime7mJavaVME"
+void init(JNIEnv *jniEnv);
 
-static void *android_runtime_handle = dlopen(ANDROID_RUNTIME_LIBRARY, RTLD_NOW | RTLD_GLOBAL);
-static JavaVM *javaVM;
+std::vector<module *> modules;
 
-extern "C" void con() __attribute__((constructor));
-
-extern void init();
-
-#define WAIT_MAX 360
-
-static void check(pid_t pid) {
-    sleep(1);
-
-    char buf[64];
-    get_proc_name(pid, buf, 63);
-
-    if (strncmp(ZYGOTE_NAME, buf, strlen(ZYGOTE_NAME)) == 0) {
-        void *p = dlsym(android_runtime_handle, SYM_JAVAVM);
-        if (!p) {
-            LOGE("symbol " SYM_JAVAVM " not found.");
-            return;
-        }
-
-        int count = 0;
-        do {
-            if ((javaVM = (JavaVM *) (*(void **) p))) {
-                break;
-            }
-
-            LOGW("AndroidRuntime::mJavaVM is null, wait 1s");
-
-            sleep(1);
-
-            count++;
-            if (count >= WAIT_MAX) {
-                LOGE("AndroidRuntime::mJavaVM is null after %ds", WAIT_MAX);
-                return;
-            }
-        } while (1);
-
-        LOGD("AndroidRuntime::mJavaVM: %p", p ? p : 0);
-
-        LOGI(ZYGOTE_NAME ", calling init...");
-
-        kill(pid, SIGUSR2);
-    }
-}
-
-void signalHandler(int signum) {
-    init();
-}
-
-std::vector<module*> modules;
-
-std::vector<module*> get_modules() {
+std::vector<module *> get_modules() {
     return modules;
 }
 
@@ -101,7 +51,7 @@ std::vector<module*> get_modules() {
 #define MODULE_PATH_FMT "/system/lib/libriru_%s.so"
 #endif
 
-void load_modules(JavaVM *javaVM, JNIEnv *jniEnv) {
+void load_modules() {
     DIR *dir;
     struct dirent *entry;
     char path[256];
@@ -128,11 +78,11 @@ void load_modules(JavaVM *javaVM, JNIEnv *jniEnv) {
                 continue;
             }
 
-            module* module = new struct module();
+            module *module = new struct module();
             module->closed = 0;
             module->handle = handle;
             module->name = strdup(entry->d_name);
-            module->moduleLoaded = dlsym(handle, "moduleLoaded");
+            module->onModuleLoaded = dlsym(handle, "onModuleLoaded");
             module->forkAndSpecializePre = dlsym(handle, "nativeForkAndSpecializePre");
             module->forkAndSpecializePost = dlsym(handle, "nativeForkAndSpecializePost");
             module->forkSystemServerPre = dlsym(handle, "nativeForkSystemServerPre");
@@ -140,18 +90,36 @@ void load_modules(JavaVM *javaVM, JNIEnv *jniEnv) {
 
             modules.push_back(module);
 
-            LOGI("loaded module: %s", module->name);
+            LOGI("module loaded: %s", module->name);
 
-            if (module->moduleLoaded) {
-                LOGV("calling loaded from module %s", module->name);
+            if (module->onModuleLoaded) {
+                LOGV("%s: onModuleLoaded", module->name);
 
-                ((loaded_t) module->moduleLoaded)(javaVM, jniEnv);
+                ((loaded_t) module->onModuleLoaded)();
             }
         }
     }
 
     closedir(dir);
 }
+
+#define XHOOK_REGISTER(NAME) \
+    if (xhook_register(".*", #NAME, (void*) new_##NAME, (void **) &old_##NAME) != 0) \
+        LOGE("failed to register hook " #NAME "."); \
+
+#define NEW_FUNC_DEF(ret, func, ...) \
+    static ret (*old_##func)(__VA_ARGS__); \
+    static ret new_##func(__VA_ARGS__)
+
+NEW_FUNC_DEF(int, _ZN7android39register_com_android_internal_os_ZygoteEP7_JNIEnv, JNIEnv *env) {
+    LOGI("register_com_android_internal_os_Zygote");
+    int res = old__ZN7android39register_com_android_internal_os_ZygoteEP7_JNIEnv(env);
+    if (res >= 0)
+        init(env);
+    return res;
+}
+
+extern "C" void con() __attribute__((constructor));
 
 void con() {
     if (access(CONFIG_DIR "/.disable", F_OK) == 0) {
@@ -166,16 +134,21 @@ void con() {
         return;
     }
 
-    std::thread(check, getpid()).detach();
+    load_modules();
 
-    signal(SIGUSR2, signalHandler);
+    XHOOK_REGISTER(_ZN7android39register_com_android_internal_os_ZygoteEP7_JNIEnv);
+
+    if (xhook_refresh(0) == 0) {
+        xhook_clear();
+        LOGI("hook installed");
+    } else {
+        LOGE("failed to refresh hook");
+    }
 }
 
 static int init_called = 0;
 static JNINativeMethod gMethods[] = {{NULL, NULL, NULL},
                                      {NULL, NULL, NULL}};
-
-const std::thread::id MAIN_THREAD_ID = std::this_thread::get_id();
 
 void *_nativeForkAndSpecialize = NULL;
 void *_nativeForkSystemServer = NULL;
@@ -216,10 +189,10 @@ JNINativeMethod *search_method(int endian, std::vector<std::pair<uintptr_t, uint
         if (res) {
             method = (JNINativeMethod *) res;
 #ifdef __LP64__
-            LOGI("found {\"%s\", \"%s\", %p} at 0x%lx\n", method->name, method->signature,
+            LOGI("found {\"%s\", \"%s\", %p} at 0x%lx", method->name, method->signature,
                  method->fnPtr, (uintptr_t) method);
 #else
-            LOGI("found {\"%s\", \"%s\", %p} at 0x%x\n", method->name, method->signature,
+            LOGI("found {\"%s\", \"%s\", %p} at 0x%x", method->name, method->signature,
                  method->fnPtr, (uintptr_t) method);
 #endif
             break;
@@ -232,21 +205,18 @@ JNINativeMethod *search_method(int endian, std::vector<std::pair<uintptr_t, uint
     return method;
 }
 
-void init() {
-    if (std::this_thread::get_id() != MAIN_THREAD_ID)
+void init(JNIEnv *jniEnv) {
+    if (init_called) {
+        LOGW("init called");
         return;
-
-    if (init_called)
-        return;
+    }
 
     // Step 0: read elf header for endian
     int endian;
 
     FILE *file = fopen(ANDROID_RUNTIME_LIBRARY, "r");
     if (!file) {
-        LOGE("fopen "
-                     ANDROID_RUNTIME_LIBRARY
-                     " failed.");
+        LOGE("fopen " ANDROID_RUNTIME_LIBRARY " failed.");
         return;
     }
 
@@ -284,7 +254,7 @@ void init() {
 
         if (strcmp(ANDROID_RUNTIME_LIBRARY, filename) == 0) {
             addresses.push_back(std::pair<uintptr_t, uintptr_t>(start, end));
-            LOGD("%lx %lx %s %s\n", start, end, flags, filename);
+            LOGD("%lx %lx %s %s", start, end, flags, filename);
         }
     }
     close(fd);
@@ -330,23 +300,7 @@ void init() {
     gMethods[0].signature = method[0]->signature;
     gMethods[1].signature = method[1]->signature;
 
-    // Step 3: get JNIEnv from AndroidRuntime::mJavaVB
-    if (!android_runtime_handle) {
-        LOGE("dlopen " ANDROID_RUNTIME_LIBRARY " failed.");
-        return;
-    }
-
-    JNIEnv *jniEnv = NULL;
-    jint getEnvStat = javaVM->GetEnv((void **) &jniEnv, JNI_VERSION_1_6);
-
-    if (getEnvStat != JNI_OK) {
-        LOGE("jniEnv not ok");
-        return;
-    }
-
-    LOGD("JNI_OK, version: %d", jniEnv->GetVersion());
-
-    // Step 4: replace native method with RegisterNatives
+    // Step 3: replace native method with RegisterNatives
     init_called = 1;
 
     jclass clazz = JNI_FindClass(jniEnv, "com/android/internal/os/Zygote");
@@ -359,9 +313,8 @@ void init() {
 
     if (res != JNI_OK) {
         LOGE("RegisterNatives failed");
+        return;
     } else {
         LOGI("replaced com.android.internal.os.Zygote#nativeForkAndSpecialize & com.android.internal.os.Zygote#nativeForkSystemServer");
     }
-
-    load_modules(javaVM, jniEnv);
 }

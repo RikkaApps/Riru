@@ -1,8 +1,6 @@
 #include <dlfcn.h>
 #include <sys/types.h>
 
-extern void init();
-
 #ifdef __LP64__
 #define MEMTRACK_LIBRARY "/system/lib64/libmemtrack_real.so"
 #else

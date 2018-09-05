@@ -1,7 +1,7 @@
 #ifndef MODULE_H
 #define MODULE_H
 
-typedef void (*loaded_t)(JavaVM *javaVM, JNIEnv *jniEnv);
+typedef void (*loaded_t)();
 
 typedef void (*nativeForkAndSpecialize_pre_t)(JNIEnv *, jclass, jint, jint, jintArray, jint,
                                               jobjectArray,
@@ -20,7 +20,7 @@ struct module {
     int closed;
     void *handle;
     char *name;
-    void *moduleLoaded;
+    void *onModuleLoaded;
     void *forkAndSpecializePre;
     void *forkAndSpecializePost;
     void *forkSystemServerPre;

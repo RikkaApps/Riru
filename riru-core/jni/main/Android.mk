@@ -5,6 +5,7 @@ LOCAL_MODULE     := libmemtrack
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH) \
 	jni/external/include
+LOCAL_STATIC_LIBRARIES := xhook
 LOCAL_LDLIBS += -ldl -llog
 LOCAL_LDFLAGS := -Wl,-init,con
 
