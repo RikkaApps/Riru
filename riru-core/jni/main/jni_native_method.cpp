@@ -10,12 +10,12 @@
 #include "init.h"
 #include "module.h"
 
-void unload(module *module, const char* from) {
+void unload(module *module, const char* reason) {
     if (module->closed)
         return;
 
     int res = dlclose(module->handle);
-    LOGD("%s: dlcose: %s, res=%d", module->name, from, res);
+    LOGD("%s: dlcose: %s, res=%d", module->name, reason, res);
     if (res == 0)
         module->closed = 1;
 }
@@ -31,7 +31,7 @@ void nativeForkAndSpecialize_pre(JNIEnv *env, jclass clazz, jint uid, jint gid,
     int id = uid % 100000;
     if (id < 10000 || id > 19999) return;
 
-    for (auto module : get_modules()) {
+    for (auto module : *get_modules()) {
         if (module->closed || !module->forkAndSpecializePre)
             continue;
 
@@ -52,7 +52,7 @@ void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, jint res)
     int id = uid % 100000;
     if (id < 10000 || id > 19999) return;
 
-    for (auto module : get_modules()) {
+    for (auto module : *get_modules()) {
         if (module->closed || !module->forkAndSpecializePost) {
             if (!res) unload(module, "no forkAndSpecializePost");
             continue;
@@ -71,7 +71,7 @@ void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, jint res)
 void nativeForkSystemServer_pre(JNIEnv *env, jclass clazz, uid_t uid, gid_t gid, jintArray gids,
                                 jint debug_flags, jobjectArray rlimits, jlong permittedCapabilities,
                                 jlong effectiveCapabilities) {
-    for (auto module : get_modules()) {
+    for (auto module : *get_modules()) {
         if (module->closed || !module->forkSystemServerPre)
             continue;
 
@@ -84,7 +84,7 @@ void nativeForkSystemServer_pre(JNIEnv *env, jclass clazz, uid_t uid, gid_t gid,
 }
 
 void nativeForkSystemServer_post(JNIEnv *env, jclass clazz, jint res) {
-    for (auto module : get_modules()) {
+    for (auto module : *get_modules()) {
         if (module->closed || !module->forkSystemServerPost) {
             if (!res) unload(module, "no forkSystemServerPost");
             continue;

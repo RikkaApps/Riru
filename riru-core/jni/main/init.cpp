@@ -39,9 +39,8 @@
 
 void init(JNIEnv *jniEnv);
 
-std::vector<module *> modules;
-
-std::vector<module *> get_modules() {
+std::vector<module *> *get_modules() {
+    static std::vector<module *> *modules = new std::vector<module *>();
     return modules;
 }
 
@@ -88,9 +87,13 @@ void load_modules() {
             module->forkSystemServerPre = dlsym(handle, "nativeForkSystemServerPre");
             module->forkSystemServerPost = dlsym(handle, "nativeForkSystemServerPost");
 
-            modules.push_back(module);
+            get_modules()->push_back(module);
 
-            LOGI("module loaded: %s", module->name);
+#ifdef __LP64__
+            LOGI("module loaded: %s %lu", module->name, get_modules()->size());
+#else
+            LOGI("module loaded: %s %u", module->name, get_modules()->size());
+#endif
 
             if (module->onModuleLoaded) {
                 LOGV("%s: onModuleLoaded", module->name);
@@ -122,6 +125,12 @@ NEW_FUNC_DEF(int, _ZN7android39register_com_android_internal_os_ZygoteEP7_JNIEnv
 extern "C" void con() __attribute__((constructor));
 
 void con() {
+    static int loaded = 0;
+    if (loaded)
+        return;
+
+    loaded = 1;
+
     if (access(CONFIG_DIR "/.disable", F_OK) == 0) {
         LOGI(CONFIG_DIR "/.disable exists, do nothing.");
         return;
@@ -146,7 +155,6 @@ void con() {
     }
 }
 
-static int init_called = 0;
 static JNINativeMethod gMethods[] = {{NULL, NULL, NULL},
                                      {NULL, NULL, NULL}};
 
@@ -206,11 +214,6 @@ JNINativeMethod *search_method(int endian, std::vector<std::pair<uintptr_t, uint
 }
 
 void init(JNIEnv *jniEnv) {
-    if (init_called) {
-        LOGW("init called");
-        return;
-    }
-
     // Step 0: read elf header for endian
     int endian;
 
@@ -301,8 +304,6 @@ void init(JNIEnv *jniEnv) {
     gMethods[1].signature = method[1]->signature;
 
     // Step 3: replace native method with RegisterNatives
-    init_called = 1;
-
     jclass clazz = JNI_FindClass(jniEnv, "com/android/internal/os/Zygote");
     if (!clazz) {
         LOGE("class com/android/internal/os/Zygote not found");
