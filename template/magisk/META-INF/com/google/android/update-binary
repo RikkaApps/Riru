@@ -6,13 +6,10 @@
 #
 ##########################################################################################
 
-# Detect whether in boot mode
-ps | grep zygote | grep -v grep >/dev/null && BOOTMODE=true || BOOTMODE=false
-$BOOTMODE || ps -A 2>/dev/null | grep zygote | grep -v grep >/dev/null && BOOTMODE=true
-
 TMPDIR=/dev/tmp
 INSTALLER=$TMPDIR/install
-MAGISKBIN=/data/adb/magisk
+# Always mount under tmp
+MOUNTPATH=$TMPDIR/magisk_img
 
 # Default permissions
 umask 022
@@ -26,7 +23,7 @@ ui_print() { echo "$1"; }
 
 require_new_magisk() {
   ui_print "*******************************"
-  ui_print " Please install Magisk v15.0+! "
+  ui_print " Please install Magisk v17.0+! "
   ui_print "*******************************"
   exit 1
 }
@@ -40,18 +37,21 @@ ZIP=$3
 
 mount /data 2>/dev/null
 
-# Utility functions must exist
-[ -f $MAGISKBIN/util_functions.sh ] || require_new_magisk
-# Load utility fuctions
-. $MAGISKBIN/util_functions.sh
+# Load utility functions
+if [ -f /data/adb/magisk/util_functions.sh ]; then
+  . /data/adb/magisk/util_functions.sh
+elif [ -f /data/magisk/util_functions.sh ]; then
+  NVBASE=/data
+  . /data/magisk/util_functions.sh
+else
+  require_new_magisk
+fi
 
-# We can't alter magisk image live, use alternative image if required
-$BOOTMODE && IMG=/data/adb/magisk_merge.img
-# Always mount under tmp
-MOUNTPATH=$TMPDIR/magisk_img
+# Use alternative image if in BOOTMODE
+$BOOTMODE && IMG=$NVBASE/magisk_merge.img
 
 # Preperation for flashable zips
-get_outfd
+setup_flashable
 
 # Mount partitions
 mount_partitions
@@ -114,7 +114,7 @@ unzip -o "$ZIP" 'system/*' -d $MODPATH >&2
 # Remove placeholder
 rm -f $MODPATH/system/placeholder 2>/dev/null
 
-# Extra copy file function
+# Extra copy file function		
 copy_files
 
 # Handle replace folders

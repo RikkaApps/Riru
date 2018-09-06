@@ -4,4 +4,4 @@ version=v5
 versionCode=5
 author=Rikka
 description=Inject zygote process by replace libmemtrack.so, provide interface to other Riru modules.
-minMagisk=1500
+minMagisk=17000

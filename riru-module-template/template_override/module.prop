@@ -4,4 +4,4 @@ version=v1
 versionCode=1
 author=Rikka
 description=Riru module template. Require Riru - Core installed.
-minMagisk=1500
+minMagisk=17000
