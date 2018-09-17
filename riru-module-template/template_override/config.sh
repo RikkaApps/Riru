@@ -111,6 +111,11 @@ check_architecture() {
 }
 
 copy_files() {
+  if [ $IS64BIT = false ]; then
+	ui_print "- Removing unnecessary files"
+	rm -rf "$MODPATH/system/lib64"
+  fi
+
   ui_print "- Extracting extra files"
   unzip -o "$ZIP" 'data/*' -d $MODPATH >&2
 
