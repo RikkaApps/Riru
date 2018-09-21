@@ -78,7 +78,6 @@ void load_modules() {
             }
 
             module *module = new struct module();
-            module->closed = 0;
             module->handle = handle;
             module->name = strdup(entry->d_name);
             module->onModuleLoaded = dlsym(handle, "onModuleLoaded");

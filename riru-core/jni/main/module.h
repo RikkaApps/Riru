@@ -17,7 +17,6 @@ typedef void (*nativeForkSystemServer_pre_t)(JNIEnv *, jclass, uid_t, gid_t, jin
 typedef int (*nativeForkSystemServer_post_t)(JNIEnv *, jclass, jint);
 
 struct module {
-    int closed;
     void *handle;
     char *name;
     void *onModuleLoaded;

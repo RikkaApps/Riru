@@ -10,14 +10,13 @@
 #include "init.h"
 #include "module.h"
 
-void unload(module *module, const char* reason) {
-    if (module->closed)
-        return;
+int shouldSkipUid(int uid) {
+    int appId = uid % 100000;
 
-    int res = dlclose(module->handle);
-    LOGD("%s: dlcose: %s, res=%d", module->name, reason, res);
-    if (res == 0)
-        module->closed = 1;
+    // limit only regular app, or strange situation will happen, such as zygote process not start (dead for no reason and leave no clues?)
+    // https://android.googlesource.com/platform/frameworks/base/+/android-9.0.0_r8/core/java/android/os/UserHandle.java#151
+    if (appId >= 10000 && appId <= 19999) return 0;
+    return 1;
 }
 
 void nativeForkAndSpecialize_pre(JNIEnv *env, jclass clazz, jint uid, jint gid,
@@ -27,12 +26,11 @@ void nativeForkAndSpecialize_pre(JNIEnv *env, jclass clazz, jint uid, jint gid,
                                  jintArray fdsToClose, jintArray fdsToIgnore,
                                  jboolean is_child_zygote,
                                  jstring instructionSet, jstring appDataDir) {
-    // only app process
-    int id = uid % 100000;
-    if (id < 10000 || id > 19999) return;
+    if (shouldSkipUid(uid))
+        return;
 
     for (auto module : *get_modules()) {
-        if (module->closed || !module->forkAndSpecializePre)
+        if (!module->forkAndSpecializePre)
             continue;
 
         LOGV("%s: forkAndSpecializePre", module->name);
@@ -48,23 +46,15 @@ void nativeForkAndSpecialize_pre(JNIEnv *env, jclass clazz, jint uid, jint gid,
 }
 
 void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, jint res) {
-    // only app process
-    int id = uid % 100000;
-    if (id < 10000 || id > 19999) return;
+    if (shouldSkipUid(uid))
+        return;
 
     for (auto module : *get_modules()) {
-        if (module->closed || !module->forkAndSpecializePost) {
-            if (!res) unload(module, "no forkAndSpecializePost");
+        if (!module->forkAndSpecializePost)
             continue;
-        }
 
         LOGV("%s: forkAndSpecializePost", module->name);
-        int unload_module = ((nativeForkAndSpecialize_post_t)
-                module->forkAndSpecializePost)(env, clazz, res);
-
-        if (!res && unload_module) {
-            unload(module, "forkAndSpecializePost returns 1");
-        }
+        ((nativeForkAndSpecialize_post_t) module->forkAndSpecializePost)(env, clazz, res);
     }
 }
 
@@ -72,7 +62,7 @@ void nativeForkSystemServer_pre(JNIEnv *env, jclass clazz, uid_t uid, gid_t gid,
                                 jint debug_flags, jobjectArray rlimits, jlong permittedCapabilities,
                                 jlong effectiveCapabilities) {
     for (auto module : *get_modules()) {
-        if (module->closed || !module->forkSystemServerPre)
+        if (!module->forkSystemServerPre)
             continue;
 
         LOGV("%s: forkSystemServerPre", module->name);
@@ -85,17 +75,11 @@ void nativeForkSystemServer_pre(JNIEnv *env, jclass clazz, uid_t uid, gid_t gid,
 
 void nativeForkSystemServer_post(JNIEnv *env, jclass clazz, jint res) {
     for (auto module : *get_modules()) {
-        if (module->closed || !module->forkSystemServerPost) {
-            if (!res) unload(module, "no forkSystemServerPost");
+        if (!module->forkSystemServerPost)
             continue;
-        }
 
         LOGV("%s: forkSystemServerPost", module->name);
-        int unload_module = ((nativeForkSystemServer_post_t)
-                module->forkSystemServerPost)(env, clazz, res);
-        if (!res && unload_module) {
-            unload(module, "forkSystemServerPost returns 1");
-        }
+        ((nativeForkSystemServer_post_t) module->forkSystemServerPost)(env, clazz, res);
     }
 }
 
