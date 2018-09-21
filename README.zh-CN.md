@@ -36,7 +36,7 @@ Riru 这个名字是来自 https://www.pixiv.net/member_illust.php?mode=medium&i
 1. 复制 `riru-module-template` 并重命名
 2. 在 `riru-your-module/build.sh` `riru-your-module/template_override/module.prop` `riru-your-module/template_override/riru_module.prop` `riru-your-module/jni/main/Android.mk` 中修改模块名字
 3. 发明你自己的魔法（
-4. 直接在命令行 (用 `gradlew`) 或者 Android Studio 执行 `:riru-core:zip`，zip 会被存到 `release`
+4. 直接在命令行 (用 `gradlew`) 或者 Android Studio 执行 `:riru-your-module:zip`，zip 会被存到 `release`
 
 
 ## 安装
