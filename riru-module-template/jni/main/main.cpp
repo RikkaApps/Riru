@@ -14,19 +14,17 @@ void nativeForkAndSpecializePre(JNIEnv *env, jclass clazz, jint uid, jint gid, j
 
 __attribute__((visibility("default")))
 int nativeForkAndSpecializePost(JNIEnv *env, jclass clazz, jint res) {
-    int unload = 1;
-    return unload;
+    return 0;
 }
 
 __attribute__((visibility("default")))
-void forkSystemServerPre(JNIEnv *env, jclass clazz, uid_t uid, gid_t gid, jintArray gids,
+void nativeForkSystemServerPre(JNIEnv *env, jclass clazz, uid_t uid, gid_t gid, jintArray gids,
                          jint debug_flags, jobjectArray rlimits, jlong permittedCapabilities,
                          jlong effectiveCapabilities) {
 }
 
 __attribute__((visibility("default")))
-int forkSystemServerPost(JNIEnv *env, jclass clazz, jint res) {
-    int unload = 1;
-    return unload;
+int nativeForkSystemServerPost(JNIEnv *env, jclass clazz, jint res) {
+    return 0;
 }
 }
