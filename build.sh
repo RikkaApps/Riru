@@ -19,6 +19,7 @@ NDK_OUT=$MODULE_NAME/build/ndkBuild/obj
 # build
 NDK_BUILD=ndk-build
 [[ "$OSTYPE" == "msys" ]] && NDK_BUILD=ndk-build.cmd
+[[ "$OSTYPE" == "cygwin" ]] && NDK_BUILD=ndk-build.cmd
 
 (cd $MODULE_NAME; $NDK_BUILD NDK_LIBS_OUT=build/ndkBuild/libs NDK_OUT=build/ndkBuild/obj)
 
