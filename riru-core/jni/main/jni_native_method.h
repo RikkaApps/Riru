@@ -3,24 +3,26 @@
 
 #include <jni.h>
 
-extern void* _nativeForkAndSpecialize;
-extern void* _nativeForkSystemServer;
+extern void *_nativeForkAndSpecialize;
+extern void *_nativeForkSystemServer;
 
-const static char* nativeForkAndSpecialize_marshmallow_sig = "(II[II[[IILjava/lang/String;Ljava/lang/String;[ILjava/lang/String;Ljava/lang/String;)I";
+const static char *nativeForkAndSpecialize_marshmallow_sig = "(II[II[[IILjava/lang/String;Ljava/lang/String;[ILjava/lang/String;Ljava/lang/String;)I";
 
-typedef jint (*nativeForkAndSpecialize_marshmallow_t)(JNIEnv*, jclass, jint, jint, jintArray, jint, jobjectArray,
-                                                      jint, jstring, jstring, jintArray, jstring, jstring);
+typedef jint (*nativeForkAndSpecialize_marshmallow_t)(JNIEnv *, jclass, jint, jint, jintArray, jint,
+                                                      jobjectArray, jint, jstring, jstring,
+                                                      jintArray, jstring, jstring);
 
-const static char* nativeForkAndSpecialize_oreo_sig = "(II[II[[IILjava/lang/String;Ljava/lang/String;[I[ILjava/lang/String;Ljava/lang/String;)I";
+const static char *nativeForkAndSpecialize_oreo_sig = "(II[II[[IILjava/lang/String;Ljava/lang/String;[I[ILjava/lang/String;Ljava/lang/String;)I";
 
-typedef jint (*nativeForkAndSpecialize_oreo_t)(JNIEnv*, jclass, jint, jint, jintArray, jint, jobjectArray,
-                                               jint, jstring, jstring, jintArray, jintArray, jstring, jstring);
+typedef jint (*nativeForkAndSpecialize_oreo_t)(JNIEnv *, jclass, jint, jint, jintArray, jint,
+                                               jobjectArray, jint, jstring, jstring, jintArray, 
+                                               jintArray, jstring, jstring);
 
-const static char* nativeForkAndSpecialize_p_sig = "(II[II[[IILjava/lang/String;Ljava/lang/String;[I[IZLjava/lang/String;Ljava/lang/String;)I";
+const static char *nativeForkAndSpecialize_p_sig = "(II[II[[IILjava/lang/String;Ljava/lang/String;[I[IZLjava/lang/String;Ljava/lang/String;)I";
 
-typedef jint (*nativeForkAndSpecialize_p_t)(JNIEnv*, jclass, jint, jint, jintArray, jint, jobjectArray,
-                                            jint, jstring, jstring, jintArray, jintArray, jboolean,
-                                            jstring, jstring);
+typedef jint (*nativeForkAndSpecialize_p_t)(JNIEnv *, jclass, jint, jint, jintArray, jint,
+                                            jobjectArray, jint, jstring, jstring, jintArray, 
+                                            jintArray, jboolean, jstring, jstring);
 
 extern jint nativeForkAndSpecialize_marshmallow(JNIEnv *env, jclass clazz, jint uid, jint gid,
                                                 jintArray gids,
@@ -46,13 +48,20 @@ extern jint nativeForkAndSpecialize_p(JNIEnv *env, jclass clazz, jint uid, jint 
                                       jboolean is_child_zygote,
                                       jstring instructionSet, jstring appDataDir);
 
-const static char* nativeForkSystemServer_sig = "(II[II[[IJJ)I";
+const static char *nativeForkSystemServer_sig = "(II[II[[IJJ)I";
 
-typedef jint (*nativeForkSystemServer_t)(JNIEnv*, jclass, uid_t, gid_t, jintArray,
+typedef jint (*nativeForkSystemServer_t)(JNIEnv *, jclass, uid_t, gid_t, jintArray,
                                          jint, jobjectArray, jlong, jlong);
 
-extern jint nativeForkSystemServer(JNIEnv* env, jclass, uid_t uid, gid_t gid, jintArray gids,
-                                   jint debug_flags, jobjectArray rlimits, jlong permittedCapabilities,
+extern jint nativeForkSystemServer(JNIEnv *env, jclass, uid_t uid, gid_t gid, jintArray gids,
+                                   jint debug_flags, jobjectArray rlimits,
+                                   jlong permittedCapabilities,
                                    jlong effectiveCapabilities);
+
+extern void *_SystemProperties_set;
+
+typedef jint (*SystemProperties_set_t)(JNIEnv *, jobject, jstring, jstring);
+
+void SystemProperties_set(JNIEnv *env, jobject clazz, jstring keyJ, jstring valJ);
 
 #endif // _JNI_NATIVE_METHOD_H

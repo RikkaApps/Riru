@@ -6,7 +6,7 @@
 
 int ClearException(JNIEnv *env) {
     jthrowable exception = env->ExceptionOccurred();
-    if (exception != NULL) {
+    if (exception != nullptr) {
         env->ExceptionDescribe();
         env->ExceptionClear();
         return true;

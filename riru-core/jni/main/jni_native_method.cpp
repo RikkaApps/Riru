@@ -2,7 +2,6 @@
 #include <vector>
 #include <unistd.h>
 #include <mntent.h>
-#include <dlfcn.h>
 
 #include "jni_native_method.h"
 #include "logging.h"
@@ -35,13 +34,13 @@ void nativeForkAndSpecialize_pre(JNIEnv *env, jclass clazz, jint uid, jint gid,
 
         LOGV("%s: forkAndSpecializePre", module->name);
         ((nativeForkAndSpecialize_pre_t) module->forkAndSpecializePre)(env, clazz, uid, gid,
-                                                                      gids, runtime_flags,
-                                                                      rlimits, mount_external,
-                                                                      se_info, se_name,
-                                                                      fdsToClose, fdsToIgnore,
-                                                                      is_child_zygote,
-                                                                      instructionSet,
-                                                                      appDataDir);
+                                                                       gids, runtime_flags,
+                                                                       rlimits, mount_external,
+                                                                       se_info, se_name,
+                                                                       fdsToClose, fdsToIgnore,
+                                                                       is_child_zygote,
+                                                                       instructionSet,
+                                                                       appDataDir);
     }
 }
 
@@ -67,9 +66,9 @@ void nativeForkSystemServer_pre(JNIEnv *env, jclass clazz, uid_t uid, gid_t gid,
 
         LOGV("%s: forkSystemServerPre", module->name);
         ((nativeForkSystemServer_pre_t) module->forkSystemServerPre)(env, clazz, uid, gid, gids,
-                                                                    debug_flags, rlimits,
-                                                                    permittedCapabilities,
-                                                                    effectiveCapabilities);
+                                                                     debug_flags, rlimits,
+                                                                     permittedCapabilities,
+                                                                     effectiveCapabilities);
     }
 }
 
@@ -158,4 +157,37 @@ jint nativeForkSystemServer(JNIEnv *env, jclass clazz, uid_t uid, gid_t gid, jin
                                                                     effectiveCapabilities);
     nativeForkSystemServer_post(env, clazz, res);
     return res;
+}
+
+/*
+ * On Android 9+, in very rare cases, SystemProperties.set("sys.user." + userId + ".ce_available", "true")
+ * will throw an exception (we don't known if this is caused by Riru) and user data will be wiped.
+ * So we hook it and clear the exception to prevent this problem from happening.
+ *
+ * log:
+ * UserDataPreparer: Setting property: sys.user.0.ce_available=true
+ * PackageManager: Destroying user 0 on volume null because we failed to prepare: java.lang.RuntimeException: failed to set system property
+ *
+ * http://androidxref.com/9.0.0_r3/xref/frameworks/base/services/core/java/com/android/server/pm/UserDataPreparer.java#107
+ * -> http://androidxref.com/9.0.0_r3/xref/frameworks/base/services/core/java/com/android/server/pm/UserDataPreparer.java#112
+ * -> http://androidxref.com/9.0.0_r3/xref/system/vold/VoldNativeService.cpp#751
+ * -> http://androidxref.com/9.0.0_r3/xref/system/vold/Ext4Crypt.cpp#743
+ * -> http://androidxref.com/9.0.0_r3/xref/system/vold/Ext4Crypt.cpp#221
+ */
+void SystemProperties_set(JNIEnv *env, jobject clazz, jstring keyJ, jstring valJ) {
+    ((SystemProperties_set_t) _SystemProperties_set)(env, clazz, keyJ, valJ);
+
+    const char *key = env->GetStringUTFChars(keyJ, JNI_FALSE);
+    char user[16];
+    if (sscanf(key, "sys.user.%[^.].ce_available", user) == 1) {
+        jthrowable exception = env->ExceptionOccurred();
+        // clear exception to prevent data be destroyed
+        if (exception) {
+            LOGW("prevented data destroy");
+
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+        }
+    }
+    env->ReleaseStringUTFChars(keyJ, key);
 }

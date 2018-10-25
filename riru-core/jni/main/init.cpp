@@ -10,7 +10,6 @@
 #include <thread>
 #include <vector>
 #include <utility>
-#include <elf.h>
 #include <string>
 #include <dirent.h>
 #include <xhook/xhook.h>
@@ -33,11 +32,6 @@
 #define APP_PROCESS_NAME "/system/bin/app_process"
 #define ANDROID_RUNTIME_LIBRARY "/system/lib/libandroid_runtime.so"
 #endif
-
-#define NATIVE_FORK_AND_SPECIALIZE_METHOD "nativeForkAndSpecialize"
-#define NATIVE_FORK_SYSTEM_SERVER_METHOD "nativeForkSystemServer"
-
-void init(JNIEnv *jniEnv);
 
 std::vector<module *> *get_modules() {
     static auto *modules = new std::vector<module *>();
@@ -105,6 +99,104 @@ void load_modules() {
     closedir(dir);
 }
 
+JNINativeMethod gZygoteMethods[] = {{nullptr, nullptr, nullptr},
+                                    {nullptr, nullptr, nullptr}};
+
+void *_nativeForkAndSpecialize = nullptr;
+void *_nativeForkSystemServer = nullptr;
+
+JNINativeMethod gSystemPropertiesMethods[] = {{nullptr, nullptr, nullptr}};
+void *_SystemProperties_set = nullptr;
+
+void onRegisterZygote(JNIEnv *env, const char *className, const JNINativeMethod *methods,
+                      int numMethods) {
+    JNINativeMethod method;
+    for (int i = 0; i < numMethods; ++i) {
+        method = methods[i];
+
+        if (strcmp(method.name, "nativeForkAndSpecialize") == 0) {
+            _nativeForkAndSpecialize = method.fnPtr;
+
+            gZygoteMethods[0].name = method.name;
+            gZygoteMethods[0].signature = method.signature;
+
+            if (strncmp(nativeForkAndSpecialize_marshmallow_sig, method.signature,
+                        strlen(nativeForkAndSpecialize_marshmallow_sig)) == 0)
+                gZygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_marshmallow;
+            else if (strncmp(nativeForkAndSpecialize_oreo_sig, method.signature,
+                             strlen(nativeForkAndSpecialize_oreo_sig)) == 0)
+                gZygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_oreo;
+            else if (strncmp(nativeForkAndSpecialize_p_sig, method.signature,
+                             strlen(nativeForkAndSpecialize_p_sig)) == 0)
+                gZygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_p;
+        } else if (strcmp(method.name, "nativeForkSystemServer") == 0) {
+            _nativeForkSystemServer = method.fnPtr;
+
+            gZygoteMethods[1].name = method.name;
+            gZygoteMethods[1].signature = method.signature;
+
+            if (strncmp(nativeForkSystemServer_sig, method.signature,
+                        strlen(nativeForkSystemServer_sig)) == 0)
+                gZygoteMethods[1].fnPtr = (void *) nativeForkSystemServer;
+        }
+    }
+
+    LOGI("{\"%s\", \"%s\", %p}", gZygoteMethods[0].name, gZygoteMethods[0].signature,
+         gZygoteMethods[0].fnPtr);
+    LOGI("{\"%s\", \"%s\", %p}", gZygoteMethods[1].name, gZygoteMethods[1].signature,
+         gZygoteMethods[1].fnPtr);
+
+    if (gZygoteMethods[0].fnPtr && gZygoteMethods[1].fnPtr) {
+        jclass clazz = JNI_FindClass(env, className);
+        if (clazz) {
+            jint r = JNI_RegisterNatives(env, clazz, gZygoteMethods, 2);
+            if (r != JNI_OK) {
+                LOGE("RegisterNatives failed");
+            } else {
+                LOGI("replaced com.android.internal.os.Zygote#nativeForkAndSpecialize & com.android.internal.os.Zygote#nativeForkSystemServer");
+            }
+        } else {
+            LOGE("class com/android/internal/os/Zygote not found");
+        }
+    }
+}
+
+void onRegisterSystemProperties(JNIEnv *env, const char *className, const JNINativeMethod *methods,
+                                int numMethods) {
+    JNINativeMethod method;
+    for (int i = 0; i < numMethods; ++i) {
+        method = methods[i];
+
+        if (strcmp(method.name, "native_set") == 0) {
+            _SystemProperties_set = method.fnPtr;
+
+            gSystemPropertiesMethods[0].name = method.name;
+            gSystemPropertiesMethods[0].signature = method.signature;
+
+            if (strcmp("(Ljava/lang/String;Ljava/lang/String;)V", method.signature) == 0)
+                gSystemPropertiesMethods[0].fnPtr = (void *) SystemProperties_set;
+        }
+    }
+
+    LOGI("{\"%s\", \"%s\", %p}", gSystemPropertiesMethods[0].name,
+         gSystemPropertiesMethods[0].signature,
+         gSystemPropertiesMethods[0].fnPtr);
+
+    if (gSystemPropertiesMethods[0].fnPtr) {
+        jclass clazz = JNI_FindClass(env, className);
+        if (clazz) {
+            jint r = JNI_RegisterNatives(env, clazz, gSystemPropertiesMethods, 1);
+            if (r != JNI_OK) {
+                LOGE("RegisterNatives failed");
+            } else {
+                LOGI("replaced android.os.SystemProperties#native_set");
+            }
+        } else {
+            LOGE("class android/os/SystemProperties not found");
+        }
+    }
+}
+
 #define XHOOK_REGISTER(NAME) \
     if (xhook_register(".*", #NAME, (void*) new_##NAME, (void **) &old_##NAME) != 0) \
         LOGE("failed to register hook " #NAME "."); \
@@ -113,11 +205,20 @@ void load_modules() {
     static ret (*old_##func)(__VA_ARGS__); \
     static ret new_##func(__VA_ARGS__)
 
-NEW_FUNC_DEF(int, _ZN7android39register_com_android_internal_os_ZygoteEP7_JNIEnv, JNIEnv *env) {
-    LOGI("register_com_android_internal_os_Zygote");
-    int res = old__ZN7android39register_com_android_internal_os_ZygoteEP7_JNIEnv(env);
-    if (res >= 0)
-        init(env);
+NEW_FUNC_DEF(int, jniRegisterNativeMethods, JNIEnv *env, const char *className,
+             const JNINativeMethod *methods, int numMethods) {
+    //LOGD("jniRegisterNativeMethods %s", className);
+
+    int res = old_jniRegisterNativeMethods(env, className, methods, numMethods);
+
+    if (strcmp("com/android/internal/os/Zygote", className) == 0) {
+        onRegisterZygote(env, className, methods, numMethods);
+    } else if (strcmp("android/os/SystemProperties", className) == 0) {
+        // hook android.os.SystemProperties#native_set to prevent a critical problem on Android 9+
+        // see comment of SystemProperties_set in jni_native_method.cpp for detail
+        onRegisterSystemProperties(env, className, methods, numMethods);
+    }
+
     return res;
 }
 
@@ -131,7 +232,8 @@ void con() {
     loaded = 1;
 
     if (access(CONFIG_DIR "/.disable", F_OK) == 0) {
-        LOGI(CONFIG_DIR "/.disable exists, do nothing.");
+        LOGI(CONFIG_DIR
+                     "/.disable exists, do nothing.");
         return;
     }
 
@@ -144,177 +246,12 @@ void con() {
 
     load_modules();
 
-    XHOOK_REGISTER(_ZN7android39register_com_android_internal_os_ZygoteEP7_JNIEnv);
+    XHOOK_REGISTER(jniRegisterNativeMethods);
 
     if (xhook_refresh(0) == 0) {
         xhook_clear();
         LOGI("hook installed");
     } else {
         LOGE("failed to refresh hook");
-    }
-}
-
-static JNINativeMethod gMethods[] = {{nullptr, nullptr, nullptr},
-                                     {nullptr, nullptr, nullptr}};
-
-void *_nativeForkAndSpecialize = nullptr;
-void *_nativeForkSystemServer = nullptr;
-
-JNINativeMethod *search_method(int endian, std::vector<std::pair<uintptr_t, uintptr_t>> addresses,
-                               const char *name, size_t len) {
-    // Step 1: search for name
-    uintptr_t str_addr = 0;
-    for (auto address : addresses) {
-        void *res = memsearch(address.first, address.second, (const void *) name, len);
-        if (res) {
-            str_addr = (uintptr_t) res;
-#ifdef __LP64__
-            LOGI("found \"%s\" at 0x%lx", (char *) str_addr, str_addr);
-#else
-            LOGI("found \"%s\" at 0x%x", (char *) str_addr, str_addr);
-#endif
-            break;
-        }
-    }
-
-    if (!str_addr) {
-        LOGE("\" %s \" not found.", name);
-        return nullptr;
-    }
-
-    // Step 2: search JNINativeMethod with str_addr's address
-    size_t size = sizeof(uintptr_t);
-    auto *data = new unsigned char[size];
-
-    for (size_t i = 0; i < size; i++)
-        data[endian == ELFDATA2LSB ? i : size - i - 1] = (unsigned char) (
-                ((uintptr_t) 0xff << i * 8 & str_addr) >> i * 8);
-
-    JNINativeMethod *method = nullptr;
-    for (auto address : addresses) {
-        void *res = memsearch(address.first, address.second, data, size);
-        if (res) {
-            method = (JNINativeMethod *) res;
-#ifdef __LP64__
-            LOGI("found {\"%s\", \"%s\", %p} at 0x%lx", method->name, method->signature,
-                 method->fnPtr, (uintptr_t) method);
-#else
-            LOGI("found {\"%s\", \"%s\", %p} at 0x%x", method->name, method->signature,
-                 method->fnPtr, (uintptr_t) method);
-#endif
-            break;
-        }
-    }
-    if (!method) {
-        LOGE("%s not found.", name);
-        return nullptr;
-    }
-    return method;
-}
-
-void init(JNIEnv *jniEnv) {
-    // Step 0: read elf header for endian
-    int endian;
-
-    FILE *file = fopen(ANDROID_RUNTIME_LIBRARY, "re");
-    if (!file) {
-        LOGE("fopen " ANDROID_RUNTIME_LIBRARY " failed.");
-        return;
-    }
-
-#ifdef __LP64__
-    Elf64_Ehdr header;
-#else
-    Elf32_Ehdr header;
-#endif
-    fread(&header, 1, sizeof(header), file);
-    endian = header.e_ident[EI_DATA];
-
-    fclose(file);
-
-    // Step 1: get libandroid_runtime.so address
-    std::vector<std::pair<uintptr_t, uintptr_t>> addresses;
-
-    int fd = open("/proc/self/maps", O_RDONLY | O_CLOEXEC);
-    if (fd == -1) {
-        LOGE("open /proc/self/maps failed.");
-        return;
-    }
-
-#if __LP64__
-    const char *s = "%lx-%lx %s %*s %*s %*s %s";
-#else
-    const char *s = "%x-%x %s %*s %*s %*s %s";
-#endif
-
-    char buf[512];
-    while (fdgets(buf, 512, fd) > 0) {
-        uintptr_t start = 0, end = 0;
-        char flags[5], filename[128];
-        if (sscanf(buf, s, &start, &end, flags, filename) != 4)
-            continue;
-
-        if (strcmp(ANDROID_RUNTIME_LIBRARY, filename) == 0) {
-            addresses.emplace_back(start, end);
-            LOGD("%lx %lx %s %s", start, end, flags, filename);
-        }
-    }
-    close(fd);
-
-    JNINativeMethod *method[2];
-    method[0] = search_method(endian, addresses, NATIVE_FORK_AND_SPECIALIZE_METHOD,
-                              strlen(NATIVE_FORK_AND_SPECIALIZE_METHOD) + 1);
-    method[1] = search_method(endian, addresses, NATIVE_FORK_SYSTEM_SERVER_METHOD,
-                              strlen(NATIVE_FORK_SYSTEM_SERVER_METHOD) + 1);
-
-    if (!method[0] || !method[1]) {
-        LOGE("JNINativeMethod not found.");
-        return;
-    }
-
-    // Step 2: make our JNINativeMethod
-    _nativeForkAndSpecialize = method[0]->fnPtr;
-    _nativeForkSystemServer = method[1]->fnPtr;
-
-    // nativeForkAndSpecialize
-    if (strncmp(nativeForkAndSpecialize_marshmallow_sig, method[0]->signature,
-                strlen(nativeForkAndSpecialize_marshmallow_sig)) == 0)
-        gMethods[0].fnPtr = (void *) nativeForkAndSpecialize_marshmallow;
-    else if (strncmp(nativeForkAndSpecialize_oreo_sig, method[0]->signature,
-                     strlen(nativeForkAndSpecialize_oreo_sig)) == 0)
-        gMethods[0].fnPtr = (void *) nativeForkAndSpecialize_oreo;
-    else if (strncmp(nativeForkAndSpecialize_p_sig, method[0]->signature,
-                     strlen(nativeForkAndSpecialize_p_sig)) == 0)
-        gMethods[0].fnPtr = (void *) nativeForkAndSpecialize_p;
-
-    // nativeForkSystemServer
-    if (strncmp(nativeForkSystemServer_sig, method[1]->signature,
-                strlen(nativeForkSystemServer_sig)) == 0)
-        gMethods[1].fnPtr = (void *) nativeForkSystemServer;
-
-    if (!gMethods[0].fnPtr || !gMethods[1].fnPtr) {
-        LOGE("not matching method found.");
-        return;
-    }
-
-    gMethods[0].name = method[0]->name;
-    gMethods[1].name = method[1]->name;
-    gMethods[0].signature = method[0]->signature;
-    gMethods[1].signature = method[1]->signature;
-
-    // Step 3: replace native method with RegisterNatives
-    jclass clazz = JNI_FindClass(jniEnv, "com/android/internal/os/Zygote");
-    if (!clazz) {
-        LOGE("class com/android/internal/os/Zygote not found");
-        return;
-    }
-
-    jint res = JNI_RegisterNatives(jniEnv, clazz, gMethods, 2);
-
-    if (res != JNI_OK) {
-        LOGE("RegisterNatives failed");
-        return;
-    } else {
-        LOGI("replaced com.android.internal.os.Zygote#nativeForkAndSpecialize & com.android.internal.os.Zygote#nativeForkSystemServer");
     }
 }
