@@ -40,7 +40,7 @@
 void init(JNIEnv *jniEnv);
 
 std::vector<module *> *get_modules() {
-    static std::vector<module *> *modules = new std::vector<module *>();
+    static auto *modules = new std::vector<module *>();
     return modules;
 }
 
@@ -71,13 +71,13 @@ void load_modules() {
                 continue;
             }
 
-            handle = dlopen(path, RTLD_LAZY | RTLD_LOCAL);
+            handle = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
             if (!handle) {
                 PLOGE("dlopen %s", path);
                 continue;
             }
 
-            module *module = new struct module();
+            auto *module = new struct module();
             module->handle = handle;
             module->name = strdup(entry->d_name);
             module->onModuleLoaded = dlsym(handle, "onModuleLoaded");
@@ -154,11 +154,11 @@ void con() {
     }
 }
 
-static JNINativeMethod gMethods[] = {{NULL, NULL, NULL},
-                                     {NULL, NULL, NULL}};
+static JNINativeMethod gMethods[] = {{nullptr, nullptr, nullptr},
+                                     {nullptr, nullptr, nullptr}};
 
-void *_nativeForkAndSpecialize = NULL;
-void *_nativeForkSystemServer = NULL;
+void *_nativeForkAndSpecialize = nullptr;
+void *_nativeForkSystemServer = nullptr;
 
 JNINativeMethod *search_method(int endian, std::vector<std::pair<uintptr_t, uintptr_t>> addresses,
                                const char *name, size_t len) {
@@ -179,18 +179,18 @@ JNINativeMethod *search_method(int endian, std::vector<std::pair<uintptr_t, uint
 
     if (!str_addr) {
         LOGE("\" %s \" not found.", name);
-        return NULL;
+        return nullptr;
     }
 
     // Step 2: search JNINativeMethod with str_addr's address
     size_t size = sizeof(uintptr_t);
-    unsigned char *data = new unsigned char[size];
+    auto *data = new unsigned char[size];
 
     for (size_t i = 0; i < size; i++)
         data[endian == ELFDATA2LSB ? i : size - i - 1] = (unsigned char) (
                 ((uintptr_t) 0xff << i * 8 & str_addr) >> i * 8);
 
-    JNINativeMethod *method = NULL;
+    JNINativeMethod *method = nullptr;
     for (auto address : addresses) {
         void *res = memsearch(address.first, address.second, data, size);
         if (res) {
@@ -207,7 +207,7 @@ JNINativeMethod *search_method(int endian, std::vector<std::pair<uintptr_t, uint
     }
     if (!method) {
         LOGE("%s not found.", name);
-        return NULL;
+        return nullptr;
     }
     return method;
 }
@@ -216,7 +216,7 @@ void init(JNIEnv *jniEnv) {
     // Step 0: read elf header for endian
     int endian;
 
-    FILE *file = fopen(ANDROID_RUNTIME_LIBRARY, "r");
+    FILE *file = fopen(ANDROID_RUNTIME_LIBRARY, "re");
     if (!file) {
         LOGE("fopen " ANDROID_RUNTIME_LIBRARY " failed.");
         return;
@@ -235,7 +235,7 @@ void init(JNIEnv *jniEnv) {
     // Step 1: get libandroid_runtime.so address
     std::vector<std::pair<uintptr_t, uintptr_t>> addresses;
 
-    int fd = open("/proc/self/maps", O_RDONLY);
+    int fd = open("/proc/self/maps", O_RDONLY | O_CLOEXEC);
     if (fd == -1) {
         LOGE("open /proc/self/maps failed.");
         return;
@@ -255,7 +255,7 @@ void init(JNIEnv *jniEnv) {
             continue;
 
         if (strcmp(ANDROID_RUNTIME_LIBRARY, filename) == 0) {
-            addresses.push_back(std::pair<uintptr_t, uintptr_t>(start, end));
+            addresses.emplace_back(start, end);
             LOGD("%lx %lx %s %s", start, end, flags, filename);
         }
     }
