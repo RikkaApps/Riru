@@ -52,7 +52,19 @@ void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, jint res)
         if (!module->forkAndSpecializePost)
             continue;
 
-        LOGV("%s: forkAndSpecializePost", module->name);
+        /*
+         * Magic problem:
+         * There is very low change that zygote process stop working and some processes forked from zygote
+         * become zombie process.
+         * When the problem happens:
+         * The following log (%s: forkAndSpecializePost) is not printed
+         * strace zygote: futex(0x6265a70698, FUTEX_WAIT_BITSET_PRIVATE, 2, NULL, 0xffffffff
+         * zygote maps: 6265a70000-6265a71000 rw-p 00020000 103:04 1160  /system/lib64/liblog.so
+         * 6265a70698-6265a70000+20000 is nothing in liblog
+         *
+         * Don't known why, so we just don't print log in zygote and see what will happen
+         */
+        if (res == 0) LOGV("%s: forkAndSpecializePost", module->name);
         ((nativeForkAndSpecialize_post_t) module->forkAndSpecializePost)(env, clazz, res);
     }
 }
@@ -77,7 +89,7 @@ void nativeForkSystemServer_post(JNIEnv *env, jclass clazz, jint res) {
         if (!module->forkSystemServerPost)
             continue;
 
-        LOGV("%s: forkSystemServerPost", module->name);
+        if (res <= 0) LOGV("%s: forkSystemServerPost", module->name);
         ((nativeForkSystemServer_post_t) module->forkSystemServerPost)(env, clazz, res);
     }
 }
