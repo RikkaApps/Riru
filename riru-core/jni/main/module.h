@@ -1,6 +1,8 @@
 #ifndef MODULE_H
 #define MODULE_H
 
+#include <map>
+
 typedef void (*loaded_t)();
 
 typedef void (*nativeForkAndSpecialize_pre_t)(JNIEnv *, jclass, jint, jint, jintArray, jint,
@@ -24,6 +26,7 @@ struct module {
     void *forkAndSpecializePost;
     void *forkSystemServerPre;
     void *forkSystemServerPost;
+    std::map<std::string, void *> * funcs;
 };
 
 #endif // MODULE_H

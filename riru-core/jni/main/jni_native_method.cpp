@@ -32,7 +32,7 @@ void nativeForkAndSpecialize_pre(JNIEnv *env, jclass clazz, jint uid, jint gid,
         if (!module->forkAndSpecializePre)
             continue;
 
-        LOGV("%s: forkAndSpecializePre", module->name);
+        //LOGV("%s: forkAndSpecializePre", module->name);
         ((nativeForkAndSpecialize_pre_t) module->forkAndSpecializePre)(env, clazz, uid, gid,
                                                                        gids, runtime_flags,
                                                                        rlimits, mount_external,
@@ -76,7 +76,7 @@ void nativeForkSystemServer_pre(JNIEnv *env, jclass clazz, uid_t uid, gid_t gid,
         if (!module->forkSystemServerPre)
             continue;
 
-        LOGV("%s: forkSystemServerPre", module->name);
+        //LOGV("%s: forkSystemServerPre", module->name);
         ((nativeForkSystemServer_pre_t) module->forkSystemServerPre)(env, clazz, uid, gid, gids,
                                                                      debug_flags, rlimits,
                                                                      permittedCapabilities,
@@ -89,7 +89,7 @@ void nativeForkSystemServer_post(JNIEnv *env, jclass clazz, jint res) {
         if (!module->forkSystemServerPost)
             continue;
 
-        if (res <= 0) LOGV("%s: forkSystemServerPost", module->name);
+        if (res == 0) LOGV("%s: forkSystemServerPost", module->name);
         ((nativeForkSystemServer_post_t) module->forkSystemServerPost)(env, clazz, res);
     }
 }

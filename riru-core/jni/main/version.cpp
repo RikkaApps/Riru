@@ -1,7 +1,7 @@
-#define VERSION 4
+#define VERSION 8
 
 extern "C" {
-__attribute__((visibility("default"))) int get_version(void) {
+__attribute__((visibility("default"))) int riru_get_version(void) {
     return VERSION;
 }
 }

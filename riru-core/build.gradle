@@ -22,5 +22,5 @@ android {
 
 task zip(type: Exec) {
     workingDir '..'
-    commandLine 'sh', 'build.sh', project.name, 'v7'
+    commandLine 'sh', 'build.sh', project.name, 'v8'
 }

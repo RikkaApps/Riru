@@ -9,10 +9,12 @@
 #include <array>
 #include <thread>
 #include <vector>
+#include <map>
 #include <utility>
 #include <string>
 #include <dirent.h>
 #include <xhook/xhook.h>
+#include <iterator>
 
 #include "misc.h"
 #include "jni_native_method.h"
@@ -36,6 +38,51 @@
 std::vector<module *> *get_modules() {
     static auto *modules = new std::vector<module *>();
     return modules;
+}
+
+unsigned long get_module_index(const char *name) {
+    if (!name)
+        return 0;
+
+    for (unsigned long i = 0; i < get_modules()->size(); ++i) {
+        if (strcmp(get_modules()->at(i)->name, name) == 0)
+            return i + 1;
+    }
+    return 0;
+}
+
+static auto *native_methods = new std::map<std::string, std::pair<const JNINativeMethod *, int>>();
+
+extern "C" {
+__attribute__((visibility("default")))
+const JNINativeMethod *get_native_method(const char *className, const char *name,
+                                         const char *signature) {
+    auto it = native_methods->find(className);
+    if (it != native_methods->end()) {
+        auto pair = it->second;
+        for (int i = 0; i < pair.second; ++i) {
+            auto method = &pair.first[i];
+            if (strcmp(method->name, name) == 0 && strcmp(method->signature, signature) == 0)
+                return method;
+        }
+    }
+    return nullptr;
+}
+
+const JNINativeMethod *get_native_methods(const char *className) {
+    auto it = native_methods->find(className);
+    if (it != native_methods->end()) {
+        return it->second.first;
+    }
+    return nullptr;
+}
+
+void *riru_get_func(const char *module_name, const char *name);
+void *riru_get_native_method_func(const char *module_name, const char *className, const char *name,
+                             const char *signature);
+void riru_set_func(const char *module_name, const char *name, void* func);
+void riru_set_native_method_func(const char *module_name, const char *className, const char *name,
+                            const char *signature, void* func);
 }
 
 #ifdef __LP64__
@@ -79,8 +126,13 @@ void load_modules() {
             module->forkAndSpecializePost = dlsym(handle, "nativeForkAndSpecializePost");
             module->forkSystemServerPre = dlsym(handle, "nativeForkSystemServerPre");
             module->forkSystemServerPost = dlsym(handle, "nativeForkSystemServerPost");
+            module->funcs = new std::map<std::string, void *>();
 
             get_modules()->push_back(module);
+
+            void *sym = dlsym(handle, "riru_set_module_name");
+            if (sym)
+                ((void (*)(const char*)) sym)(module->name);
 
 #ifdef __LP64__
             LOGI("module loaded: %s %lu", module->name, get_modules()->size());
@@ -207,7 +259,9 @@ void onRegisterSystemProperties(JNIEnv *env, const char *className, const JNINat
 
 NEW_FUNC_DEF(int, jniRegisterNativeMethods, JNIEnv *env, const char *className,
              const JNINativeMethod *methods, int numMethods) {
-    //LOGD("jniRegisterNativeMethods %s", className);
+    (*native_methods)[className] = std::pair<const JNINativeMethod *, int>(methods, numMethods);
+
+    LOGV("jniRegisterNativeMethods %s", className);
 
     int res = old_jniRegisterNativeMethods(env, className, methods, numMethods);
 
@@ -244,8 +298,6 @@ void con() {
         return;
     }
 
-    load_modules();
-
     XHOOK_REGISTER(jniRegisterNativeMethods);
 
     if (xhook_refresh(0) == 0) {
@@ -254,4 +306,68 @@ void con() {
     } else {
         LOGE("failed to refresh hook");
     }
+
+    load_modules();
+}
+
+void *riru_get_func(const char *module_name, const char *name) {
+    unsigned long index = get_module_index(module_name);
+    if (index == 0)
+        return nullptr;
+
+    index -= 1;
+
+    LOGI("get_func %s %s", module_name, name);
+
+    // find if it is set by previous modules
+    if (index != 0) {
+        for (unsigned long i = index - 1; i >= 0; --i) {
+            auto module = get_modules()->at(i);
+            auto it = module->funcs->find(name);
+            if (module->funcs->end() != it)
+                return it->second;
+        }
+    }
+
+    return nullptr;
+}
+
+void *riru_get_native_method_func(const char *module_name, const char *className, const char *name,
+                                  const char *signature) {
+    unsigned long index = get_module_index(module_name);
+    if (index == 0)
+        return nullptr;
+
+    index -= 1;
+
+    LOGI("get_func %s %s %s %s", module_name, className, name, signature);
+
+    // find if it is set by previous modules
+    if (index != 0) {
+        for (unsigned long i = index - 1; i >= 0; --i) {
+            auto module = get_modules()->at(i);
+            auto it = module->funcs->find(std::string(className) + name + signature);
+            if (module->funcs->end() != it)
+                return it->second;
+        }
+    }
+
+    const JNINativeMethod *jniNativeMethod = get_native_method(className, name, signature);
+    return jniNativeMethod ? jniNativeMethod->fnPtr : nullptr;
+}
+
+void riru_set_func(const char *module_name, const char *name, void* func) {
+    unsigned long index = get_module_index(module_name);
+    if (index == 0)
+        return;
+
+    LOGI("set_func %s %s %p", module_name, name, func);
+
+    auto module = get_modules()->at(index - 1);
+    (*module->funcs)[name] = func;
+}
+
+void riru_set_native_method_func(const char *module_name, const char *className, const char *name,
+                                 const char *signature, void* func) {
+    riru_set_func(module_name, (std::string(className) + name + signature).c_str(), func);
 }
