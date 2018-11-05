@@ -326,6 +326,8 @@ void *riru_get_func(const char *module_name, const char *name) {
             auto it = module->funcs->find(name);
             if (module->funcs->end() != it)
                 return it->second;
+
+            if (i == 0) break;
         }
     }
 
@@ -349,6 +351,8 @@ void *riru_get_native_method_func(const char *module_name, const char *className
             auto it = module->funcs->find(std::string(className) + name + signature);
             if (module->funcs->end() != it)
                 return it->second;
+
+            if (i == 0) break;
         }
     }
 
