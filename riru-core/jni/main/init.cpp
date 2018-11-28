@@ -171,25 +171,29 @@ void onRegisterZygote(JNIEnv *env, const char *className, const JNINativeMethod 
 
             gZygoteMethods[0].name = method.name;
             gZygoteMethods[0].signature = method.signature;
+            gZygoteMethods[0].fnPtr = nullptr;
 
-            if (strncmp(nativeForkAndSpecialize_marshmallow_sig, method.signature,
-                        strlen(nativeForkAndSpecialize_marshmallow_sig)) == 0)
+            if (strcmp(nativeForkAndSpecialize_marshmallow_sig, method.signature) == 0)
                 gZygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_marshmallow;
-            else if (strncmp(nativeForkAndSpecialize_oreo_sig, method.signature,
-                             strlen(nativeForkAndSpecialize_oreo_sig)) == 0)
+            else if (strcmp(nativeForkAndSpecialize_oreo_sig, method.signature) == 0)
                 gZygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_oreo;
-            else if (strncmp(nativeForkAndSpecialize_p_sig, method.signature,
-                             strlen(nativeForkAndSpecialize_p_sig)) == 0)
+            else if (strcmp(nativeForkAndSpecialize_p_sig, method.signature) == 0)
                 gZygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_p;
+            else if (strcmp(nativeForkAndSpecialize_samsung_o_sig, method.signature) == 0)
+                gZygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_samsung_o;
+            else
+                LOGW("found nativeForkAndSpecialize but signature %s mismatch", method.signature);
         } else if (strcmp(method.name, "nativeForkSystemServer") == 0) {
             _nativeForkSystemServer = method.fnPtr;
 
             gZygoteMethods[1].name = method.name;
             gZygoteMethods[1].signature = method.signature;
+            gZygoteMethods[1].fnPtr = nullptr;
 
-            if (strncmp(nativeForkSystemServer_sig, method.signature,
-                        strlen(nativeForkSystemServer_sig)) == 0)
+            if (strcmp(nativeForkSystemServer_sig, method.signature) == 0)
                 gZygoteMethods[1].fnPtr = (void *) nativeForkSystemServer;
+            else
+                LOGW("found nativeForkSystemServer but signature %s mismatch", method.signature);
         }
     }
 
@@ -317,7 +321,7 @@ void *riru_get_func(const char *module_name, const char *name) {
 
     index -= 1;
 
-    LOGI("get_func %s %s", module_name, name);
+    LOGV("get_func %s %s", module_name, name);
 
     // find if it is set by previous modules
     if (index != 0) {
@@ -342,7 +346,7 @@ void *riru_get_native_method_func(const char *module_name, const char *className
 
     index -= 1;
 
-    LOGI("get_func %s %s %s %s", module_name, className, name, signature);
+    LOGV("get_func %s %s %s %s", module_name, className, name, signature);
 
     // find if it is set by previous modules
     if (index != 0) {
@@ -365,7 +369,7 @@ void riru_set_func(const char *module_name, const char *name, void* func) {
     if (index == 0)
         return;
 
-    LOGI("set_func %s %s %p", module_name, name, func);
+    LOGV("set_func %s %s %p", module_name, name, func);
 
     auto module = get_modules()->at(index - 1);
     (*module->funcs)[name] = func;
