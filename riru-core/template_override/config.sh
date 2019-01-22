@@ -97,7 +97,7 @@ set_permissions() {
 # difficult for you to migrate your modules to newer template versions.
 # Make update-binary as clean as possible, try to only do function calls in it.
 check_architecture() {
-  if [[ "$ARCH" != "arm" && "$ARCH" != "arm64" ]]; then
+  if [[ "$ARCH" != "arm" && "$ARCH" != "arm64" && "$ARCH" != "x86" && "$ARCH" != "x64" ]]; then
     ui_print "- Unsupported platform: $ARCH"
     exit 1
   else
@@ -108,11 +108,11 @@ check_architecture() {
 copy_file_from() {
   FROM_PATH=$1
   FULL_PATH="/system/$FROM_PATH/libmemtrack_real.so"
-  if [ -f $FULL_PATH ]; then
+  if [[ -f "$FULL_PATH" ]]; then
     ui_print "- Found $FULL_PATH"
   else
     FULL_PATH="/system/$FROM_PATH/libmemtrack.so"
-    if [ -f $FULL_PATH ]; then
+    if [[ -f "$FULL_PATH" ]]; then
       ui_print "- Found $FULL_PATH"
 	else
       ui_print "- $FULL_PATH not found"
@@ -120,16 +120,28 @@ copy_file_from() {
     fi
   fi
   
-  cp $FULL_PATH "$MODPATH/system/$FROM_PATH/libmemtrack_real.so" || exit 1
+  cp "$FULL_PATH" "$MODPATH/system/$FROM_PATH/libmemtrack_real.so" || exit 1
   return 0
 }
 
 copy_files() {
   mkdir -p "/data/misc/riru/modules"
-
-  if [ $IS64BIT = true ]; then
+  
+  if [[ "$ARCH" == "x86" || "$ARCH" == "x64" ]]; then
+    ui_print "- Removing arm/arm64 libraries"
+    rm -rf "$MODPATH/system/lib"
+    rm -rf "$MODPATH/system/lib64"
+    mv "$MODPATH/system_x86/lib" "$MODPATH/system/lib"
+    mv "$MODPATH/system_x86/lib64" "$MODPATH/system/lib64"
+  else
+    ui_print "- Removing x86/64 libraries"
+  fi
+  rm -rf "$MODPATH/system_x86"
+  
+  if [[ "$IS64BIT" = true ]]; then
     copy_file_from lib64
   else
+    ui_print "- Removing 64-bit libraries"
 	rm -rf "$MODPATH/system/lib64"
   fi
   copy_file_from lib
