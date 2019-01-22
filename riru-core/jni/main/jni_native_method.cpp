@@ -184,19 +184,18 @@ jint nativeForkSystemServer(
  * -> http://androidxref.com/9.0.0_r3/xref/system/vold/Ext4Crypt.cpp#221
  */
 void SystemProperties_set(JNIEnv *env, jobject clazz, jstring keyJ, jstring valJ) {
-    ((SystemProperties_set_t) _SystemProperties_set)(env, clazz, keyJ, valJ);
-
     const char *key = env->GetStringUTFChars(keyJ, JNI_FALSE);
     char user[16];
-    if (sscanf(key, "sys.user.%[^.].ce_available", user) == 1) {
-        jthrowable exception = env->ExceptionOccurred();
-        // clear exception to prevent data be destroyed
-        if (exception) {
-            LOGW("prevented data destroy");
-
-            env->ExceptionDescribe();
-            env->ExceptionClear();
-        }
-    }
+    int no_throw = sscanf(key, "sys.user.%[^.].ce_available", user) == 1;
     env->ReleaseStringUTFChars(keyJ, key);
+
+    ((SystemProperties_set_t) _SystemProperties_set)(env, clazz, keyJ, valJ);
+
+    jthrowable exception = env->ExceptionOccurred();
+    if (exception && no_throw) {
+        LOGW("prevented data destroy");
+
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
 }
