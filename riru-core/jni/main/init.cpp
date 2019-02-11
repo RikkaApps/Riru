@@ -22,6 +22,7 @@
 #include "wrap.h"
 #include "module.h"
 #include "JNIHelper.h"
+#include "api.h"
 
 #define CONFIG_DIR "/data/misc/riru"
 
@@ -35,63 +36,13 @@
 #define ANDROID_RUNTIME_LIBRARY "/system/lib/libandroid_runtime.so"
 #endif
 
-std::vector<module *> *get_modules() {
-    static auto *modules = new std::vector<module *>();
-    return modules;
-}
-
-unsigned long get_module_index(const char *name) {
-    if (!name)
-        return 0;
-
-    for (unsigned long i = 0; i < get_modules()->size(); ++i) {
-        if (strcmp(get_modules()->at(i)->name, name) == 0)
-            return i + 1;
-    }
-    return 0;
-}
-
-static auto *native_methods = new std::map<std::string, std::pair<const JNINativeMethod *, int>>();
-
-extern "C" {
-__attribute__((visibility("default")))
-const JNINativeMethod *get_native_method(const char *className, const char *name,
-                                         const char *signature) {
-    auto it = native_methods->find(className);
-    if (it != native_methods->end()) {
-        auto pair = it->second;
-        for (int i = 0; i < pair.second; ++i) {
-            auto method = &pair.first[i];
-            if (strcmp(method->name, name) == 0 && strcmp(method->signature, signature) == 0)
-                return method;
-        }
-    }
-    return nullptr;
-}
-
-const JNINativeMethod *get_native_methods(const char *className) {
-    auto it = native_methods->find(className);
-    if (it != native_methods->end()) {
-        return it->second.first;
-    }
-    return nullptr;
-}
-
-void *riru_get_func(const char *module_name, const char *name);
-void *riru_get_native_method_func(const char *module_name, const char *className, const char *name,
-                             const char *signature);
-void riru_set_func(const char *module_name, const char *name, void* func);
-void riru_set_native_method_func(const char *module_name, const char *className, const char *name,
-                            const char *signature, void* func);
-}
-
 #ifdef __LP64__
 #define MODULE_PATH_FMT "/system/lib64/libriru_%s.so"
 #else
 #define MODULE_PATH_FMT "/system/lib/libriru_%s.so"
 #endif
 
-void load_modules() {
+static void load_modules() {
     DIR *dir;
     struct dirent *entry;
     char path[256];
@@ -151,61 +102,55 @@ void load_modules() {
     closedir(dir);
 }
 
-JNINativeMethod gZygoteMethods[] = {{nullptr, nullptr, nullptr},
-                                    {nullptr, nullptr, nullptr}};
 
-void *_nativeForkAndSpecialize = nullptr;
-void *_nativeForkSystemServer = nullptr;
-
-JNINativeMethod gSystemPropertiesMethods[] = {{nullptr, nullptr, nullptr}};
-void *_SystemProperties_set = nullptr;
-
-void onRegisterZygote(JNIEnv *env, const char *className, const JNINativeMethod *methods,
+static void onRegisterZygote(JNIEnv *env, const char *className, const JNINativeMethod *methods,
                       int numMethods) {
+    JNINativeMethod zygoteMethods[] = {{nullptr, nullptr, nullptr},
+                                       {nullptr, nullptr, nullptr}};
     JNINativeMethod method;
     for (int i = 0; i < numMethods; ++i) {
         method = methods[i];
 
         if (strcmp(method.name, "nativeForkAndSpecialize") == 0) {
-            _nativeForkAndSpecialize = method.fnPtr;
+            set_nativeForkAndSpecialize(method.fnPtr);
 
-            gZygoteMethods[0].name = method.name;
-            gZygoteMethods[0].signature = method.signature;
-            gZygoteMethods[0].fnPtr = nullptr;
+            zygoteMethods[0].name = method.name;
+            zygoteMethods[0].signature = method.signature;
+            zygoteMethods[0].fnPtr = nullptr;
 
             if (strcmp(nativeForkAndSpecialize_marshmallow_sig, method.signature) == 0)
-                gZygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_marshmallow;
+                zygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_marshmallow;
             else if (strcmp(nativeForkAndSpecialize_oreo_sig, method.signature) == 0)
-                gZygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_oreo;
+                zygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_oreo;
             else if (strcmp(nativeForkAndSpecialize_p_sig, method.signature) == 0)
-                gZygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_p;
+                zygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_p;
             else if (strcmp(nativeForkAndSpecialize_samsung_o_sig, method.signature) == 0)
-                gZygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_samsung_o;
+                zygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_samsung_o;
             else
                 LOGW("found nativeForkAndSpecialize but signature %s mismatch", method.signature);
         } else if (strcmp(method.name, "nativeForkSystemServer") == 0) {
-            _nativeForkSystemServer = method.fnPtr;
+            set_nativeForkSystemServer(method.fnPtr);
 
-            gZygoteMethods[1].name = method.name;
-            gZygoteMethods[1].signature = method.signature;
-            gZygoteMethods[1].fnPtr = nullptr;
+            zygoteMethods[1].name = method.name;
+            zygoteMethods[1].signature = method.signature;
+            zygoteMethods[1].fnPtr = nullptr;
 
             if (strcmp(nativeForkSystemServer_sig, method.signature) == 0)
-                gZygoteMethods[1].fnPtr = (void *) nativeForkSystemServer;
+                zygoteMethods[1].fnPtr = (void *) nativeForkSystemServer;
             else
                 LOGW("found nativeForkSystemServer but signature %s mismatch", method.signature);
         }
     }
 
-    LOGI("{\"%s\", \"%s\", %p}", gZygoteMethods[0].name, gZygoteMethods[0].signature,
-         gZygoteMethods[0].fnPtr);
-    LOGI("{\"%s\", \"%s\", %p}", gZygoteMethods[1].name, gZygoteMethods[1].signature,
-         gZygoteMethods[1].fnPtr);
+    LOGI("{\"%s\", \"%s\", %p}", zygoteMethods[0].name, zygoteMethods[0].signature,
+         zygoteMethods[0].fnPtr);
+    LOGI("{\"%s\", \"%s\", %p}", zygoteMethods[1].name, zygoteMethods[1].signature,
+         zygoteMethods[1].fnPtr);
 
-    if (gZygoteMethods[0].fnPtr && gZygoteMethods[1].fnPtr) {
+    if (zygoteMethods[0].fnPtr && zygoteMethods[1].fnPtr) {
         jclass clazz = JNI_FindClass(env, className);
         if (clazz) {
-            jint r = JNI_RegisterNatives(env, clazz, gZygoteMethods, 2);
+            jint r = JNI_RegisterNatives(env, clazz, zygoteMethods, 2);
             if (r != JNI_OK) {
                 LOGE("RegisterNatives failed");
             } else {
@@ -217,31 +162,32 @@ void onRegisterZygote(JNIEnv *env, const char *className, const JNINativeMethod 
     }
 }
 
-void onRegisterSystemProperties(JNIEnv *env, const char *className, const JNINativeMethod *methods,
+static void onRegisterSystemProperties(JNIEnv *env, const char *className, const JNINativeMethod *methods,
                                 int numMethods) {
+    JNINativeMethod systemPropertiesMethods[] = {{nullptr, nullptr, nullptr}};
     JNINativeMethod method;
     for (int i = 0; i < numMethods; ++i) {
         method = methods[i];
 
         if (strcmp(method.name, "native_set") == 0) {
-            _SystemProperties_set = method.fnPtr;
+            set_SystemProperties_set(method.fnPtr);
 
-            gSystemPropertiesMethods[0].name = method.name;
-            gSystemPropertiesMethods[0].signature = method.signature;
+            systemPropertiesMethods[0].name = method.name;
+            systemPropertiesMethods[0].signature = method.signature;
 
             if (strcmp("(Ljava/lang/String;Ljava/lang/String;)V", method.signature) == 0)
-                gSystemPropertiesMethods[0].fnPtr = (void *) SystemProperties_set;
+                systemPropertiesMethods[0].fnPtr = (void *) SystemProperties_set;
         }
     }
 
-    LOGI("{\"%s\", \"%s\", %p}", gSystemPropertiesMethods[0].name,
-         gSystemPropertiesMethods[0].signature,
-         gSystemPropertiesMethods[0].fnPtr);
+    LOGI("{\"%s\", \"%s\", %p}", systemPropertiesMethods[0].name,
+         systemPropertiesMethods[0].signature,
+         systemPropertiesMethods[0].fnPtr);
 
-    if (gSystemPropertiesMethods[0].fnPtr) {
+    if (systemPropertiesMethods[0].fnPtr) {
         jclass clazz = JNI_FindClass(env, className);
         if (clazz) {
-            jint r = JNI_RegisterNatives(env, clazz, gSystemPropertiesMethods, 1);
+            jint r = JNI_RegisterNatives(env, clazz, systemPropertiesMethods, 1);
             if (r != JNI_OK) {
                 LOGE("RegisterNatives failed");
             } else {
@@ -263,7 +209,7 @@ void onRegisterSystemProperties(JNIEnv *env, const char *className, const JNINat
 
 NEW_FUNC_DEF(int, jniRegisterNativeMethods, JNIEnv *env, const char *className,
              const JNINativeMethod *methods, int numMethods) {
-    (*native_methods)[className] = std::pair<const JNINativeMethod *, int>(methods, numMethods);
+    put_native_method(className, methods, numMethods);
 
     LOGV("jniRegisterNativeMethods %s", className);
 
@@ -280,9 +226,9 @@ NEW_FUNC_DEF(int, jniRegisterNativeMethods, JNIEnv *env, const char *className,
     return res;
 }
 
-extern "C" void con() __attribute__((constructor));
+extern "C" void riru_constructor() __attribute__((constructor));
 
-void con() {
+void riru_constructor() {
     static int loaded = 0;
     if (loaded)
         return;
@@ -312,70 +258,4 @@ void con() {
     }
 
     load_modules();
-}
-
-void *riru_get_func(const char *module_name, const char *name) {
-    unsigned long index = get_module_index(module_name);
-    if (index == 0)
-        return nullptr;
-
-    index -= 1;
-
-    LOGV("get_func %s %s", module_name, name);
-
-    // find if it is set by previous modules
-    if (index != 0) {
-        for (unsigned long i = index - 1; i >= 0; --i) {
-            auto module = get_modules()->at(i);
-            auto it = module->funcs->find(name);
-            if (module->funcs->end() != it)
-                return it->second;
-
-            if (i == 0) break;
-        }
-    }
-
-    return nullptr;
-}
-
-void *riru_get_native_method_func(const char *module_name, const char *className, const char *name,
-                                  const char *signature) {
-    unsigned long index = get_module_index(module_name);
-    if (index == 0)
-        return nullptr;
-
-    index -= 1;
-
-    LOGV("get_func %s %s %s %s", module_name, className, name, signature);
-
-    // find if it is set by previous modules
-    if (index != 0) {
-        for (unsigned long i = index - 1; i >= 0; --i) {
-            auto module = get_modules()->at(i);
-            auto it = module->funcs->find(std::string(className) + name + signature);
-            if (module->funcs->end() != it)
-                return it->second;
-
-            if (i == 0) break;
-        }
-    }
-
-    const JNINativeMethod *jniNativeMethod = get_native_method(className, name, signature);
-    return jniNativeMethod ? jniNativeMethod->fnPtr : nullptr;
-}
-
-void riru_set_func(const char *module_name, const char *name, void* func) {
-    unsigned long index = get_module_index(module_name);
-    if (index == 0)
-        return;
-
-    LOGV("set_func %s %s %p", module_name, name, func);
-
-    auto module = get_modules()->at(index - 1);
-    (*module->funcs)[name] = func;
-}
-
-void riru_set_native_method_func(const char *module_name, const char *className, const char *name,
-                                 const char *signature, void* func) {
-    riru_set_func(module_name, (std::string(className) + name + signature).c_str(), func);
 }

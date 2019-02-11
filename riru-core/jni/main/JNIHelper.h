@@ -4,6 +4,7 @@
 #include <jni.h>
 #include "logging.h"
 
+__attribute__((visibility("hidden")))
 int ClearException(JNIEnv *env) {
     jthrowable exception = env->ExceptionOccurred();
     if (exception != nullptr) {

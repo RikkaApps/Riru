@@ -9,7 +9,23 @@
 #include "init.h"
 #include "module.h"
 
-int shouldSkipUid(int uid) {
+static void *_nativeForkAndSpecialize = nullptr;
+static void *_nativeForkSystemServer = nullptr;
+static void *_SystemProperties_set = nullptr;
+
+void set_nativeForkAndSpecialize(void *addr) {
+    _nativeForkAndSpecialize = addr;
+}
+
+void set_nativeForkSystemServer(void *addr) {
+    _nativeForkSystemServer = addr;
+}
+
+void set_SystemProperties_set(void *addr) {
+    _SystemProperties_set = addr;
+}
+
+static int shouldSkipUid(int uid) {
     int appId = uid % 100000;
 
     // limit only regular app, or strange situation will happen, such as zygote process not start (dead for no reason and leave no clues?)
@@ -18,7 +34,7 @@ int shouldSkipUid(int uid) {
     return 1;
 }
 
-void nativeForkAndSpecialize_pre(
+static void nativeForkAndSpecialize_pre(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtime_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jstring se_name,
         jintArray fdsToClose, jintArray fdsToIgnore, jboolean is_child_zygote,
@@ -37,7 +53,7 @@ void nativeForkAndSpecialize_pre(
     }
 }
 
-void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, jint res) {
+static void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, jint res) {
     if (shouldSkipUid(uid))
         return;
 
@@ -62,7 +78,7 @@ void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, jint res)
     }
 }
 
-void nativeForkSystemServer_pre(
+static void nativeForkSystemServer_pre(
         JNIEnv *env, jclass clazz, uid_t uid, gid_t gid, jintArray gids, jint debug_flags,
         jobjectArray rlimits, jlong permittedCapabilities, jlong effectiveCapabilities) {
     for (auto module : *get_modules()) {
@@ -76,7 +92,7 @@ void nativeForkSystemServer_pre(
     }
 }
 
-void nativeForkSystemServer_post(JNIEnv *env, jclass clazz, jint res) {
+static void nativeForkSystemServer_post(JNIEnv *env, jclass clazz, jint res) {
     for (auto module : *get_modules()) {
         if (!module->forkSystemServerPost)
             continue;
