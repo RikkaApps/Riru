@@ -126,6 +126,8 @@ static void onRegisterZygote(JNIEnv *env, const char *className, const JNINative
                 zygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_p;
             else if (strcmp(nativeForkAndSpecialize_samsung_o_sig, method.signature) == 0)
                 zygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_samsung_o;
+            else if (strcmp(nativeForkAndSpecialize_samsung_n_sig, method.signature) == 0)
+                zygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_samsung_n;
             else
                 LOGW("found nativeForkAndSpecialize but signature %s mismatch", method.signature);
         } else if (strcmp(method.name, "nativeForkSystemServer") == 0) {

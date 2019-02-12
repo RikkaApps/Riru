@@ -61,6 +61,18 @@ jint nativeForkAndSpecialize_samsung_o(
         jstring se_name, jintArray fdsToClose, jintArray fdsToIgnore, jstring instructionSet,
         jstring appDataDir);
 
+const static char *nativeForkAndSpecialize_samsung_n_sig = "(II[II[[IILjava/lang/String;IILjava/lang/String;[ILjava/lang/String;Ljava/lang/String;I)I";
+typedef jint (*nativeForkAndSpecialize_samsung_n_t)(
+        JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jint, jint,
+        jstring, jintArray, jstring, jstring, jint);
+
+__attribute__((visibility("hidden")))
+jint nativeForkAndSpecialize_samsung_n(
+        JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint debug_flags,
+        jobjectArray rlimits, jint mount_external, jstring se_info, jint category, jint accessInfo,
+        jstring se_name, jintArray fdsToClose, jstring instructionSet, jstring appDataDir, jint);
+
+
 const static char *nativeForkSystemServer_sig = "(II[II[[IJJ)I";
 
 typedef jint (*nativeForkSystemServer_t)(
