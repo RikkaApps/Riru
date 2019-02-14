@@ -69,15 +69,13 @@ static void load_modules() {
                 continue;
             }
 
-            auto *module = new struct module();
+            auto *module = new struct module(strdup(entry->d_name));
             module->handle = handle;
-            module->name = strdup(entry->d_name);
             module->onModuleLoaded = dlsym(handle, "onModuleLoaded");
             module->forkAndSpecializePre = dlsym(handle, "nativeForkAndSpecializePre");
             module->forkAndSpecializePost = dlsym(handle, "nativeForkAndSpecializePost");
             module->forkSystemServerPre = dlsym(handle, "nativeForkSystemServerPre");
             module->forkSystemServerPost = dlsym(handle, "nativeForkSystemServerPost");
-            module->funcs = new std::map<std::string, void *>();
 
             get_modules()->push_back(module);
 
@@ -157,6 +155,10 @@ static void onRegisterZygote(JNIEnv *env, const char *className, const JNINative
                 LOGE("RegisterNatives failed");
             } else {
                 LOGI("replaced com.android.internal.os.Zygote#nativeForkAndSpecialize & com.android.internal.os.Zygote#nativeForkSystemServer");
+                riru_set_native_method_func(MODULE_NAME_CORE, className, zygoteMethods[0].name,
+                                            zygoteMethods[0].signature, zygoteMethods[0].fnPtr);
+                riru_set_native_method_func(MODULE_NAME_CORE, className, zygoteMethods[1].name,
+                                            zygoteMethods[1].signature, zygoteMethods[1].fnPtr);
             }
         } else {
             LOGE("class com/android/internal/os/Zygote not found");
@@ -194,6 +196,9 @@ static void onRegisterSystemProperties(JNIEnv *env, const char *className, const
                 LOGE("RegisterNatives failed");
             } else {
                 LOGI("replaced android.os.SystemProperties#native_set");
+                riru_set_native_method_func(MODULE_NAME_CORE, className,
+                        systemPropertiesMethods[0].name,
+                        systemPropertiesMethods[0].signature, systemPropertiesMethods[0].fnPtr);
             }
         } else {
             LOGE("class android/os/SystemProperties not found");

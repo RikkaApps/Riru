@@ -10,7 +10,7 @@
 static auto *native_methods = new std::map<std::string, std::pair<const JNINativeMethod *, int>>();
 
 std::vector<module *> *get_modules() {
-    static auto *modules = new std::vector<module *>();
+    static auto *modules = new std::vector<module *>({new module(strdup(MODULE_NAME_CORE))});
     return modules;
 }
 
@@ -30,7 +30,7 @@ static unsigned long get_module_index(const char *name) {
 }
 
 static const JNINativeMethod *get_native_method(const char *className, const char *name,
-                                         const char *signature) {
+                                                const char *signature) {
     auto it = native_methods->find(className);
     if (it != native_methods->end()) {
         auto pair = it->second;
@@ -59,7 +59,7 @@ void *riru_get_func(const char *module_name, const char *name) {
 
     index -= 1;
 
-    LOGV("get_func %s %s", module_name, name);
+    //LOGV("get_func %s %s", module_name, name);
 
     // find if it is set by previous modules
     if (index != 0) {
@@ -84,7 +84,7 @@ void *riru_get_native_method_func(const char *module_name, const char *className
 
     index -= 1;
 
-    LOGV("get_func %s %s %s %s", module_name, className, name, signature);
+    //LOGV("get_func %s %s %s %s", module_name, className, name, signature);
 
     // find if it is set by previous modules
     if (index != 0) {
@@ -107,7 +107,7 @@ void riru_set_func(const char *module_name, const char *name, void *func) {
     if (index == 0)
         return;
 
-    LOGV("set_func %s %s %p", module_name, name, func);
+    //LOGV("set_func %s %s %p", module_name, name, func);
 
     auto module = get_modules()->at(index - 1);
     (*module->funcs)[name] = func;
