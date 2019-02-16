@@ -6,8 +6,8 @@
 #include "jni_native_method.h"
 #include "logging.h"
 #include "misc.h"
-#include "init.h"
 #include "module.h"
+#include "api.h"
 
 static void *_nativeForkAndSpecialize = nullptr;
 static void *_nativeForkSystemServer = nullptr;
@@ -34,11 +34,25 @@ static int shouldSkipUid(int uid) {
     return 1;
 }
 
+int nativeForkAndSpecialize_calls_count = 0;
+
+int riru_get_nativeForkAndSpecialize_calls_count() {
+    return nativeForkAndSpecialize_calls_count;
+}
+
+int nativeForkSystemServer_calls_count = 0;
+
+int riru_get_nativeForkSystemServer_calls_count() {
+    return nativeForkSystemServer_calls_count;
+}
+
 static void nativeForkAndSpecialize_pre(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtime_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jstring se_name,
         jintArray fdsToClose, jintArray fdsToIgnore, jboolean is_child_zygote,
         jstring instructionSet, jstring appDataDir) {
+    nativeForkAndSpecialize_calls_count++;
+
     if (shouldSkipUid(uid))
         return;
 
@@ -81,6 +95,8 @@ static void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, ji
 static void nativeForkSystemServer_pre(
         JNIEnv *env, jclass clazz, uid_t uid, gid_t gid, jintArray gids, jint debug_flags,
         jobjectArray rlimits, jlong permittedCapabilities, jlong effectiveCapabilities) {
+    nativeForkSystemServer_calls_count++;
+
     for (auto module : *get_modules()) {
         if (!module->forkSystemServerPre)
             continue;
@@ -172,7 +188,8 @@ jint nativeForkAndSpecialize_samsung_o(
 jint nativeForkAndSpecialize_samsung_n(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint debug_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jint category, jint accessInfo,
-        jstring se_name, jintArray fdsToClose, jstring instructionSet, jstring appDataDir, jint a1) {
+        jstring se_name, jintArray fdsToClose, jstring instructionSet, jstring appDataDir,
+        jint a1) {
     nativeForkAndSpecialize_pre(env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external,
                                 se_info, se_name, fdsToClose, nullptr, JNI_FALSE, instructionSet,
                                 appDataDir);

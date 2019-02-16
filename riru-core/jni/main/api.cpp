@@ -29,29 +29,25 @@ static unsigned long get_module_index(const char *name) {
     return 0;
 }
 
-static const JNINativeMethod *get_native_method(const char *className, const char *name,
-                                                const char *signature) {
+extern "C" {
+const JNINativeMethod *riru_get_original_native_methods(const char *className, const char *name,
+                                                        const char *signature) {
     auto it = native_methods->find(className);
     if (it != native_methods->end()) {
+        if (!name && !signature)
+            return it->second.first;
+
         auto pair = it->second;
         for (int i = 0; i < pair.second; ++i) {
             auto method = &pair.first[i];
-            if (strcmp(method->name, name) == 0 && strcmp(method->signature, signature) == 0)
+            if ((!name || strcmp(method->name, name) == 0)
+                && (!signature || strcmp(method->signature, signature) == 0))
                 return method;
         }
     }
     return nullptr;
 }
 
-static const JNINativeMethod *get_native_methods(const char *className) {
-    auto it = native_methods->find(className);
-    if (it != native_methods->end()) {
-        return it->second.first;
-    }
-    return nullptr;
-}
-
-extern "C" {
 void *riru_get_func(const char *module_name, const char *name) {
     unsigned long index = get_module_index(module_name);
     if (index == 0)
@@ -98,7 +94,8 @@ void *riru_get_native_method_func(const char *module_name, const char *className
         }
     }
 
-    const JNINativeMethod *jniNativeMethod = get_native_method(className, name, signature);
+    const JNINativeMethod *jniNativeMethod = riru_get_original_native_methods(className, name,
+                                                                              signature);
     return jniNativeMethod ? jniNativeMethod->fnPtr : nullptr;
 }
 

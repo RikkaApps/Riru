@@ -42,6 +42,12 @@
 #define MODULE_PATH_FMT "/system/lib/libriru_%s.so"
 #endif
 
+int methods_replaced = 0;
+
+int riru_is_zygote_methods_replaced() {
+    return methods_replaced;
+}
+
 static void load_modules() {
     DIR *dir;
     struct dirent *entry;
@@ -100,7 +106,6 @@ static void load_modules() {
     closedir(dir);
 }
 
-
 static void onRegisterZygote(JNIEnv *env, const char *className, const JNINativeMethod *methods,
                       int numMethods) {
     JNINativeMethod zygoteMethods[] = {{nullptr, nullptr, nullptr},
@@ -142,12 +147,12 @@ static void onRegisterZygote(JNIEnv *env, const char *className, const JNINative
         }
     }
 
-    LOGI("{\"%s\", \"%s\", %p}", zygoteMethods[0].name, zygoteMethods[0].signature,
-         zygoteMethods[0].fnPtr);
-    LOGI("{\"%s\", \"%s\", %p}", zygoteMethods[1].name, zygoteMethods[1].signature,
-         zygoteMethods[1].fnPtr);
-
     if (zygoteMethods[0].fnPtr && zygoteMethods[1].fnPtr) {
+        LOGI("{\"%s\", \"%s\", %p}", zygoteMethods[0].name, zygoteMethods[0].signature,
+             zygoteMethods[0].fnPtr);
+        LOGI("{\"%s\", \"%s\", %p}", zygoteMethods[1].name, zygoteMethods[1].signature,
+             zygoteMethods[1].fnPtr);
+
         jclass clazz = JNI_FindClass(env, className);
         if (clazz) {
             jint r = JNI_RegisterNatives(env, clazz, zygoteMethods, 2);
@@ -159,6 +164,8 @@ static void onRegisterZygote(JNIEnv *env, const char *className, const JNINative
                                             zygoteMethods[0].signature, zygoteMethods[0].fnPtr);
                 riru_set_native_method_func(MODULE_NAME_CORE, className, zygoteMethods[1].name,
                                             zygoteMethods[1].signature, zygoteMethods[1].fnPtr);
+
+                methods_replaced = 1;
             }
         } else {
             LOGE("class com/android/internal/os/Zygote not found");
