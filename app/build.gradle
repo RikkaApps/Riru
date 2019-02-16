@@ -1,0 +1,65 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-android'
+
+android {
+    compileSdkVersion rootProject.ext.targetSdkVersion
+    defaultConfig {
+        applicationId "moe.riru.manager"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        externalNativeBuild {
+            cmake {
+                abiFilters "armeabi-v7a", 'arm64-v8a', 'x86', 'x86_64'
+                cppFlags "-std=c++11"
+                arguments '-DANDROID_TOOLCHAIN=clang', '-DANDROID_STL=c++_static'
+            }
+        }
+    }
+    compileOptions {
+        sourceCompatibility 1.8
+        targetCompatibility 1.8
+    }
+    signingConfigs {
+        sign
+    }
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.sign
+        }
+        release {
+            signingConfig signingConfigs.sign
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+        }
+    }
+    splits {
+        abi {
+            enable false
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "moe.shizuku.support:recyclerview-utils:3.0.4"
+    implementation "moe.shizuku.support:design:3.1.0"
+    implementation "moe.shizuku.support:support-utils:3.0.4"
+}
+repositories {
+    mavenCentral()
+}
+
+apply from: project.file('signing.gradle')
