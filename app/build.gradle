@@ -9,7 +9,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0"
+        versionName "0.0.1"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
@@ -32,7 +32,8 @@ android {
         }
         release {
             signingConfig signingConfigs.sign
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -57,6 +58,7 @@ dependencies {
     implementation "moe.shizuku.support:recyclerview-utils:3.0.4"
     implementation "moe.shizuku.support:design:3.1.0"
     implementation "moe.shizuku.support:support-utils:3.0.4"
+    implementation "moe.shizuku.support:htmlcompat:2.0.0"
 }
 repositories {
     mavenCentral()

@@ -1,5 +1,8 @@
 package moe.riru.manager.utils;
 
+import androidx.annotation.Keep;
+
+@Keep
 public class NativeHelper {
 
     static {
@@ -12,4 +15,6 @@ public class NativeHelper {
     public static native boolean isZygoteMethodsReplaced();
     public static native int getNativeForkAndSpecializeCallsCount();
     public static native int getNativeForkSystemServerCallsCount();
+    public static native String getNativeForkAndSpecializeSignature();
+    public static native String getNativeForkSystemServerSignature();
 }

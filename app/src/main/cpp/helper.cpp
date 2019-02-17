@@ -55,13 +55,13 @@ int xh_elf_check_elfheader(uintptr_t base_addr) {
 
     //check machine
 #if defined(__arm__)
-    if(EM_ARM != ehdr->e_machine) return XH_ERRNO_FORMAT;
+    if(EM_ARM != ehdr->e_machine) return 1;
 #elif defined(__aarch64__)
     if (EM_AARCH64 != ehdr->e_machine) return 1;
 #elif defined(__i386__)
-    if(EM_386 != ehdr->e_machine) return XH_ERRNO_FORMAT;
+    if(EM_386 != ehdr->e_machine) return 1;
 #elif defined(__x86_64__)
-    if(EM_X86_64 != ehdr->e_machine) return XH_ERRNO_FORMAT;
+    if(EM_X86_64 != ehdr->e_machine) return 1;
 #else
     return XH_ERRNO_FORMAT;
 #endif
@@ -71,10 +71,6 @@ int xh_elf_check_elfheader(uintptr_t base_addr) {
 
     return 0;
 }
-
-#define PAGE_START(addr) ((addr) & PAGE_MASK)
-#define PAGE_END(addr)   (PAGE_START(addr + sizeof(uintptr_t) - 1) + PAGE_SIZE)
-#define PAGE_COVER(addr) (PAGE_END(addr) - PAGE_START(addr))
 
 static int init_elf(const char *pathname, uintptr_t base_in_mem) {
     struct stat statbuf{};
@@ -138,14 +134,20 @@ static int init_elf(const char *pathname, uintptr_t base_in_mem) {
 
             if (strcmp("riru_get_version", (char *) dynstr + dynsyms[i].st_name) == 0)
                 riru_get_version_addr = dynsyms[i].st_value + base_in_mem;
-            else if (strcmp("riru_get_original_native_methods", (char *) dynstr + dynsyms[i].st_name) == 0)
+            else if (strcmp("riru_get_original_native_methods",
+                            (char *) dynstr + dynsyms[i].st_name) == 0)
                 riru_get_original_native_methods_addr = dynsyms[i].st_value + base_in_mem;
-            else if (strcmp("riru_is_zygote_methods_replaced", (char *) dynstr + dynsyms[i].st_name) == 0)
+            else if (strcmp("riru_is_zygote_methods_replaced",
+                            (char *) dynstr + dynsyms[i].st_name) == 0)
                 riru_is_zygote_methods_replaced_addr = dynsyms[i].st_value + base_in_mem;
-            else if (strcmp("riru_get_nativeForkAndSpecialize_calls_count", (char *) dynstr + dynsyms[i].st_name) == 0)
-                riru_get_nativeForkAndSpecialize_calls_count_addr = dynsyms[i].st_value + base_in_mem;
-            else if (strcmp("riru_get_nativeForkSystemServer_calls_count", (char *) dynstr + dynsyms[i].st_name) == 0)
-                riru_get_nativeForkSystemServer_calls_count_addr = dynsyms[i].st_value + base_in_mem;
+            else if (strcmp("riru_get_nativeForkAndSpecialize_calls_count",
+                            (char *) dynstr + dynsyms[i].st_name) == 0)
+                riru_get_nativeForkAndSpecialize_calls_count_addr =
+                        dynsyms[i].st_value + base_in_mem;
+            else if (strcmp("riru_get_nativeForkSystemServer_calls_count",
+                            (char *) dynstr + dynsyms[i].st_name) == 0)
+                riru_get_nativeForkSystemServer_calls_count_addr =
+                        dynsyms[i].st_value + base_in_mem;
         }
     }
 
@@ -205,6 +207,30 @@ static jint get_nativeForkSystemServer_calls_count(JNIEnv *env, jobject thiz) {
     return ((int (*)()) riru_get_nativeForkSystemServer_calls_count_addr)();
 }
 
+static jstring get_nativeForkAndSpecialize_signature(JNIEnv *env, jobject thiz) {
+    if (!riru_get_original_native_methods_addr)
+        return nullptr;
+
+    auto method = ((const JNINativeMethod *(*)(const char *, const char *, const char *)) riru_get_original_native_methods_addr)(
+            "com/android/internal/os/Zygote", "nativeForkAndSpecialize", nullptr);
+    if (method != nullptr)
+        return env->NewStringUTF(method->signature);
+    else
+        return nullptr;
+}
+
+static jstring get_nativeForkSystemServer_signature(JNIEnv *env, jobject thiz) {
+    if (!riru_get_original_native_methods_addr)
+        return nullptr;
+
+    auto method = ((const JNINativeMethod *(*)(const char *, const char *, const char *)) riru_get_original_native_methods_addr)(
+            "com/android/internal/os/Zygote", "nativeForkSystemServer", nullptr);
+    if (method != nullptr)
+        return env->NewStringUTF(method->signature);
+    else
+        return nullptr;
+}
+
 static JNINativeMethod gMethods[] = {
         {"init",                                 "()Z",                   (void *) init},
         {"isRiruModuleExists",                   "(Ljava/lang/String;)Z", (void *) is_riru_module_exists},
@@ -212,6 +238,8 @@ static JNINativeMethod gMethods[] = {
         {"isZygoteMethodsReplaced",              "()Z",                   (void *) is_zygote_methods_replaced},
         {"getNativeForkAndSpecializeCallsCount", "()I",                   (void *) get_nativeForkAndSpecialize_calls_count},
         {"getNativeForkSystemServerCallsCount",  "()I",                   (void *) get_nativeForkSystemServer_calls_count},
+        {"getNativeForkAndSpecializeSignature",  "()Ljava/lang/String;",  (void *) get_nativeForkAndSpecialize_signature},
+        {"getNativeForkSystemServerSignature",   "()Ljava/lang/String;",  (void *) get_nativeForkSystemServer_signature},
 };
 
 static int registerNativeMethods(JNIEnv *env, const char *className,
