@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
         LOGW("no Riru found in " ZYGOTE_NAME ", restart " RESTART_NAME);
 
         // restart zygote_secondary will also restart zygote, see init.zygote64_32.rc
-        __system_property_get("ctl.restart", const_cast<char *>(RESTART_NAME));
+        __system_property_set("ctl.restart", const_cast<char *>(RESTART_NAME));
     } else {
         LOGI("found Riru in " ZYGOTE_NAME);
     }
