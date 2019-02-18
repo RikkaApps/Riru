@@ -122,8 +122,8 @@ int main(int argc, char **argv) {
     if (fork() != 0)
         return 1;
 
-    LOGV("sleep 10s");
-    sleep(10);
+    LOGV("sleep 2s");
+    sleep(2);
 
     pid_t pid;
     while ((pid = get_pid_by_name_and_uid(ZYGOTE_NAME, 0)) == -1) {
