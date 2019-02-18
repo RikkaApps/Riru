@@ -28,7 +28,7 @@ AUTOMOUNT=true
 PROPFILE=false
 
 # Set to true if you need post-fs-data script
-POSTFSDATA=false
+POSTFSDATA=true
 
 # Set to true if you need late_start service script
 LATESTARTSERVICE=false
@@ -131,12 +131,11 @@ copy_files() {
     ui_print "- Removing arm/arm64 libraries"
     rm -rf "$MODPATH/system/lib"
     rm -rf "$MODPATH/system/lib64"
+	ui_print "- Extracting x86/64 libraries"
+	unzip -o "$ZIP" 'system_x86/*' -d $MODPATH >&2
     mv "$MODPATH/system_x86/lib" "$MODPATH/system/lib"
     mv "$MODPATH/system_x86/lib64" "$MODPATH/system/lib64"
-  else
-    ui_print "- Removing x86/64 libraries"
   fi
-  rm -rf "$MODPATH/system_x86"
   
   if [[ "$IS64BIT" = true ]]; then
     copy_file_from lib64
@@ -145,4 +144,10 @@ copy_files() {
 	rm -rf "$MODPATH/system/lib64"
   fi
   copy_file_from lib
+  
+  ui_print "- Extracting zygote_restart executable"
+  mkdir -p "/data/misc/riru/bin"
+  unzip -j "$ZIP" "zygote_restart_$ARCH" -d "/data/misc/riru/bin" >&2
+  mv "/data/misc/riru/bin/zygote_restart_$ARCH" "/data/misc/riru/bin/zygote_restart"
+  set_perm "/data/misc/riru/bin/zygote_restart" 0 0 0700 u:object_r:system_file:s0
 }
