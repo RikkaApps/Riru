@@ -168,6 +168,24 @@ jint nativeForkAndSpecialize_p(
     return res;
 }
 
+jint nativeForkAndSpecialize_samsung_p(
+        JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtime_flags,
+        jobjectArray rlimits, jint mount_external, jstring se_info, jint category, jint accessInfo,
+        jstring se_name, jintArray fdsToClose, jintArray fdsToIgnore, jboolean is_child_zygote,
+        jstring instructionSet, jstring appDataDir) {
+    nativeForkAndSpecialize_pre(env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external,
+                                se_info, se_name, fdsToClose, fdsToIgnore, is_child_zygote,
+                                instructionSet, appDataDir);
+
+    jint res = ((nativeForkAndSpecialize_samsung_p_t) _nativeForkAndSpecialize)(
+            env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external, se_info, category,
+            accessInfo, se_name, fdsToClose, fdsToIgnore, is_child_zygote, instructionSet,
+            appDataDir);
+
+    nativeForkAndSpecialize_post(env, clazz, uid, res);
+    return res;
+}
+
 jint nativeForkAndSpecialize_samsung_o(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint debug_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jint category, jint accessInfo,

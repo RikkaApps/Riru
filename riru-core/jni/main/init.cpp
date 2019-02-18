@@ -127,6 +127,8 @@ static void onRegisterZygote(JNIEnv *env, const char *className, const JNINative
                 zygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_oreo;
             else if (strcmp(nativeForkAndSpecialize_p_sig, method.signature) == 0)
                 zygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_p;
+            else if (strcmp(nativeForkAndSpecialize_samsung_p_sig, method.signature) == 0)
+                zygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_samsung_p;
             else if (strcmp(nativeForkAndSpecialize_samsung_o_sig, method.signature) == 0)
                 zygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_samsung_o;
             else if (strcmp(nativeForkAndSpecialize_samsung_n_sig, method.signature) == 0)
