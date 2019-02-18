@@ -6,7 +6,7 @@ LOCAL_MODULE     := libriru_template
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)
 LOCAL_LDLIBS += -ldl -llog
-LOCAL_LDFLAGS := -Wl
+LOCAL_LDFLAGS := -Wl,--hash-style=both
 
 LOCAL_SRC_FILES:= main.cpp
 
