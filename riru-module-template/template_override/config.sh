@@ -115,13 +115,12 @@ copy_files() {
     ui_print "- Removing arm/arm64 libraries"
     rm -rf "$MODPATH/system/lib"
     rm -rf "$MODPATH/system/lib64"
+    ui_print "- Extracting x86/64 libraries"
+	unzip -o "$ZIP" 'system_x86/*' -d $MODPATH >&2
     mv "$MODPATH/system_x86/lib" "$MODPATH/system/lib"
     mv "$MODPATH/system_x86/lib64" "$MODPATH/system/lib64"
-  else
-    ui_print "- Removing x86/x64 libraries"
   fi
-  rm -rf "$MODPATH/system_x86"
-  
+
   if [[ "$IS64BIT" = false ]]; then
 	ui_print "- Removing 64-bit libraries"
 	rm -rf "$MODPATH/system/lib64"
