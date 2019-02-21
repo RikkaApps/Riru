@@ -1,11 +1,9 @@
 #include <dlfcn.h>
 #include <cstdio>
 #include <unistd.h>
-#include <fcntl.h>
 #include <jni.h>
 #include <cstring>
 #include <cstdlib>
-#include <sys/mman.h>
 #include <array>
 #include <thread>
 #include <vector>
@@ -87,7 +85,7 @@ static void load_modules() {
 
             void *sym = dlsym(handle, "riru_set_module_name");
             if (sym)
-                ((void (*)(const char*)) sym)(module->name);
+                ((void (*)(const char *)) sym)(module->name);
 
 #ifdef __LP64__
             LOGI("module loaded: %s %lu", module->name, get_modules()->size());
@@ -106,10 +104,13 @@ static void load_modules() {
     closedir(dir);
 }
 
-static void onRegisterZygote(JNIEnv *env, const char *className, const JNINativeMethod *methods,
-                      int numMethods) {
-    JNINativeMethod zygoteMethods[] = {{nullptr, nullptr, nullptr},
-                                       {nullptr, nullptr, nullptr}};
+static JNINativeMethod *onRegisterZygote(JNIEnv *env, const char *className,
+                                         const JNINativeMethod *methods, int numMethods) {
+    int replaced = 0;
+
+    auto *newMethods = new JNINativeMethod[numMethods];
+    memcpy(newMethods, methods, sizeof(JNINativeMethod) * numMethods);
+
     JNINativeMethod method;
     for (int i = 0; i < numMethods; ++i) {
         method = methods[i];
@@ -117,67 +118,56 @@ static void onRegisterZygote(JNIEnv *env, const char *className, const JNINative
         if (strcmp(method.name, "nativeForkAndSpecialize") == 0) {
             set_nativeForkAndSpecialize(method.fnPtr);
 
-            zygoteMethods[0].name = method.name;
-            zygoteMethods[0].signature = method.signature;
-            zygoteMethods[0].fnPtr = nullptr;
-
             if (strcmp(nativeForkAndSpecialize_marshmallow_sig, method.signature) == 0)
-                zygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_marshmallow;
+                newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_marshmallow;
             else if (strcmp(nativeForkAndSpecialize_oreo_sig, method.signature) == 0)
-                zygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_oreo;
+                newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_oreo;
             else if (strcmp(nativeForkAndSpecialize_p_sig, method.signature) == 0)
-                zygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_p;
+                newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_p;
             else if (strcmp(nativeForkAndSpecialize_samsung_p_sig, method.signature) == 0)
-                zygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_samsung_p;
+                newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_samsung_p;
             else if (strcmp(nativeForkAndSpecialize_samsung_o_sig, method.signature) == 0)
-                zygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_samsung_o;
+                newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_samsung_o;
             else if (strcmp(nativeForkAndSpecialize_samsung_n_sig, method.signature) == 0)
-                zygoteMethods[0].fnPtr = (void *) nativeForkAndSpecialize_samsung_n;
+                newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_samsung_n;
             else
                 LOGW("found nativeForkAndSpecialize but signature %s mismatch", method.signature);
+
+            if (newMethods[i].fnPtr != methods[i].fnPtr) {
+                LOGI("replaced com.android.internal.os.Zygote#nativeForkAndSpecialize");
+                riru_set_native_method_func(MODULE_NAME_CORE, className, newMethods[i].name,
+                                            newMethods[i].signature, newMethods[i].fnPtr);
+
+                replaced += 1;
+            }
         } else if (strcmp(method.name, "nativeForkSystemServer") == 0) {
             set_nativeForkSystemServer(method.fnPtr);
 
-            zygoteMethods[1].name = method.name;
-            zygoteMethods[1].signature = method.signature;
-            zygoteMethods[1].fnPtr = nullptr;
-
             if (strcmp(nativeForkSystemServer_sig, method.signature) == 0)
-                zygoteMethods[1].fnPtr = (void *) nativeForkSystemServer;
+                newMethods[i].fnPtr = (void *) nativeForkSystemServer;
             else
                 LOGW("found nativeForkSystemServer but signature %s mismatch", method.signature);
-        }
-    }
 
-    if (zygoteMethods[0].fnPtr && zygoteMethods[1].fnPtr) {
-        LOGI("{\"%s\", \"%s\", %p}", zygoteMethods[0].name, zygoteMethods[0].signature,
-             zygoteMethods[0].fnPtr);
-        LOGI("{\"%s\", \"%s\", %p}", zygoteMethods[1].name, zygoteMethods[1].signature,
-             zygoteMethods[1].fnPtr);
+            if (newMethods[i].fnPtr != methods[i].fnPtr) {
+                LOGI("replaced com.android.internal.os.Zygote#nativeForkSystemServer");
+                riru_set_native_method_func(MODULE_NAME_CORE, className, newMethods[i].name,
+                                            newMethods[i].signature, newMethods[i].fnPtr);
 
-        jclass clazz = JNI_FindClass(env, className);
-        if (clazz) {
-            jint r = JNI_RegisterNatives(env, clazz, zygoteMethods, 2);
-            if (r != JNI_OK) {
-                LOGE("RegisterNatives failed");
-            } else {
-                LOGI("replaced com.android.internal.os.Zygote#nativeForkAndSpecialize & com.android.internal.os.Zygote#nativeForkSystemServer");
-                riru_set_native_method_func(MODULE_NAME_CORE, className, zygoteMethods[0].name,
-                                            zygoteMethods[0].signature, zygoteMethods[0].fnPtr);
-                riru_set_native_method_func(MODULE_NAME_CORE, className, zygoteMethods[1].name,
-                                            zygoteMethods[1].signature, zygoteMethods[1].fnPtr);
-
-                methods_replaced = 1;
+                replaced += 1;
             }
-        } else {
-            LOGE("class com/android/internal/os/Zygote not found");
         }
     }
+
+    methods_replaced = replaced == 2;
+
+    return newMethods;
 }
 
-static void onRegisterSystemProperties(JNIEnv *env, const char *className, const JNINativeMethod *methods,
-                                int numMethods) {
-    JNINativeMethod systemPropertiesMethods[] = {{nullptr, nullptr, nullptr}};
+static JNINativeMethod *onRegisterSystemProperties(JNIEnv *env, const char *className,
+                                                   const JNINativeMethod *methods, int numMethods) {
+    auto *newMethods = new JNINativeMethod[numMethods];
+    memcpy(newMethods, methods, sizeof(JNINativeMethod) * numMethods);
+
     JNINativeMethod method;
     for (int i = 0; i < numMethods; ++i) {
         method = methods[i];
@@ -185,34 +175,20 @@ static void onRegisterSystemProperties(JNIEnv *env, const char *className, const
         if (strcmp(method.name, "native_set") == 0) {
             set_SystemProperties_set(method.fnPtr);
 
-            systemPropertiesMethods[0].name = method.name;
-            systemPropertiesMethods[0].signature = method.signature;
-
             if (strcmp("(Ljava/lang/String;Ljava/lang/String;)V", method.signature) == 0)
-                systemPropertiesMethods[0].fnPtr = (void *) SystemProperties_set;
-        }
-    }
+                newMethods[i].fnPtr = (void *) SystemProperties_set;
+            else
+                LOGW("found native_set but signature %s mismatch", method.signature);
 
-    LOGI("{\"%s\", \"%s\", %p}", systemPropertiesMethods[0].name,
-         systemPropertiesMethods[0].signature,
-         systemPropertiesMethods[0].fnPtr);
-
-    if (systemPropertiesMethods[0].fnPtr) {
-        jclass clazz = JNI_FindClass(env, className);
-        if (clazz) {
-            jint r = JNI_RegisterNatives(env, clazz, systemPropertiesMethods, 1);
-            if (r != JNI_OK) {
-                LOGE("RegisterNatives failed");
-            } else {
+            if (newMethods[i].fnPtr != methods[i].fnPtr) {
                 LOGI("replaced android.os.SystemProperties#native_set");
-                riru_set_native_method_func(MODULE_NAME_CORE, className,
-                        systemPropertiesMethods[0].name,
-                        systemPropertiesMethods[0].signature, systemPropertiesMethods[0].fnPtr);
+
+                riru_set_native_method_func(MODULE_NAME_CORE, className, newMethods[i].name,
+                                            newMethods[i].signature, newMethods[i].fnPtr);
             }
-        } else {
-            LOGE("class android/os/SystemProperties not found");
         }
     }
+    return newMethods;
 }
 
 #define XHOOK_REGISTER(NAME) \
@@ -229,16 +205,17 @@ NEW_FUNC_DEF(int, jniRegisterNativeMethods, JNIEnv *env, const char *className,
 
     LOGV("jniRegisterNativeMethods %s", className);
 
-    int res = old_jniRegisterNativeMethods(env, className, methods, numMethods);
-
+    JNINativeMethod *newMethods = nullptr;
     if (strcmp("com/android/internal/os/Zygote", className) == 0) {
-        onRegisterZygote(env, className, methods, numMethods);
+        newMethods = onRegisterZygote(env, className, methods, numMethods);
     } else if (strcmp("android/os/SystemProperties", className) == 0) {
         // hook android.os.SystemProperties#native_set to prevent a critical problem on Android 9+
         // see comment of SystemProperties_set in jni_native_method.cpp for detail
-        onRegisterSystemProperties(env, className, methods, numMethods);
+        newMethods = onRegisterSystemProperties(env, className, methods, numMethods);
     }
 
+    int res = old_jniRegisterNativeMethods(env, className, newMethods ? newMethods : methods, numMethods);
+    delete newMethods;
     return res;
 }
 
