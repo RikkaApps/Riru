@@ -1,7 +1,9 @@
 #ifndef MODULE_H
 #define MODULE_H
 
+#include <jni.h>
 #include <map>
+#include <vector>
 
 #define MODULE_NAME_CORE "core"
 
@@ -34,5 +36,9 @@ struct module {
         funcs = new std::map<std::string, void *>();
     }
 };
+
+std::vector<module *> *get_modules();
+
+void put_native_method(const char *className, const JNINativeMethod *methods, int numMethods);
 
 #endif // MODULE_H

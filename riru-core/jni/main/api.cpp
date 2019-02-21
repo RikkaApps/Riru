@@ -6,6 +6,7 @@
 
 #include "logging.h"
 #include "module.h"
+#include "api.h"
 
 static auto *native_methods = new std::map<std::string, std::pair<const JNINativeMethod *, int>>();
 
