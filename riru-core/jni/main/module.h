@@ -22,6 +22,8 @@ typedef void (*nativeForkSystemServer_pre_t)(JNIEnv *, jclass, uid_t, gid_t, jin
 
 typedef int (*nativeForkSystemServer_post_t)(JNIEnv *, jclass, jint);
 
+typedef int (*shouldSkipUid_t)(int);
+
 struct module {
     void *handle{};
     char *name;
@@ -30,6 +32,7 @@ struct module {
     void *forkAndSpecializePost{};
     void *forkSystemServerPre{};
     void *forkSystemServerPost{};
+    void *shouldSkipUid{};
     std::map<std::string, void *> * funcs;
 
     explicit module(char *name) : name(name) {

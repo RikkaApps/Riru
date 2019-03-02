@@ -53,12 +53,15 @@ static void nativeForkAndSpecialize_pre(
         jstring instructionSet, jstring appDataDir) {
     nativeForkAndSpecialize_calls_count++;
 
-    if (shouldSkipUid(uid))
-        return;
-
     for (auto module : *get_modules()) {
         if (!module->forkAndSpecializePre)
             continue;
+
+        if (!module->shouldSkipUid && shouldSkipUid(uid)) {
+            continue;
+        } else if (((shouldSkipUid_t) module->shouldSkipUid)(uid)) {
+            continue;
+        }
 
         //LOGV("%s: forkAndSpecializePre", module->name);
         ((nativeForkAndSpecialize_pre_t) module->forkAndSpecializePre)(
@@ -68,13 +71,16 @@ static void nativeForkAndSpecialize_pre(
 }
 
 static void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, jint res) {
-    if (shouldSkipUid(uid))
-        return;
 
     for (auto module : *get_modules()) {
         if (!module->forkAndSpecializePost)
             continue;
 
+        if (!module->shouldSkipUid && shouldSkipUid(uid)) {
+            continue;
+        } else if (((shouldSkipUid_t) module->shouldSkipUid)(uid)) {
+            continue;
+        }
         /*
          * Magic problem:
          * There is very low change that zygote process stop working and some processes forked from zygote
