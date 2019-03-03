@@ -23,24 +23,6 @@ NDK_BUILD=ndk-build
 
 (cd $MODULE_NAME; $NDK_BUILD NDK_LIBS_OUT=build/ndkBuild/libs NDK_OUT=build/ndkBuild/obj)
 
-# elf cleaner
-function run_elf_cleaner {
-  for file in $1/*
-  do
-    if [ -f $file ]; then
-        clean_elf $file > /dev/null
-    fi
-  done
-}
-
-if [ -f elf-cleaner.sh ]; then
-  source elf-cleaner.sh
-  run_elf_cleaner $LIBS_OUTPUT/arm64-v8a
-  run_elf_cleaner $LIBS_OUTPUT/armeabi-v7a
-  run_elf_cleaner $LIBS_OUTPUT/x86
-  run_elf_cleaner $LIBS_OUTPUT/x86-64
-fi
-
 # create tmp dir
 TMP_DIR=build/zip
 TMP_DIR_MAGISK=$TMP_DIR/magisk

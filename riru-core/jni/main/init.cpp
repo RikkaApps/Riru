@@ -81,15 +81,22 @@ static void load_modules() {
             module->forkSystemServerPre = dlsym(handle, "nativeForkSystemServerPre");
             module->forkSystemServerPost = dlsym(handle, "nativeForkSystemServerPost");
             module->shouldSkipUid = dlsym(handle, "shouldSkipUid");
+            module->getApiVersion = dlsym(handle, "getApiVersion");
 
             get_modules()->push_back(module);
+
+            if (module->getApiVersion) {
+                module->apiVersion = ((getApiVersion_t) module->getApiVersion)();
+
+                LOGI("%s: api=%d", module->name, module->apiVersion);
+            }
 
             void *sym = dlsym(handle, "riru_set_module_name");
             if (sym)
                 ((void (*)(const char *)) sym)(module->name);
 
 #ifdef __LP64__
-            LOGI("module loaded: %s %lu", module->name, get_modules()->size());
+            LOGI("module loaded: %s (api %d) %lu", module->name, module->apiVersion, get_modules()->size());
 #else
             LOGI("module loaded: %s %u", module->name, get_modules()->size());
 #endif

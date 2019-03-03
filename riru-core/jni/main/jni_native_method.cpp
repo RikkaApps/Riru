@@ -63,10 +63,16 @@ static void nativeForkAndSpecialize_pre(
             continue;
         }
 
-        //LOGV("%s: forkAndSpecializePre", module->name);
-        ((nativeForkAndSpecialize_pre_t) module->forkAndSpecializePre)(
-                env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external, se_info,
-                se_name, fdsToClose, fdsToIgnore, is_child_zygote, instructionSet, appDataDir);
+        if (module->apiVersion >= 2) {
+            ((nativeForkAndSpecialize_pre_v2_t) module->forkAndSpecializePre)(
+                    env, clazz, &uid, &gid, &gids, &runtime_flags, &rlimits, &mount_external,
+                    &se_info, &se_name, &fdsToClose, &fdsToIgnore, &is_child_zygote,
+                    &instructionSet, &appDataDir);
+        } else {
+            ((nativeForkAndSpecialize_pre_t) module->forkAndSpecializePre)(
+                    env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external, se_info,
+                    se_name, fdsToClose, fdsToIgnore, is_child_zygote, instructionSet, appDataDir);
+        }
     }
 }
 
@@ -107,10 +113,15 @@ static void nativeForkSystemServer_pre(
         if (!module->forkSystemServerPre)
             continue;
 
-        //LOGV("%s: forkSystemServerPre", module->name);
-        ((nativeForkSystemServer_pre_t) module->forkSystemServerPre)(
-                env, clazz, uid, gid, gids, debug_flags, rlimits, permittedCapabilities,
-                effectiveCapabilities);
+        if (module->apiVersion >= 2) {
+            ((nativeForkSystemServer_pre_v2_t) module->forkSystemServerPre)(
+                    env, clazz, &uid, &gid, &gids, &debug_flags, &rlimits, &permittedCapabilities,
+                    &effectiveCapabilities);
+        } else {
+            ((nativeForkSystemServer_pre_t) module->forkSystemServerPre)(
+                    env, clazz, uid, gid, gids, debug_flags, rlimits, permittedCapabilities,
+                    effectiveCapabilities);
+        }
     }
 }
 
