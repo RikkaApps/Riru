@@ -1,6 +1,6 @@
 #include "api.h"
 
-#define VERSION 15
+#define VERSION 17
 
 extern "C" {
 int riru_get_version(void) {
