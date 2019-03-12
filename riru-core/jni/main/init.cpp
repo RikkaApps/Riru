@@ -87,8 +87,6 @@ static void load_modules() {
 
             if (module->getApiVersion) {
                 module->apiVersion = ((getApiVersion_t) module->getApiVersion)();
-
-                LOGI("%s: api=%d", module->name, module->apiVersion);
             }
 
             void *sym = dlsym(handle, "riru_set_module_name");
@@ -96,7 +94,7 @@ static void load_modules() {
                 ((void (*)(const char *)) sym)(module->name);
 
 #ifdef __LP64__
-            LOGI("module loaded: %s (api %d) %lu", module->name, module->apiVersion, get_modules()->size());
+            LOGI("module loaded: %s (api %d), count=%lu", module->name, module->apiVersion, get_modules()->size());
 #else
             LOGI("module loaded: %s %u", module->name, get_modules()->size());
 #endif
