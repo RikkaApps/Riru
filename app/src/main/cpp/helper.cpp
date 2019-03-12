@@ -97,7 +97,7 @@ static jstring get_nativeForkAndSpecialize_signature(JNIEnv *env, jobject thiz) 
     static void *sym;
     void *handle;
     if ((handle = get_handle()) == nullptr) return nullptr;
-    if (sym == nullptr) sym = dlsym(handle, "riru_nativeForkAndSpecialize_signature");
+    if (sym == nullptr) sym = dlsym(handle, "riru_get_original_native_methods");
     if (sym) {
         auto method = ((const JNINativeMethod *(*)(const char *, const char *, const char *)) sym)(
                 "com/android/internal/os/Zygote", "nativeForkAndSpecialize", nullptr);
@@ -111,7 +111,7 @@ static jstring get_nativeForkSystemServer_signature(JNIEnv *env, jobject thiz) {
     static void *sym;
     void *handle;
     if ((handle = get_handle()) == nullptr) return nullptr;
-    if (sym == nullptr) sym = dlsym(handle, "riru_get_original_native_methods_addr");
+    if (sym == nullptr) sym = dlsym(handle, "riru_get_original_native_methods");
     if (sym) {
         auto method = ((const JNINativeMethod *(*)(const char *, const char *, const char *)) sym)(
                 "com/android/internal/os/Zygote", "nativeForkSystemServer", nullptr);
