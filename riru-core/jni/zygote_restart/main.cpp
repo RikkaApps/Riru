@@ -129,13 +129,28 @@ int main(int argc, char **argv) {
     }
 
     if (!is_path_in_maps(pid, CHECK_LIB_NAME)) {
-        LOGW("no Riru found in " ZYGOTE_NAME ", restart " RESTART_NAME);
-
-        // restart zygote_secondary will also restart zygote, see init.zygote64_32.rc
-        __system_property_set("ctl.restart", const_cast<char *>(RESTART_NAME));
+        LOGW("no Riru found in %s (pid=%d), restart required", ZYGOTE_NAME, pid);
     } else {
-        LOGI("found Riru in " ZYGOTE_NAME);
+        LOGI("found Riru in %s (pid=%d)", ZYGOTE_NAME, pid);
+        return 0;
     }
+
+    // wait for magisk mount
+    while (access(CHECK_LIB_NAME, F_OK) != 0) {
+        LOGV("not mounted, wait 1s");
+        sleep(1);
+    }
+
+    // check if zygote is restarted by other
+    if ((pid = get_pid_by_name_and_uid(ZYGOTE_NAME, 0)) != -1
+        && is_path_in_maps(pid, CHECK_LIB_NAME)) {
+        LOGI("found Riru in %s (pid=%d), abort restart", ZYGOTE_NAME, pid);
+        return 0;
+    }
+
+    LOGI("restart " RESTART_NAME);
+    // restart zygote_secondary will also restart zygote, see init.zygote64_32.rc
+    __system_property_set("ctl.restart", const_cast<char *>(RESTART_NAME));
 
     return 0;
 }
