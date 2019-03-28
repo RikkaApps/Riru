@@ -30,8 +30,8 @@ There is only one `libmemtrack.so`, if someone wants to do something by replacin
 ## Build Requirements
 
 1. Android NDK (add the directory with `ndk-build` to `PATH`)
-2. `zip` to create the zip file (add to `PATH`)
-3. (Windows only) Environment to run `build.sh` script
+2. (non Windows) `zip` to create the zip file (add to `PATH`)
+3. (Windows) `winrar` to create the zip file (add to `PATH`)
 
 ## Build core
 

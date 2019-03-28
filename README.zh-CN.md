@@ -27,8 +27,8 @@ JNI 函数 (`com.android.internal.os.Zygote#nativeForkAndSpecialize` & `com.andr
 ## 构建需求
 
 1. Android NDK (把有 `ndk-build` 的目录加到 `PATH`)
-2. `zip` 用来创建 zip 文件 (也要加到 `PATH`)
-3. (仅 Windows) 用于执行 `build.sh` 的环境
+2. (非 Windows)`zip` 用来创建 zip 文件 (也要加到 `PATH`)
+3. (Windows) `winrar` 用来创建 zip 文件 (也要加到 `PATH`)
 
 ## 构建 core
 
