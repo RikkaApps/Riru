@@ -21,6 +21,12 @@ android {
 }
 
 task zip(type: Exec) {
-    workingDir '..'
-    commandLine 'sh', 'build.sh', project.name, 'v17'
+    String osName = System.getProperty("os.name").toLowerCase();
+    if (osName.contains("windows")) {
+        workingDir '..'
+        commandLine 'cmd', '/c', 'build', project.name, 'v17'
+    } else {
+        workingDir '..'
+        commandLine 'sh', 'build.sh', project.name, 'v17'
+    }
 }
