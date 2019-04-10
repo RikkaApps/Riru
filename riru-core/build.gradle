@@ -24,9 +24,9 @@ task zip(type: Exec) {
     String osName = System.getProperty("os.name").toLowerCase();
     if (osName.contains("windows")) {
         workingDir '..'
-        commandLine 'cmd', '/c', 'build', project.name, 'v17'
+        commandLine 'cmd', '/c', 'build', project.name, 'v18'
     } else {
         workingDir '..'
-        commandLine 'sh', 'build.sh', project.name, 'v17'
+        commandLine 'sh', 'build.sh', project.name, 'v18'
     }
 }
