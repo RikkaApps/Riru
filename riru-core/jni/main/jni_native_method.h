@@ -43,6 +43,19 @@ jint nativeForkAndSpecialize_p(
         jintArray fdsToClose, jintArray fdsToIgnore, jboolean is_child_zygote,
         jstring instructionSet, jstring appDataDir);
 
+const static char *nativeForkAndSpecialize_q_sig = "(II[II[[IILjava/lang/String;Ljava/lang/String;[I[IZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)I";
+
+typedef jint (*nativeForkAndSpecialize_q_t)(
+        JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
+        jintArray, jintArray, jboolean, jstring, jstring, jstring, jobjectArray, jobjectArray);
+
+jint nativeForkAndSpecialize_q(
+        JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtime_flags,
+        jobjectArray rlimits, jint mount_external, jstring se_info, jstring se_name,
+        jintArray fdsToClose, jintArray fdsToIgnore, jboolean is_child_zygote,
+        jstring instructionSet, jstring appDataDir, jstring packageName,
+        jobjectArray packagesForUID, jobjectArray visibleVolIDs);
+
 const static char *nativeForkAndSpecialize_samsung_p_sig = "(II[II[[IILjava/lang/String;IILjava/lang/String;[I[IZLjava/lang/String;Ljava/lang/String;)I";
 
 typedef jint (*nativeForkAndSpecialize_samsung_p_t)(

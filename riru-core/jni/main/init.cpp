@@ -130,6 +130,8 @@ static JNINativeMethod *onRegisterZygote(JNIEnv *env, const char *className,
                 newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_oreo;
             else if (strcmp(nativeForkAndSpecialize_p_sig, method.signature) == 0)
                 newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_p;
+            else if (strcmp(nativeForkAndSpecialize_q_sig, method.signature) == 0)
+                newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_q;
             else if (strcmp(nativeForkAndSpecialize_samsung_p_sig, method.signature) == 0)
                 newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_samsung_p;
             else if (strcmp(nativeForkAndSpecialize_samsung_o_sig, method.signature) == 0)
@@ -230,12 +232,6 @@ NEW_FUNC_DEF(int, jniRegisterNativeMethods, JNIEnv *env, const char *className,
 extern "C" void riru_constructor() __attribute__((constructor));
 
 void riru_constructor() {
-    static int loaded = 0;
-    if (loaded)
-        return;
-
-    loaded = 1;
-
     if (access(CONFIG_DIR "/.disable", F_OK) == 0) {
         LOGI(CONFIG_DIR
                      "/.disable exists, do nothing.");
