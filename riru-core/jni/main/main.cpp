@@ -25,16 +25,6 @@
 #define CONFIG_DIR "/data/misc/riru"
 
 #ifdef __LP64__
-#define ZYGOTE_NAME "zygote64"
-#define APP_PROCESS_NAME "/system/bin/app_process64"
-#define ANDROID_RUNTIME_LIBRARY "/system/lib64/libandroid_runtime.so"
-#else
-#define ZYGOTE_NAME "zygote"
-#define APP_PROCESS_NAME "/system/bin/app_process"
-#define ANDROID_RUNTIME_LIBRARY "/system/lib/libandroid_runtime.so"
-#endif
-
-#ifdef __LP64__
 #define MODULE_PATH_FMT "/system/lib64/libriru_%s.so"
 #else
 #define MODULE_PATH_FMT "/system/lib/libriru_%s.so"
@@ -94,7 +84,8 @@ static void load_modules() {
                 ((void (*)(const char *)) sym)(module->name);
 
 #ifdef __LP64__
-            LOGI("module loaded: %s (api %d), count=%lu", module->name, module->apiVersion, get_modules()->size());
+            LOGI("module loaded: %s (api %d), count=%lu", module->name, module->apiVersion,
+                 get_modules()->size());
 #else
             LOGI("module loaded: %s %u", module->name, get_modules()->size());
 #endif
@@ -201,8 +192,8 @@ static JNINativeMethod *onRegisterSystemProperties(JNIEnv *env, const char *clas
     return newMethods;
 }
 
-#define XHOOK_REGISTER(NAME) \
-    if (xhook_register(".*", #NAME, (void*) new_##NAME, (void **) &old_##NAME) != 0) \
+#define XHOOK_REGISTER(PATH_REGEX, NAME) \
+    if (xhook_register(PATH_REGEX, #NAME, (void*) new_##NAME, (void **) &old_##NAME) != 0) \
         LOGE("failed to register hook " #NAME "."); \
 
 #define NEW_FUNC_DEF(ret, func, ...) \
@@ -224,28 +215,48 @@ NEW_FUNC_DEF(int, jniRegisterNativeMethods, JNIEnv *env, const char *className,
         newMethods = onRegisterSystemProperties(env, className, methods, numMethods);
     }
 
-    int res = old_jniRegisterNativeMethods(env, className, newMethods ? newMethods : methods, numMethods);
+    int res = old_jniRegisterNativeMethods(env, className, newMethods ? newMethods : methods,
+                                           numMethods);
     delete newMethods;
     return res;
 }
 
-extern "C" void riru_constructor() __attribute__((constructor));
+void unhook_jniRegisterNativeMethods() {
+    xhook_register(".*\\libandroid_runtime.so$", "jniRegisterNativeMethods",
+                   (void *) old_jniRegisterNativeMethods,
+                   nullptr);
+    if (xhook_refresh(0) == 0) {
+        xhook_clear();
+        LOGI("hook removed");
+    }
+}
 
-void riru_constructor() {
+extern "C" void constructor() __attribute__((constructor));
+
+void constructor() {
+    static int loaded = 0;
+    if (loaded)
+        return;
+
+    loaded = 1;
+
+    if (getuid() != 0)
+        return;
+
+    char cmdline[ARG_MAX + 1];
+    get_self_cmdline(cmdline);
+
+    if (!strstr(cmdline, "--zygote"))
+        return;
+
+    LOGI("riru in zygote");
+
     if (access(CONFIG_DIR "/.disable", F_OK) == 0) {
-        LOGI(CONFIG_DIR
-                     "/.disable exists, do nothing.");
+        LOGI(CONFIG_DIR "/.disable exists, do nothing.");
         return;
     }
 
-    char buf[64];
-    get_proc_name(getpid(), buf, 63);
-    if (strncmp(ZYGOTE_NAME, buf, strlen(ZYGOTE_NAME)) != 0 &&
-        strncmp(APP_PROCESS_NAME, buf, strlen(APP_PROCESS_NAME)) != 0) {
-        return;
-    }
-
-    XHOOK_REGISTER(jniRegisterNativeMethods);
+    XHOOK_REGISTER(".*\\libandroid_runtime.so$", jniRegisterNativeMethods);
 
     if (xhook_refresh(0) == 0) {
         xhook_clear();

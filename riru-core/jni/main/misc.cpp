@@ -27,30 +27,24 @@ ssize_t fdgets(char *buf, size_t size, int fd) {
     return len;
 }
 
-int get_proc_name(int pid, char *name, size_t _size) {
+ssize_t get_self_cmdline(char *cmdline) {
     int fd;
-    ssize_t __size;
+    ssize_t size;
 
-    char buf[1024];
-    snprintf(buf, sizeof(buf), "/proc/%d/cmdline", pid);
+    char buf[PATH_MAX];
+    snprintf(buf, sizeof(buf), "/proc/self/cmdline");
     if (access(buf, R_OK) == -1 || (fd = open(buf, O_RDONLY)) == -1)
         return 1;
-    if ((__size = fdgets(buf, sizeof(buf), fd)) == 0) {
-        snprintf(buf, sizeof(buf), "/proc/%d/comm", pid);
-        close(fd);
-        if (access(buf, R_OK) == -1 || (fd = open(buf, O_RDONLY)) == -1)
-            return 1;
-        __size = fdgets(buf, sizeof(buf), fd);
-    }
-    close(fd);
 
-    if (__size < _size) {
-        strncpy(name, buf, static_cast<size_t>(__size));
-        name[__size] = '\0';
+    if ((size = read(fd, cmdline, ARG_MAX)) > 0) {
+        for (ssize_t i = 0; i < size - 1; ++i) {
+            if (cmdline[i] == 0)
+                cmdline[i] = ' ';
+        }
     } else {
-        strncpy(name, buf, _size);
-        name[_size] = '\0';
+        cmdline[0] = 0;
     }
 
-    return 0;
+    close(fd);
+    return size;
 }

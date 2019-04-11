@@ -8,7 +8,15 @@
 #include "module.h"
 #include "api.h"
 
-static auto *native_methods = new std::map<std::string, std::pair<const JNINativeMethod *, int>>();
+struct JNINativeMethodHolder {
+    const JNINativeMethod *methods;
+    int count;
+
+    JNINativeMethodHolder(const JNINativeMethod *methods, int count) :
+            methods(methods), count(count) {}
+};
+
+static auto *native_methods = new std::map<std::string, JNINativeMethodHolder*>();
 
 std::vector<module *> *get_modules() {
     static auto *modules = new std::vector<module *>({new module(strdup(MODULE_NAME_CORE))});
@@ -16,7 +24,7 @@ std::vector<module *> *get_modules() {
 }
 
 void put_native_method(const char *className, const JNINativeMethod *methods, int numMethods) {
-    (*native_methods)[className] = std::pair<const JNINativeMethod *, int>(methods, numMethods);
+    (*native_methods)[className] = new JNINativeMethodHolder(methods, numMethods);
 }
 
 static unsigned long get_module_index(const char *name) {
@@ -36,11 +44,11 @@ const JNINativeMethod *riru_get_original_native_methods(const char *className, c
     auto it = native_methods->find(className);
     if (it != native_methods->end()) {
         if (!name && !signature)
-            return it->second.first;
+            return it->second->methods;
 
-        auto pair = it->second;
-        for (int i = 0; i < pair.second; ++i) {
-            auto method = &pair.first[i];
+        auto holder = it->second;
+        for (int i = 0; i < holder->count; ++i) {
+            auto method = &holder->methods[i];
             if ((!name || strcmp(method->name, name) == 0)
                 && (!signature || strcmp(method->signature, signature) == 0))
                 return method;
