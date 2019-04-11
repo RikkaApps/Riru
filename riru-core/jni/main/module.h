@@ -18,6 +18,12 @@ typedef void (*nativeForkAndSpecialize_pre_v2_t)(JNIEnv *, jclass, jint *, jint 
                                                  jstring *, jintArray *, jintArray *, jboolean *,
                                                  jstring *, jstring *);
 
+typedef void (*nativeForkAndSpecialize_pre_v3_t)(JNIEnv *, jclass, jint *, jint *, jintArray *,
+                                                 jint *, jobjectArray *, jint *, jstring *,
+                                                 jstring *, jintArray *, jintArray *, jboolean *,
+                                                 jstring *, jstring *, jstring *, jobjectArray *,
+                                                 jobjectArray *);
+
 typedef int (*nativeForkAndSpecialize_post_t)(JNIEnv *, jclass, jint);
 
 typedef void (*nativeForkSystemServer_pre_t)(JNIEnv *, jclass, uid_t, gid_t, jintArray,

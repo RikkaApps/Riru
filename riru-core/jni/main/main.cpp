@@ -13,6 +13,7 @@
 #include <dirent.h>
 #include <xhook/xhook.h>
 #include <iterator>
+#include <sys/system_properties.h>
 
 #include "misc.h"
 #include "jni_native_method.h"
@@ -30,16 +31,23 @@
 #define MODULE_PATH_FMT "/system/lib/libriru_%s.so"
 #endif
 
-int methods_replaced = 0;
+static int methods_replaced = 0;
+static int sdkLevel;
+static char androidVersionName[PROP_VALUE_MAX + 1];
 
 int riru_is_zygote_methods_replaced() {
     return methods_replaced;
 }
 
+static int isQ() {
+    return strcmp("Q", androidVersionName) == 0 || sdkLevel >= 29;
+}
+
 static void load_modules() {
     DIR *dir;
     struct dirent *entry;
-    char path[256];
+    char path[PATH_MAX], module_prop[PATH_MAX], api[PATH_MAX];
+    int moduleApiVersion;
     void *handle;
 
     if (!(dir = _opendir(CONFIG_DIR "/modules")))
@@ -50,10 +58,26 @@ static void load_modules() {
             if (entry->d_name[0] == '.')
                 continue;
 
-            snprintf(path, 256, MODULE_PATH_FMT, entry->d_name);
+            snprintf(path, PATH_MAX, MODULE_PATH_FMT, entry->d_name);
 
             if (access(path, F_OK) != 0) {
                 PLOGE("access %s", path);
+                continue;
+            }
+
+            snprintf(module_prop, PATH_MAX, CONFIG_DIR "/modules/%s/module.prop", entry->d_name);
+            if (access(module_prop, F_OK) != 0) {
+                PLOGE("access %s", module_prop);
+                continue;
+            }
+
+            moduleApiVersion = -1;
+            if (get_prop(module_prop, "api", api) > 0) {
+                moduleApiVersion = atoi(api);
+            }
+
+            if (isQ() && moduleApiVersion < 3) {
+                LOGW("module %s does not support Android Q", entry->d_name);
                 continue;
             }
 
@@ -71,12 +95,17 @@ static void load_modules() {
             module->forkSystemServerPre = dlsym(handle, "nativeForkSystemServerPre");
             module->forkSystemServerPost = dlsym(handle, "nativeForkSystemServerPost");
             module->shouldSkipUid = dlsym(handle, "shouldSkipUid");
-            module->getApiVersion = dlsym(handle, "getApiVersion");
-
             get_modules()->push_back(module);
 
-            if (module->getApiVersion) {
-                module->apiVersion = ((getApiVersion_t) module->getApiVersion)();
+            if (moduleApiVersion == -1) {
+                // only for api v2
+                module->getApiVersion = dlsym(handle, "getApiVersion");
+
+                if (module->getApiVersion) {
+                    module->apiVersion = ((getApiVersion_t) module->getApiVersion)();
+                }
+            } else {
+                module->apiVersion = moduleApiVersion;
             }
 
             void *sym = dlsym(handle, "riru_set_module_name");
@@ -84,8 +113,7 @@ static void load_modules() {
                 ((void (*)(const char *)) sym)(module->name);
 
 #ifdef __LP64__
-            LOGI("module loaded: %s (api %d), count=%lu", module->name, module->apiVersion,
-                 get_modules()->size());
+            LOGI("module loaded: %s (api %d)", module->name, module->apiVersion);
 #else
             LOGI("module loaded: %s %u", module->name, get_modules()->size());
 #endif
@@ -231,6 +259,16 @@ void unhook_jniRegisterNativeMethods() {
     }
 }
 
+static void read_prop() {
+    char sdk[PROP_VALUE_MAX + 1];
+    if (__system_property_get("ro.build.version.sdk", sdk) > 0)
+        sdkLevel = atoi(sdk);
+
+    __system_property_get("ro.build.version.release", androidVersionName);
+
+    LOGI("system version %s (api %d)", androidVersionName, sdkLevel);
+}
+
 extern "C" void constructor() __attribute__((constructor));
 
 void constructor() {
@@ -249,12 +287,18 @@ void constructor() {
     if (!strstr(cmdline, "--zygote"))
         return;
 
+#ifdef __LP64__
+    LOGI("riru in zygote64");
+#else
     LOGI("riru in zygote");
+#endif
 
     if (access(CONFIG_DIR "/.disable", F_OK) == 0) {
         LOGI(CONFIG_DIR "/.disable exists, do nothing.");
         return;
     }
+
+    read_prop();
 
     XHOOK_REGISTER(".*\\libandroid_runtime.so$", jniRegisterNativeMethods);
 

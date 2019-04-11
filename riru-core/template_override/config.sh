@@ -150,4 +150,7 @@ copy_files() {
   unzip -j "$ZIP" "zygote_restart_$ARCH" -d "/data/misc/riru/bin" >&2
   mv "/data/misc/riru/bin/zygote_restart_$ARCH" "/data/misc/riru/bin/zygote_restart"
   set_perm "/data/misc/riru/bin/zygote_restart" 0 0 0700 u:object_r:system_file:s0
+
+  ui_print "- Writing api_version file"
+  echo -n "3" > "/data/misc/riru/api_version"
 }

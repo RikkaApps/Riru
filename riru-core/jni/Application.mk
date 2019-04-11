@@ -12,8 +12,8 @@ APP_CPPFLAGS += $(SCS_FLAGS)
 
 ifeq ($(NDK_DEBUG),1)
 $(info building DEBUG version...)
-APP_CFLAGS += -O2
-APP_CPPFLAGS += -O2
+APP_CFLAGS += -O0
+APP_CPPFLAGS += -O0
 else
 $(info building RELEASE version...)
 APP_CFLAGS += -fvisibility=hidden -fvisibility-inlines-hidden -O2
