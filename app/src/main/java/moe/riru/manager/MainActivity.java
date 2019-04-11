@@ -35,7 +35,7 @@ public class MainActivity extends BaseActivity {
                 nativeForkAndSpecializeSignature = NativeHelper.getNativeForkAndSpecializeSignature();
                 nativeForkSystemServerSignature = NativeHelper.getNativeForkSystemServerSignature();
 
-                sb.append("Riru v").append(version).append(" found.").append("<br>");
+                sb.append("Riru ").append(NativeHelper.versionName(this, version)).append(" found.").append("<br>");
 
                 if (isZygoteMethodsReplaced) {
                     sb.append("Native methods of Zygote class replaced.").append("<br><br>")
