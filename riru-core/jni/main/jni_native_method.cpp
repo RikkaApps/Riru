@@ -8,6 +8,7 @@
 #include "misc.h"
 #include "module.h"
 #include "api.h"
+#include "main.h"
 
 static void *_nativeForkAndSpecialize = nullptr;
 static void *_nativeForkSystemServer = nullptr;

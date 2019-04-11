@@ -1,5 +1,6 @@
 #!/bin/bash
 MODULE_NAME=$1
+shift
 if [ "$MODULE_NAME" == "" ]; then
   echo "Usage: sh build.sh <module name> [<version name>]"
   exit 1
@@ -10,7 +11,8 @@ if [ ! -d "$MODULE_NAME" ]; then
   exit 1
 fi
 
-VERSION=$2
+VERSION=$1
+shift
 [[ "$VERSION" == "" ]] && VERSION=v1
 
 LIBS_OUTPUT=$MODULE_NAME/build/ndkBuild/libs
@@ -21,7 +23,7 @@ NDK_BUILD=ndk-build
 [[ "$OSTYPE" == "msys" ]] && NDK_BUILD=ndk-build.cmd
 [[ "$OSTYPE" == "cygwin" ]] && NDK_BUILD=ndk-build.cmd
 
-(cd $MODULE_NAME; $NDK_BUILD NDK_LIBS_OUT=build/ndkBuild/libs NDK_OUT=build/ndkBuild/obj)
+$NDK_BUILD -C $MODULE_NAME NDK_LIBS_OUT=build/ndkBuild/libs NDK_OUT=build/ndkBuild/obj $@
 
 # create tmp dir
 TMP_DIR=build/zip

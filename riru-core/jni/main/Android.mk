@@ -7,8 +7,8 @@ LOCAL_C_INCLUDES := \
 	jni/external/include
 LOCAL_STATIC_LIBRARIES := xhook
 LOCAL_LDLIBS += -ldl -llog
-LOCAL_LDFLAGS := -Wl,-init,riru_constructor,--hash-style=both
+LOCAL_LDFLAGS := -Wl,--hash-style=both
 
-LOCAL_SRC_FILES:= init.cpp jni_native_method.cpp misc.cpp wrap.cpp redirect_memtrack.cpp version.cpp api.cpp
+LOCAL_SRC_FILES:= main.cpp jni_native_method.cpp misc.cpp wrap.cpp redirect_memtrack.cpp version.cpp api.cpp
 
 include $(BUILD_SHARED_LIBRARY)
