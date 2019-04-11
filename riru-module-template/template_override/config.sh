@@ -101,6 +101,13 @@ fail() {
   exit 1
 }
 
+check_riru_version() {
+  [[ ! -f "/data/misc/riru/api_version" ]] && fail "! Please Install Riru - Core v18 or above"
+  VERSION=$(cat "/data/misc/riru/api_version")
+  ui_print "- Riru API version is $VERSION"
+  [[ "$VERSION" -ge 3 ]] || fail "! Please Install Riru - Core v18 or above"
+}
+
 check_architecture() {
   if [[ "$ARCH" != "arm" && "$ARCH" != "arm64" ]]; then
     ui_print "- Unsupported platform: $ARCH"
@@ -108,6 +115,8 @@ check_architecture() {
   else
     ui_print "- Device platform: $ARCH"
   fi
+
+  check_riru_version
 }
 
 copy_files() {
