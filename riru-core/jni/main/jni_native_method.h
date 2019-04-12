@@ -5,6 +5,8 @@
 
 void set_nativeForkAndSpecialize(void *addr);
 
+void set_nativeSpecializeBlastula(void *addr);
+
 void set_nativeForkSystemServer(void *addr);
 
 void set_SystemProperties_set(void *addr);
@@ -101,6 +103,22 @@ jint nativeForkAndSpecialize_samsung_m(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint debug_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jint category, jint accessInfo,
         jstring se_name, jintArray fdsToClose, jstring instructionSet, jstring appDataDir);
+
+// -----------------------------------------------------------------
+
+const static char *nativeSpecializeBlastula_sig = "(II[II[[IILjava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)V";
+
+typedef void (*nativeSpecializeBlastula_t)(
+        JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
+        jboolean, jstring, jstring, jstring, jobjectArray, jobjectArray);
+
+void nativeSpecializeBlastula(
+        JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
+        jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
+        jboolean startChildZygote, jstring instructionSet, jstring appDataDir, jstring packageName,
+        jobjectArray packagesForUID, jobjectArray visibleVolIDs);
+
+// -----------------------------------------------------------------
 
 const static char *nativeForkSystemServer_sig = "(II[II[[IJJ)I";
 

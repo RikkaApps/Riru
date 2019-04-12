@@ -4,7 +4,7 @@
 #include <jni.h>
 #include "logging.h"
 
-int ClearException(JNIEnv *env) {
+static int ClearException(JNIEnv *env) {
     jthrowable exception = env->ExceptionOccurred();
     if (exception != nullptr) {
         env->ExceptionDescribe();
