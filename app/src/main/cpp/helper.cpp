@@ -57,6 +57,7 @@ static void *get_handle() {
 
     return handle;
 }
+
 static jint get_riru_rersion(JNIEnv *env, jobject thiz) {
     static void *sym;
     void *handle;
@@ -107,6 +108,20 @@ static jstring get_nativeForkAndSpecialize_signature(JNIEnv *env, jobject thiz) 
     return nullptr;
 }
 
+static jstring get_nativeSpecializeBlastula_signature(JNIEnv *env, jobject thiz) {
+    static void *sym;
+    void *handle;
+    if ((handle = get_handle()) == nullptr) return nullptr;
+    if (sym == nullptr) sym = dlsym(handle, "riru_get_original_native_methods");
+    if (sym) {
+        auto method = ((const JNINativeMethod *(*)(const char *, const char *, const char *)) sym)(
+                "com/android/internal/os/Zygote", "nativeSpecializeBlastula", nullptr);
+        if (method != nullptr)
+            return env->NewStringUTF(method->signature);
+    }
+    return nullptr;
+}
+
 static jstring get_nativeForkSystemServer_signature(JNIEnv *env, jobject thiz) {
     static void *sym;
     void *handle;
@@ -129,6 +144,7 @@ static JNINativeMethod gMethods[] = {
         {"getNativeForkAndSpecializeCallsCount", "()I",                   (void *) get_nativeForkAndSpecialize_calls_count},
         {"getNativeForkSystemServerCallsCount",  "()I",                   (void *) get_nativeForkSystemServer_calls_count},
         {"getNativeForkAndSpecializeSignature",  "()Ljava/lang/String;",  (void *) get_nativeForkAndSpecialize_signature},
+        {"getNativeSpecializeBlastulaSignature", "()Ljava/lang/String;",  (void *) get_nativeSpecializeBlastula_signature},
         {"getNativeForkSystemServerSignature",   "()Ljava/lang/String;",  (void *) get_nativeForkSystemServer_signature},
 };
 

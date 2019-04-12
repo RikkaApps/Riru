@@ -10,11 +10,16 @@
 #include "api.h"
 
 static void *_nativeForkAndSpecialize = nullptr;
+static void *_nativeSpecializeBlastula = nullptr;
 static void *_nativeForkSystemServer = nullptr;
 static void *_SystemProperties_set = nullptr;
 
 void set_nativeForkAndSpecialize(void *addr) {
     _nativeForkAndSpecialize = addr;
+}
+
+void set_nativeSpecializeBlastula(void *addr) {
+    _nativeSpecializeBlastula = addr;
 }
 
 void set_nativeForkSystemServer(void *addr) {
@@ -45,6 +50,8 @@ int nativeForkSystemServer_calls_count = 0;
 int riru_get_nativeForkSystemServer_calls_count() {
     return nativeForkSystemServer_calls_count;
 }
+
+// -----------------------------------------------------------------
 
 static void nativeForkAndSpecialize_pre(
         JNIEnv *env, jclass clazz, jint &uid, jint &gid, jintArray &gids, jint &runtime_flags,
@@ -112,6 +119,24 @@ static void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, ji
     }
 }
 
+// -----------------------------------------------------------------
+
+static void nativeSpecializeBlastula_pre(
+        JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
+        jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
+        jboolean startChildZygote, jstring instructionSet, jstring appDataDir, jstring packageName,
+        jobjectArray packagesForUID, jobjectArray visibleVolIDs) {
+    /*const char *cPackageName = env->GetStringUTFChars(packageName, nullptr);
+    LOGI("nativeSpecializeBlastulaPre: uid=%d, packageName=%s, from_uid=%d", uid, cPackageName, getuid());
+    env->ReleaseStringUTFChars(packageName, cPackageName);*/
+}
+
+static void nativeSpecializeBlastula_post(JNIEnv *env, jclass clazz) {
+    //LOGI("nativeSpecializeBlastulaPost: from_uid=%d", getuid());
+}
+
+// -----------------------------------------------------------------
+
 static void nativeForkSystemServer_pre(
         JNIEnv *env, jclass clazz, uid_t &uid, gid_t &gid, jintArray &gids, jint &debug_flags,
         jobjectArray &rlimits, jlong &permittedCapabilities, jlong &effectiveCapabilities) {
@@ -144,6 +169,7 @@ static void nativeForkSystemServer_post(JNIEnv *env, jclass clazz, jint res) {
     }
 }
 
+// -----------------------------------------------------------------
 
 jint nativeForkAndSpecialize_marshmallow(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint debug_flags,
@@ -332,6 +358,29 @@ jint nativeForkAndSpecialize_samsung_m(
     nativeForkAndSpecialize_post(env, clazz, uid, res);
     return res;
 }
+
+// -----------------------------------------------------------------
+
+void nativeSpecializeBlastula(
+        JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
+        jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
+        jboolean startChildZygote, jstring instructionSet, jstring appDataDir, jstring packageName,
+        jobjectArray packagesForUID, jobjectArray visibleVolIDs) {
+
+    nativeSpecializeBlastula_pre(
+            env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
+            startChildZygote, instructionSet, appDataDir, packageName, packagesForUID,
+            visibleVolIDs);
+
+    ((nativeSpecializeBlastula_t) _nativeSpecializeBlastula)(
+            env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
+            startChildZygote, instructionSet, appDataDir, packageName, packagesForUID,
+            visibleVolIDs);
+
+    nativeSpecializeBlastula_post(env, clazz);
+}
+
+// -----------------------------------------------------------------
 
 jint nativeForkSystemServer(
         JNIEnv *env, jclass clazz, uid_t uid, gid_t gid, jintArray gids, jint debug_flags,

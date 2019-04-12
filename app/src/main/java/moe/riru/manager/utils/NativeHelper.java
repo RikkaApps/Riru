@@ -42,5 +42,6 @@ public class NativeHelper {
     public static native int getNativeForkAndSpecializeCallsCount();
     public static native int getNativeForkSystemServerCallsCount();
     public static native String getNativeForkAndSpecializeSignature();
+    public static native String getNativeSpecializeBlastulaSignature();
     public static native String getNativeForkSystemServerSignature();
 }

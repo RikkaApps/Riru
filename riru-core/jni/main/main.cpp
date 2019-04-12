@@ -169,6 +169,21 @@ static JNINativeMethod *onRegisterZygote(JNIEnv *env, const char *className,
 
                 replaced += 1;
             }
+        } else if (strcmp(method.name, "nativeSpecializeBlastula") == 0) {
+            set_nativeSpecializeBlastula(method.fnPtr);
+
+            if (strcmp(nativeSpecializeBlastula_sig, method.signature) == 0)
+                newMethods[i].fnPtr = (void *) nativeSpecializeBlastula;
+            else
+                LOGW("found nativeSpecializeBlastula but signature %s mismatch", method.signature);
+
+            if (newMethods[i].fnPtr != methods[i].fnPtr) {
+                LOGI("replaced com.android.internal.os.Zygote#nativeSpecializeBlastula");
+                riru_set_native_method_func(MODULE_NAME_CORE, className, newMethods[i].name,
+                                            newMethods[i].signature, newMethods[i].fnPtr);
+
+                //replaced += 1;
+            }
         } else if (strcmp(method.name, "nativeForkSystemServer") == 0) {
             set_nativeForkSystemServer(method.fnPtr);
 
@@ -187,7 +202,7 @@ static JNINativeMethod *onRegisterZygote(JNIEnv *env, const char *className,
         }
     }
 
-    methods_replaced = replaced == 2;
+    methods_replaced = replaced == 2/*(isQ() ? 3 : 2)*/;
 
     return newMethods;
 }
@@ -294,7 +309,8 @@ void constructor() {
 #endif
 
     if (access(CONFIG_DIR "/.disable", F_OK) == 0) {
-        LOGI(CONFIG_DIR "/.disable exists, do nothing.");
+        LOGI(CONFIG_DIR
+                     "/.disable exists, do nothing.");
         return;
     }
 
