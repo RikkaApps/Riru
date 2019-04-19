@@ -20,12 +20,7 @@ set NDK_OUT=%MODULE_NAME%\build\ndkBuild\obj
 
 :: build
 set NDK_BUILD=ndk-build.cmd
-
-(
-    cd %MODULE_NAME%
-    call %NDK_BUILD% NDK_LIBS_OUT=build/ndkBuild/libs NDK_OUT=build/ndkBuild/obj
-    cd %~dp0
-)
+call %NDK_BUILD% -C %MODULE_NAME% NDK_LIBS_OUT=build/ndkBuild/libs NDK_OUT=build/ndkBuild/obj
 
 :: create tmp dir
 set TMP_DIR=build\zip
