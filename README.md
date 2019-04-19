@@ -16,7 +16,7 @@ The name Riru is from https://www.pixiv.net/member_illust.php?mode=medium&illust
 In short, replace a shared library which will be loaded by the zygote process.
 
 First, we need to find that library. The library needs to be as simple as possible, so we found libmemtrack, with only 10 exported functions.
-Then we can provide a library named libmemtrack with all its functions, so the functionality will not be affected and we will able to in the zygote process. (However, it seems that choose libmemtrack is very good now)
+Then we can provide a library named libmemtrack with all its functions, so the functionality will not be affected and we will able to in the zygote process. (However, it seems that choose libmemtrack is not so appropriate now)
 
 Now the next question, how to know if we are in an app process or a system server process.
 We found some JNI functions (`com.android.internal.os.Zygote#nativeForkAndSpecialize` & `com.android.internal.os.Zygote#nativeForkSystemServer`) will be called when a app or system server is forked.
