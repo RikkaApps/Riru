@@ -1,6 +1,6 @@
-name=Module template
-version=v1
-versionCode=1
-author=Rikka
-description=Module template
-api=3
+name=%%%NAME%%%
+version=%%%VERSION_NAME%%%
+versionCode=%%%VERSION_CODE%%%
+author=%%%AUTHOR%%%
+description=%%%DESCRIPTION%%%
+api=%%%API%%%

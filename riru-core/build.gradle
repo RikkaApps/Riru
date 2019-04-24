@@ -20,13 +20,14 @@ android {
     }
 }
 
-def moduleIdMagisk = "riru-core"
+def moduleId = "riru-core"
 def moduleName = "Riru - Core"
 def moduleAuthor = "Rikka"
 def moduleDescription = "Inject zygote process by replace libmemtrack.so, provide interface to other Riru modules."
 def versionName = "v18"
 def versionCode = 19
-def magiskZip = "magisk-${project.name}-${versionName}.zip"
+
+def zipNameMagisk = "magisk-${project.name}-${versionName}.zip"
 
 def isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows()
 def libPathRelease = "$buildDir/ndkBuild/release/lib"
@@ -38,7 +39,7 @@ task copyFilesMagiskRelease(type: Copy) {
     filter { line ->
         line.replaceAll('%%%VERSION_NAME%%%', versionName)
                 .replaceAll('%%%VERSION_CODE%%%', versionCode.toString())
-                .replaceAll('%%%ID%%%', moduleIdMagisk)
+                .replaceAll('%%%ID%%%', moduleId)
                 .replaceAll('%%%NAME%%%', moduleName)
                 .replaceAll('%%%AUTHOR%%%', moduleAuthor)
                 .replaceAll('%%%DESCRIPTION%%%', moduleDescription)
@@ -82,7 +83,7 @@ task createMagiskTmpDirRelease(type: Copy) {
 }
 
 task zipMagiskRelease(type: Zip) {
-    archiveFileName = magiskZip
+    archiveFileName = zipNameMagisk
     destinationDirectory = file("$rootDir/release")
 
     from "$zipPathMagiskRelease"
@@ -90,7 +91,7 @@ task zipMagiskRelease(type: Zip) {
 
 task cleanMagiskRelease(type: Delete) {
     delete file(zipPathMagiskRelease)
-    delete file("$rootDir/release/$magiskZip")
+    delete file("$rootDir/release/$zipNameMagisk")
 }
 
 task assembleMagiskRelease(type: GradleBuild) {
