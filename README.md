@@ -29,20 +29,21 @@ There is only one `libmemtrack.so`, if someone wants to do something by replacin
 
 ## Build Requirements
 
-1. Android NDK (add the directory with `ndk-build` to `PATH`)
-2. `zip` to create the zip file (add to `PATH`)
-3. (Windows only) Environment to run `build.sh` script
+Android NDK (add the directory with `ndk-build` to `PATH`)
 
 ## Build core
 
-Run `:riru-core:zip` task in the command line (use `gradlew`) or Android Studio, zip will be saved to `release`
+* Magisk Module
+
+  Run `:riru-core:assembleMagiskRelease` task in the command line (use `gradlew`) or Android Studio, zip will be saved to `release`
 
 ## Build your own module
 
 1. Copy `riru-module-template` and rename to your name
-2. Change module name in `riru-your-module/build.sh` `riru-your-module/template_override/module.prop` `riru-your-module/template_override/riru_module.prop` `riru-your-module/jni/main/Android.mk`
-3. Write your code
-4. Run `:riru-your-module:zip` task in command line (use `gradlew`) or Android Studio, zip will be saved to `release`
+2. Change module name in `riru-your-module/jni/main/Android.mk`
+3. Change module information in `build.gradle`
+4. Write your code
+5. Run `:riru-your-module:assembleMagiskRelease` task in command line (use `gradlew`) or Android Studio, zip will be saved to `release`
 
 ## APIs provided by core
 

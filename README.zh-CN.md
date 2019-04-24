@@ -26,20 +26,21 @@ JNI 函数 (`com.android.internal.os.Zygote#nativeForkAndSpecialize` & `com.andr
 
 ## 构建需求
 
-1. Android NDK (把有 `ndk-build` 的目录加到 `PATH`)
-2. `zip` 用来创建 zip 文件 (也要加到 `PATH`)
-3. (仅 Windows) 用于执行 `build.sh` 的环境
+Android NDK (把有 `ndk-build` 的目录加到 `PATH`)
 
 ## 构建 core
 
-直接在命令行 (用 `gradlew`) 或者 Android Studio 执行 `:riru-core:zip`，zip 会被存到 `release`
+* Magisk 模块
+
+  在命令行 (用 `gradlew`) 或者 Android Studio 执行 `:riru-core:assembleMagiskRelease`，zip 会被存到 `release`
 
 ## 构建你自己的模块
 
 1. 复制 `riru-module-template` 并重命名
-2. 在 `riru-your-module/build.sh` `riru-your-module/template_override/module.prop` `riru-your-module/template_override/riru_module.prop` `riru-your-module/jni/main/Android.mk` 中修改模块名字
-3. 发明你自己的魔法（
-4. 直接在命令行 (用 `gradlew`) 或者 Android Studio 执行 `:riru-your-module:zip`，zip 会被存到 `release`
+2. 在 `riru-your-module/jni/main/Android.mk` 中修改模块名字
+3. 在 `build.gradle` 修改模块信息
+4. 发明你自己的魔法（
+5. 直接在命令行 (用 `gradlew`) 或者 Android Studio 执行 `:riru-your-module:assembleMagiskRelease`，zip 会被存到 `release`
 
 ## core 提供的 API
 
