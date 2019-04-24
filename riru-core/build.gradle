@@ -20,7 +20,85 @@ android {
     }
 }
 
-task zip(type: Exec) {
-    workingDir '..'
-    commandLine 'sh', 'build.sh', project.name, 'v18'
+def moduleIdMagisk = "riru-core"
+def moduleName = "Riru - Core"
+def moduleAuthor = "Rikka"
+def moduleDescription = "Inject zygote process by replace libmemtrack.so, provide interface to other Riru modules."
+def versionName = "v18"
+def versionCode = 19
+def magiskZip = "magisk-${project.name}-${versionName}.zip"
+
+def isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows()
+def libPathRelease = "$buildDir/ndkBuild/release/lib"
+def zipPathMagiskRelease = "$buildDir/tmp/release/magisk"
+
+task copyFilesMagiskRelease(type: Copy) {
+    from 'template_override/module.prop'
+    into zipPathMagiskRelease
+    filter { line ->
+        line.replaceAll('%%%VERSION_NAME%%%', versionName)
+                .replaceAll('%%%VERSION_CODE%%%', versionCode.toString())
+                .replaceAll('%%%ID%%%', moduleIdMagisk)
+                .replaceAll('%%%NAME%%%', moduleName)
+                .replaceAll('%%%AUTHOR%%%', moduleAuthor)
+                .replaceAll('%%%DESCRIPTION%%%', moduleDescription)
+    }
+
+    doLast {
+        file("$zipPathMagiskRelease/common").mkdirs()
+        file("$zipPathMagiskRelease/system").mkdirs()
+        file("$zipPathMagiskRelease/system_x86").mkdirs()
+
+        file("$libPathRelease/arm64-v8a").renameTo("$zipPathMagiskRelease/system/lib64")
+        file("$libPathRelease/armeabi-v7a").renameTo("$zipPathMagiskRelease/system/lib")
+        file("$libPathRelease/x86_64").renameTo("$zipPathMagiskRelease/system_x86/lib64")
+        file("$libPathRelease/x86").renameTo("$zipPathMagiskRelease/system_x86/lib")
+
+        file("$zipPathMagiskRelease/system/lib/zygote_restart").renameTo("$zipPathMagiskRelease/zygote_restart_arm")
+        file("$zipPathMagiskRelease/system/lib64/zygote_restart").renameTo("$zipPathMagiskRelease/zygote_restart_arm64")
+        file("$zipPathMagiskRelease/system_x86/lib/zygote_restart").renameTo("$zipPathMagiskRelease/zygote_restart_x86")
+        file("$zipPathMagiskRelease/system_x86/lib64/zygote_restart").renameTo("$zipPathMagiskRelease/zygote_restart_x64")
+
+        file("$zipPathMagiskRelease/post-fs-data.sh").renameTo("$zipPathMagiskRelease/common/post-fs-data.sh")
+    }
+}
+
+task buildNativeRelease(type: Exec) {
+    if (isWindows)
+        commandLine 'cmd', '/c', 'ndk-build.cmd',
+                '-j8',
+                "NDK_LIBS_OUT=$libPathRelease",
+                "NDK_OUT=$buildDir/ndkBuild/release/obj".replace("\\", "/")
+    else
+        commandLine 'sh', 'ndk-build',
+                '-j8',
+                "NDK_LIBS_OUT=$libPathRelease",
+                "NDK_OUT=$buildDir/ndkBuild/release/obj"
+}
+
+task createMagiskTmpDirRelease(type: Copy) {
+    from "$rootDir/template/magisk", 'template_override'
+    into zipPathMagiskRelease
+}
+
+task zipMagiskRelease(type: Zip) {
+    archiveFileName = magiskZip
+    destinationDirectory = file("$rootDir/release")
+
+    from "$zipPathMagiskRelease"
+}
+
+task cleanMagiskRelease(type: Delete) {
+    delete file(zipPathMagiskRelease)
+    delete file("$rootDir/release/$magiskZip")
+}
+
+task assembleMagiskRelease(type: GradleBuild) {
+    tasks = [
+            'buildNativeRelease',
+            'cleanMagiskRelease',
+            'createMagiskTmpDirRelease',
+            'copyFilesMagiskRelease',
+            'zipMagiskRelease'
+    ]
 }
