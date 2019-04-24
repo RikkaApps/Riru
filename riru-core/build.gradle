@@ -1,3 +1,5 @@
+import org.apache.tools.ant.filters.FixCrLfFilter
+
 apply plugin: 'com.android.library'
 
 android {
@@ -33,6 +35,8 @@ def isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows()
 def libPathRelease = "$buildDir/ndkBuild/release/lib"
 def zipPathMagiskRelease = "$buildDir/tmp/release/magisk"
 
+import org.apache.tools.ant.filters.FixCrLfFilter
+
 task copyFilesMagiskRelease(type: Copy) {
     from 'template_override/module.prop'
     into zipPathMagiskRelease
@@ -44,6 +48,8 @@ task copyFilesMagiskRelease(type: Copy) {
                 .replaceAll('%%%AUTHOR%%%', moduleAuthor)
                 .replaceAll('%%%DESCRIPTION%%%', moduleDescription)
     }
+    filter(FixCrLfFilter.class,
+            eol: FixCrLfFilter.CrLf.newInstance("lf"))
 
     doLast {
         file("$zipPathMagiskRelease/common").mkdirs()
