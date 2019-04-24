@@ -31,7 +31,7 @@ def riruApi = 3
 
 def moduleIdMagisk = "riru-$moduleId".replace('_', "-") // use '_' for so file, '-' for Magisk module name
 def moduleNameMagisk = "Riru - $moduleName"
-def moduleDescriptionMagisk = "$moduleDescription. Requires Riru - Core v18 or above installed."
+def moduleDescriptionMagisk = "$moduleDescription Requires Riru - Core v18 or above installed."
 def zipNameMagisk = "magisk-${project.name}-${versionName}.zip"
 
 def isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows()
