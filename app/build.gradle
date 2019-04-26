@@ -55,9 +55,10 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "androidx.annotation:annotation:1.0.2"
     implementation "moe.shizuku.support:recyclerview-utils:3.0.4"
-    implementation "moe.shizuku.support:design:3.1.0"
-    implementation "moe.shizuku.support:support-utils:3.0.4"
+    implementation "moe.shizuku.support:design:3.1.2"
+    implementation "moe.shizuku.support:support-utils:3.0.5"
     implementation "moe.shizuku.support:htmlcompat:2.0.0"
 }
 repositories {
