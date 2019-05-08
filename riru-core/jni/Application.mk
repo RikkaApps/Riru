@@ -16,6 +16,6 @@ APP_CFLAGS += -O0
 APP_CPPFLAGS += -O0
 else
 $(info building RELEASE version...)
-APP_CFLAGS += -fvisibility=hidden -fvisibility-inlines-hidden -O2
-APP_CPPFLAGS += -fvisibility=hidden -fvisibility-inlines-hidden -O2
+APP_CFLAGS += -fvisibility=hidden -fvisibility-inlines-hidden -O2 -Wl,-exclude-libs,ALL
+APP_CPPFLAGS += -fvisibility=hidden -fvisibility-inlines-hidden -O2 -Wl,-exclude-libs,ALL
 endif

@@ -22,7 +22,7 @@ typedef void (*nativeForkAndSpecialize_pre_v3_t)(JNIEnv *, jclass, jint *, jint 
                                                  jint *, jobjectArray *, jint *, jstring *,
                                                  jstring *, jintArray *, jintArray *, jboolean *,
                                                  jstring *, jstring *, jstring *, jobjectArray *,
-                                                 jobjectArray *);
+                                                 jstring *);
 
 typedef int (*nativeForkAndSpecialize_post_t)(JNIEnv *, jclass, jint);
 

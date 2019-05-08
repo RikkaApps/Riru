@@ -8,8 +8,8 @@ void nativeForkAndSpecializePre(
         jobjectArray *rlimits, jint *_mount_external, jstring *se_info, jstring *se_name,
         jintArray *fdsToClose, jintArray *fdsToIgnore, jboolean *is_child_zygote,
         jstring *instructionSet, jstring *appDataDir, jstring *packageName,
-        jobjectArray *packagesForUID, jobjectArray *visibleVolIDs) {
-    // packageName, packagesForUID, visibleVolIDs exists from Android Q
+        jobjectArray *packagesForUID, jstring *sandboxId) {
+    // packageName, packagesForUID, sandboxId exists from Android Q
 }
 
 __attribute__((visibility("default")))
