@@ -50,7 +50,7 @@ public class NativeHelper {
 
     public static native String getNativeForkAndSpecializeSignature();
 
-    public static native String getNativeSpecializeBlastulaSignature();
+    public static native String getNativeSpecializeAppProcessSignature();
 
     public static native String getNativeForkSystemServerSignature();
 }

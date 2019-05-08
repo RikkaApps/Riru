@@ -19,7 +19,7 @@ public class MainActivity extends BaseActivity {
 
         boolean init, isZygoteMethodsReplaced;
         int version, nativeForkAndSpecializeCallsCount, nativeForkSystemServerCallsCount;
-        String nativeForkAndSpecializeSignature, nativeSpecializeBlastulaSignature, nativeForkSystemServerSignature;
+        String nativeForkAndSpecializeSignature, nativeSpecializeAppProcessSignature, nativeForkSystemServerSignature;
 
         StringBuilder sb = new StringBuilder();
 
@@ -33,7 +33,7 @@ public class MainActivity extends BaseActivity {
                 nativeForkAndSpecializeCallsCount = NativeHelper.getNativeForkAndSpecializeCallsCount();
                 nativeForkSystemServerCallsCount = NativeHelper.getNativeForkSystemServerCallsCount();
                 nativeForkAndSpecializeSignature = NativeHelper.getNativeForkAndSpecializeSignature();
-                nativeSpecializeBlastulaSignature = NativeHelper.getNativeSpecializeBlastulaSignature();
+                nativeSpecializeAppProcessSignature = NativeHelper.getNativeSpecializeAppProcessSignature();
                 nativeForkSystemServerSignature = NativeHelper.getNativeForkSystemServerSignature();
 
                 sb.append("Riru ").append(NativeHelper.versionName(this, version)).append(" found.").append("<br>");
@@ -76,7 +76,7 @@ public class MainActivity extends BaseActivity {
         Log.i("RiruManager", "getNativeForkAndSpecializeCallsCount: " + NativeHelper.getNativeForkAndSpecializeCallsCount());
         Log.i("RiruManager", "getNativeForkSystemServerCallsCount: " + NativeHelper.getNativeForkSystemServerCallsCount());
         Log.i("RiruManager", "getNativeForkAndSpecializeSignature: " + NativeHelper.getNativeForkAndSpecializeSignature());
-        Log.i("RiruManager", "getNativeSpecializeBlastulaSignature: " + NativeHelper.getNativeSpecializeBlastulaSignature());
+        Log.i("RiruManager", "getNativeSpecializeAppProcessSignature: " + NativeHelper.getNativeSpecializeAppProcessSignature());
         Log.i("RiruManager", "getNativeForkSystemServerSignature: " + NativeHelper.getNativeForkSystemServerSignature());
     }
 }

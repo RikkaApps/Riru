@@ -10,7 +10,7 @@
 #include "api.h"
 
 static void *_nativeForkAndSpecialize = nullptr;
-static void *_nativeSpecializeBlastula = nullptr;
+static void *_nativeSpecializeAppProcess = nullptr;
 static void *_nativeForkSystemServer = nullptr;
 static void *_SystemProperties_set = nullptr;
 
@@ -18,8 +18,8 @@ void set_nativeForkAndSpecialize(void *addr) {
     _nativeForkAndSpecialize = addr;
 }
 
-void set_nativeSpecializeBlastula(void *addr) {
-    _nativeSpecializeBlastula = addr;
+void set_nativeSpecializeAppProcess(void *addr) {
+    _nativeSpecializeAppProcess = addr;
 }
 
 void set_nativeForkSystemServer(void *addr) {
@@ -121,18 +121,18 @@ static void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, ji
 
 // -----------------------------------------------------------------
 
-static void nativeSpecializeBlastula_pre(
+static void nativeSpecializeAppProcess_pre(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
         jboolean startChildZygote, jstring instructionSet, jstring appDataDir, jstring packageName,
         jobjectArray packagesForUID, jobjectArray sandboxId) {
-    /*const char *cPackageName = env->GetStringUTFChars(packageName, nullptr);
+    const char *cPackageName = env->GetStringUTFChars(packageName, nullptr);
     LOGI("nativeSpecializeBlastulaPre: uid=%d, packageName=%s, from_uid=%d", uid, cPackageName, getuid());
-    env->ReleaseStringUTFChars(packageName, cPackageName);*/
+    env->ReleaseStringUTFChars(packageName, cPackageName);
 }
 
-static void nativeSpecializeBlastula_post(JNIEnv *env, jclass clazz) {
-    //LOGI("nativeSpecializeBlastulaPost: from_uid=%d", getuid());
+static void nativeSpecializeAppProcess_post(JNIEnv *env, jclass clazz) {
+    LOGI("nativeSpecializeBlastulaPost: from_uid=%d", getuid());
 }
 
 // -----------------------------------------------------------------
@@ -361,23 +361,23 @@ jint nativeForkAndSpecialize_samsung_m(
 
 // -----------------------------------------------------------------
 
-void nativeSpecializeBlastula(
+void nativeSpecializeAppProcess(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
         jboolean startChildZygote, jstring instructionSet, jstring appDataDir, jstring packageName,
-        jobjectArray packagesForUID, jobjectArray sandboxId) {
+        jobjectArray packagesForUID, jobjectArray visibleVolIDs) {
 
-    nativeSpecializeBlastula_pre(
+    nativeSpecializeAppProcess_pre(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
             startChildZygote, instructionSet, appDataDir, packageName, packagesForUID,
-            sandboxId);
+            visibleVolIDs);
 
-    ((nativeSpecializeBlastula_t) _nativeSpecializeBlastula)(
+    ((nativeSpecializeAppProcess_t) _nativeSpecializeAppProcess)(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
             startChildZygote, instructionSet, appDataDir, packageName, packagesForUID,
-            sandboxId);
+            visibleVolIDs);
 
-    nativeSpecializeBlastula_post(env, clazz);
+    nativeSpecializeAppProcess_post(env, clazz);
 }
 
 // -----------------------------------------------------------------

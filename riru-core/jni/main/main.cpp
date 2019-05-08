@@ -33,6 +33,7 @@
 
 static int methods_replaced = 0;
 static int sdkLevel;
+static int previewSdkLevel;
 static char androidVersionName[PROP_VALUE_MAX + 1];
 
 int riru_is_zygote_methods_replaced() {
@@ -40,7 +41,7 @@ int riru_is_zygote_methods_replaced() {
 }
 
 static int isQ() {
-    return strcmp("Q", androidVersionName) == 0 || sdkLevel >= 29;
+    return (sdkLevel == 28 && previewSdkLevel > 0) || sdkLevel >= 29;
 }
 
 static void load_modules() {
@@ -169,16 +170,16 @@ static JNINativeMethod *onRegisterZygote(JNIEnv *env, const char *className,
 
                 replaced += 1;
             }
-        } else if (strcmp(method.name, "nativeSpecializeBlastula") == 0) {
-            set_nativeSpecializeBlastula(method.fnPtr);
+        } else if (strcmp(method.name, "nativeSpecializeAppProcess") == 0) {
+            set_nativeSpecializeAppProcess(method.fnPtr);
 
-            if (strcmp(nativeSpecializeBlastula_sig, method.signature) == 0)
-                newMethods[i].fnPtr = (void *) nativeSpecializeBlastula;
+            if (strcmp(nativeSpecializeAppProcess_sig, method.signature) == 0)
+                newMethods[i].fnPtr = (void *) nativeSpecializeAppProcess;
             else
-                LOGW("found nativeSpecializeBlastula but signature %s mismatch", method.signature);
+                LOGW("found nativeSpecializeAppProcess but signature %s mismatch", method.signature);
 
             if (newMethods[i].fnPtr != methods[i].fnPtr) {
-                LOGI("replaced com.android.internal.os.Zygote#nativeSpecializeBlastula");
+                LOGI("replaced com.android.internal.os.Zygote#nativeSpecializeAppProcess");
                 riru_set_native_method_func(MODULE_NAME_CORE, className, newMethods[i].name,
                                             newMethods[i].signature, newMethods[i].fnPtr);
 
@@ -279,9 +280,12 @@ static void read_prop() {
     if (__system_property_get("ro.build.version.sdk", sdk) > 0)
         sdkLevel = atoi(sdk);
 
+    if (__system_property_get("ro.build.version.preview_sdk", sdk) > 0)
+        previewSdkLevel = atoi(sdk);
+
     __system_property_get("ro.build.version.release", androidVersionName);
 
-    LOGI("system version %s (api %d)", androidVersionName, sdkLevel);
+    LOGI("system version %s (api %d, preview_sdk %d)", androidVersionName, sdkLevel, previewSdkLevel);
 }
 
 extern "C" void constructor() __attribute__((constructor));

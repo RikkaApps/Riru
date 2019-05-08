@@ -36,6 +36,7 @@ static jboolean init(JNIEnv *env, jobject thiz) {
     jboolean res = JNI_FALSE;
     procmaps_struct *maps_tmp = nullptr;
     while ((maps_tmp = pmparser_next(maps)) != nullptr) {
+        //LOGI("%s", maps_tmp->pathname);
         if (strstr(maps_tmp->pathname, "libmemtrack_real.so")) {
             res = JNI_TRUE;
         }
@@ -108,14 +109,14 @@ static jstring get_nativeForkAndSpecialize_signature(JNIEnv *env, jobject thiz) 
     return nullptr;
 }
 
-static jstring get_nativeSpecializeBlastula_signature(JNIEnv *env, jobject thiz) {
+static jstring get_nativeSpecializeAppProcess_signature(JNIEnv *env, jobject thiz) {
     static void *sym;
     void *handle;
     if ((handle = get_handle()) == nullptr) return nullptr;
     if (sym == nullptr) sym = dlsym(handle, "riru_get_original_native_methods");
     if (sym) {
         auto method = ((const JNINativeMethod *(*)(const char *, const char *, const char *)) sym)(
-                "com/android/internal/os/Zygote", "nativeSpecializeBlastula", nullptr);
+                "com/android/internal/os/Zygote", "nativeSpecializeAppProcess", nullptr);
         if (method != nullptr)
             return env->NewStringUTF(method->signature);
     }
@@ -137,15 +138,15 @@ static jstring get_nativeForkSystemServer_signature(JNIEnv *env, jobject thiz) {
 }
 
 static JNINativeMethod gMethods[] = {
-        {"init",                                 "()Z",                   (void *) init},
-        {"isRiruModuleExists",                   "(Ljava/lang/String;)Z", (void *) is_riru_module_exists},
-        {"getRiruVersion",                       "()I",                   (void *) get_riru_rersion},
-        {"isZygoteMethodsReplaced",              "()Z",                   (void *) is_zygote_methods_replaced},
-        {"getNativeForkAndSpecializeCallsCount", "()I",                   (void *) get_nativeForkAndSpecialize_calls_count},
-        {"getNativeForkSystemServerCallsCount",  "()I",                   (void *) get_nativeForkSystemServer_calls_count},
-        {"getNativeForkAndSpecializeSignature",  "()Ljava/lang/String;",  (void *) get_nativeForkAndSpecialize_signature},
-        {"getNativeSpecializeBlastulaSignature", "()Ljava/lang/String;",  (void *) get_nativeSpecializeBlastula_signature},
-        {"getNativeForkSystemServerSignature",   "()Ljava/lang/String;",  (void *) get_nativeForkSystemServer_signature},
+        {"init",                                   "()Z",                   (void *) init},
+        {"isRiruModuleExists",                     "(Ljava/lang/String;)Z", (void *) is_riru_module_exists},
+        {"getRiruVersion",                         "()I",                   (void *) get_riru_rersion},
+        {"isZygoteMethodsReplaced",                "()Z",                   (void *) is_zygote_methods_replaced},
+        {"getNativeForkAndSpecializeCallsCount",   "()I",                   (void *) get_nativeForkAndSpecialize_calls_count},
+        {"getNativeForkSystemServerCallsCount",    "()I",                   (void *) get_nativeForkSystemServer_calls_count},
+        {"getNativeForkAndSpecializeSignature",    "()Ljava/lang/String;",  (void *) get_nativeForkAndSpecialize_signature},
+        {"getNativeSpecializeAppProcessSignature", "()Ljava/lang/String;",  (void *) get_nativeSpecializeAppProcess_signature},
+        {"getNativeForkSystemServerSignature",     "()Ljava/lang/String;",  (void *) get_nativeForkSystemServer_signature},
 };
 
 static int registerNativeMethods(JNIEnv *env, const char *className,
