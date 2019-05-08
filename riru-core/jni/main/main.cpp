@@ -24,6 +24,7 @@
 #include "api.h"
 
 #define CONFIG_DIR "/data/misc/riru"
+#define CONFIG_DIR_MAGISK "/sbin/riru"
 
 #ifdef __LP64__
 #define MODULE_PATH_FMT "/system/lib64/libriru_%s.so"
@@ -44,14 +45,29 @@ static int isQ() {
     return (sdkLevel == 28 && previewSdkLevel > 0) || sdkLevel >= 29;
 }
 
+static const char *config_dir = nullptr;
+
+static const char* get_config_dir() {
+    if (config_dir) return config_dir;
+
+    if (access(CONFIG_DIR_MAGISK, R_OK) == 0) {
+        config_dir = CONFIG_DIR_MAGISK;
+    } else {
+        config_dir = CONFIG_DIR;
+    }
+    return config_dir;
+}
+
 static void load_modules() {
     DIR *dir;
     struct dirent *entry;
-    char path[PATH_MAX], module_prop[PATH_MAX], api[PATH_MAX];
+    char path[PATH_MAX], modules_path[PATH_MAX], module_prop[PATH_MAX], api[PATH_MAX];
     int moduleApiVersion;
     void *handle;
 
-    if (!(dir = _opendir(CONFIG_DIR "/modules")))
+    snprintf(modules_path, PATH_MAX, "%s/modules", get_config_dir());
+
+    if (!(dir = _opendir(modules_path)))
         return;
 
     while ((entry = _readdir(dir))) {
@@ -66,7 +82,7 @@ static void load_modules() {
                 continue;
             }
 
-            snprintf(module_prop, PATH_MAX, CONFIG_DIR "/modules/%s/module.prop", entry->d_name);
+            snprintf(module_prop, PATH_MAX, "%s/%s/module.prop", modules_path, entry->d_name);
             if (access(module_prop, F_OK) != 0) {
                 PLOGE("access %s", module_prop);
                 continue;
@@ -312,9 +328,13 @@ void constructor() {
     LOGI("riru in zygote");
 #endif
 
-    if (access(CONFIG_DIR "/.disable", F_OK) == 0) {
-        LOGI(CONFIG_DIR
-                     "/.disable exists, do nothing.");
+    LOGI("config dir is %s", get_config_dir());
+
+    char path[PATH_MAX];
+    snprintf(path, PATH_MAX, "%s/.disable", get_config_dir());
+
+    if (access(path, F_OK) == 0) {
+        LOGI("%s exists, do nothing.", path);
         return;
     }
 
