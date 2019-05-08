@@ -121,6 +121,10 @@ REPLACE="
 
 # Set what you want to display when installing your module
 
+#RIRU_PATH="/data/adb/riru"
+RIRU_PATH="/data/misc/riru"
+RIRU_API=4
+
 print_modname() {
   ui_print "*******************************"
   ui_print "          Riru - Core          "
@@ -155,19 +159,16 @@ copy_file_from() {
 on_install() {
   check_architecture
 
-  #RIRU_PATH="/data/adb/riru"
-  RIRU_PATH="/data/misc/riru"
-
   mkdir -p "$RIRU_PATH/modules"
 
   if [[ "$ARCH" == "x86" || "$ARCH" == "x64" ]]; then
 	ui_print "- Extracting x86/64 libraries"
-	unzip -o "$ZIP" 'system_x86/*' -d $MODPATH >&2
+	unzip -o "$ZIPFILE" 'system_x86/*' -d $MODPATH >&2
     mv "$MODPATH/system_x86/lib" "$MODPATH/system/lib"
     mv "$MODPATH/system_x86/lib64" "$MODPATH/system/lib64"
   else
     ui_print "- Extracting arm/arm64 libraries"
-  unzip -o "$ZIPFILE" 'system/*' -d $MODPATH >&2
+    unzip -o "$ZIPFILE" 'system/*' -d $MODPATH >&2
   fi
 
   if [[ "$IS64BIT" = true ]]; then
@@ -180,12 +181,12 @@ on_install() {
 
   ui_print "- Extracting zygote_restart executable"
   mkdir -p "$RIRU_PATH/bin"
-  unzip -j "$ZIP" "zygote_restart_$ARCH" -d "$RIRU_PATH/bin" >&2
+  unzip -j "$ZIPFILE" "zygote_restart_$ARCH" -d "$RIRU_PATH/bin" >&2
   mv "$RIRU_PATH/bin/zygote_restart_$ARCH" "$RIRU_PATH/bin/zygote_restart"
   set_perm "$RIRU_PATH/bin/zygote_restart" 0 0 0700 u:object_r:system_file:s0
 
   ui_print "- Writing api_version file"
-  echo -n "3" > "$RIRU_PATH/api_version"
+  echo -n "$RIRU_API" > "$RIRU_PATH/api_version"
 }
 
 # Only some special files require specific permissions

@@ -111,6 +111,8 @@ static void load_modules() {
             module->forkAndSpecializePost = dlsym(handle, "nativeForkAndSpecializePost");
             module->forkSystemServerPre = dlsym(handle, "nativeForkSystemServerPre");
             module->forkSystemServerPost = dlsym(handle, "nativeForkSystemServerPost");
+            module->specializeAppProcessPre = dlsym(handle, "specializeAppProcessPre");
+            module->specializeAppProcessPost = dlsym(handle, "specializeAppProcessPost");
             module->shouldSkipUid = dlsym(handle, "shouldSkipUid");
             get_modules()->push_back(module);
 

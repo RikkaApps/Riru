@@ -51,6 +51,12 @@ int riru_get_nativeForkSystemServer_calls_count() {
     return nativeForkSystemServer_calls_count;
 }
 
+int specializeAppProcess_calls_count = 0;
+
+int riru_get_specializeAppProcess_calls_count() {
+    return specializeAppProcess_calls_count;
+}
+
 // -----------------------------------------------------------------
 
 static void nativeForkAndSpecialize_pre(
@@ -126,13 +132,32 @@ static void nativeSpecializeAppProcess_pre(
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
         jboolean startChildZygote, jstring instructionSet, jstring appDataDir, jstring packageName,
         jobjectArray packagesForUID, jstring sandboxId) {
-    const char *cPackageName = env->GetStringUTFChars(packageName, nullptr);
-    LOGI("nativeSpecializeBlastulaPre: uid=%d, packageName=%s, from_uid=%d", uid, cPackageName, getuid());
-    env->ReleaseStringUTFChars(packageName, cPackageName);
+
+    specializeAppProcess_calls_count++;
+
+    for (auto module : *get_modules()) {
+        if (!module->specializeAppProcessPre)
+            continue;
+
+        if (module->apiVersion >= 4) {
+            ((nativeSpecializeAppProcess_pre_t) module->specializeAppProcessPre)(
+                    env, clazz, &uid, &gid, &gids, &runtimeFlags, &rlimits, &mountExternal, &seInfo,
+                    &niceName, &startChildZygote, &instructionSet, &appDataDir, &packageName,
+                    &packagesForUID, &sandboxId);
+        }
+    }
 }
 
 static void nativeSpecializeAppProcess_post(JNIEnv *env, jclass clazz) {
-    LOGI("nativeSpecializeBlastulaPost: from_uid=%d", getuid());
+    for (auto module : *get_modules()) {
+        if (!module->specializeAppProcessPost)
+            continue;
+
+        LOGV("%s: specializeAppProcessPost", module->name);
+        if (module->apiVersion >= 4) {
+            ((nativeSpecializeAppProcess_post_t) module->specializeAppProcessPost)(env, clazz);
+        }
+    }
 }
 
 // -----------------------------------------------------------------
