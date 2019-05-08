@@ -110,13 +110,13 @@ const static char *nativeSpecializeAppProcess_sig = "(II[II[[IILjava/lang/String
 
 typedef void (*nativeSpecializeAppProcess_t)(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
-        jboolean, jstring, jstring, jstring, jobjectArray, jobjectArray);
+        jboolean, jstring, jstring, jstring, jobjectArray, jstring);
 
 void nativeSpecializeAppProcess(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
         jboolean startChildZygote, jstring instructionSet, jstring appDataDir, jstring packageName,
-        jobjectArray packagesForUID, jobjectArray visibleVolIDs);
+        jobjectArray packagesForUID, jstring sandboxId);
 
 // -----------------------------------------------------------------
 
