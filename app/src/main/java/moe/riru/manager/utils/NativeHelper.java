@@ -9,7 +9,8 @@ import moe.riru.manager.R;
 @Keep
 public class NativeHelper {
 
-    private static final int MAX_VERSION = 19;
+    private static final int MAX_VERSION = 20;
+    private static final int V19 = 20;
     private static final int V18 = 19;
     private static final int V17_1 = 18;
 
@@ -27,12 +28,14 @@ public class NativeHelper {
         }
 
         switch (versionCode) {
+            case V19:
+                return "v19";
             case V18:
                 return "v18";
             case V17_1:
                 return "v17.1";
             default:
-                return "v" + versionCode;
+                return "unknown (version code " + versionCode + ")";
         }
     }
 
@@ -48,9 +51,12 @@ public class NativeHelper {
 
     public static native int getNativeForkSystemServerCallsCount();
 
+    public static native int getNativeSpecializeAppProcessCallsCount();
+
     public static native String getNativeForkAndSpecializeSignature();
+
+    public static native String getNativeForkSystemServerSignature();
 
     public static native String getNativeSpecializeAppProcessSignature();
 
-    public static native String getNativeForkSystemServerSignature();
 }

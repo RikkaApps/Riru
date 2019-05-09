@@ -51,10 +51,10 @@ int riru_get_nativeForkSystemServer_calls_count() {
     return nativeForkSystemServer_calls_count;
 }
 
-int specializeAppProcess_calls_count = 0;
+int nativeSpecializeAppProcess_calls_count = 0;
 
-int riru_get_specializeAppProcess_calls_count() {
-    return specializeAppProcess_calls_count;
+int riru_get_nativeSpecializeAppProcess_calls_count() {
+    return nativeSpecializeAppProcess_calls_count;
 }
 
 // -----------------------------------------------------------------
@@ -133,7 +133,7 @@ static void nativeSpecializeAppProcess_pre(
         jboolean startChildZygote, jstring instructionSet, jstring appDataDir, jstring packageName,
         jobjectArray packagesForUID, jstring sandboxId) {
 
-    specializeAppProcess_calls_count++;
+    nativeSpecializeAppProcess_calls_count++;
 
     for (auto module : *get_modules()) {
         if (!module->specializeAppProcessPre)

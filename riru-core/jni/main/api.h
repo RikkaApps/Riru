@@ -30,6 +30,8 @@ int riru_get_nativeForkAndSpecialize_calls_count() EXPORT;
 
 int riru_get_nativeForkSystemServer_calls_count() EXPORT;
 
+int riru_get_nativeSpecializeAppProcess_calls_count() EXPORT;
+
 #ifdef __cplusplus
 }
 #endif

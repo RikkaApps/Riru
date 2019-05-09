@@ -5,6 +5,6 @@ import android.os.Build;
 public class BuildUtils {
 
     public static boolean isQ() {
-        return "Q".equals(Build.VERSION.RELEASE) || Build.VERSION.SDK_INT >= 29;
+        return (Build.VERSION.SDK_INT == 28 && Build.VERSION.PREVIEW_SDK_INT > 0) || Build.VERSION.SDK_INT >= 29;
     }
 }
