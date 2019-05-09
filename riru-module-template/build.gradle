@@ -25,9 +25,9 @@ def moduleId = "module_template"
 def moduleName = "Module template"
 def moduleAuthor = "Author"
 def moduleDescription = "Riru module template."
-def versionName = "v3"
-def versionCode = 3
-def riruApi = 3
+def versionName = "v4"
+def versionCode = 4
+def riruApi = 4
 
 def moduleIdMagisk = "riru-$moduleId".replace('_', "-") // use '_' for so file, '-' for Magisk module name
 def moduleNameMagisk = "Riru - $moduleName"

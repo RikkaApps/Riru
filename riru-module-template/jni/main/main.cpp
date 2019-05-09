@@ -40,4 +40,20 @@ int nativeForkSystemServerPost(JNIEnv *env, jclass clazz, jint res) {
     }
     return 0;
 }
+
+__attribute__((visibility("default"))) void specializeAppProcessPre(
+        JNIEnv *env, jclass clazz, jint *_uid, jint *gid, jintArray *gids, jint *runtimeFlags,
+        jobjectArray *rlimits, jint *mountExternal, jstring *seInfo, jstring *niceName,
+        jboolean *startChildZygote, jstring *instructionSet, jstring *appDataDir,
+        jstring *packageName, jobjectArray *packagesForUID, jstring *sandboxId) {
+    // from Android Q beta 3
+    // in zygote process
+}
+
+__attribute__((visibility("default"))) int specializeAppProcessPost(
+        JNIEnv *env, jclass clazz) {
+    // from Android Q beta 3
+    // in app process
+    return 0;
+}
 }
