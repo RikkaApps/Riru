@@ -167,11 +167,10 @@ on_install() {
   TARGET="$RIRU_PATH/modules"
 
   [[ -d "$TARGET" ]] || mkdir -p "$TARGET" || abort "! Can't mkdir -p $TARGET"
-  cp -af "$$TMPDIR$TARGET/." "$TARGET" || abort "! Can't cp -af $$TMPDIR$TARGET/. $TARGET"
+  cp -af "$TMPDIR$TARGET/." "$TARGET" || abort "! Can't cp -af $TMPDIR$TARGET/. $TARGET"
 
   ui_print "- Files copied"
 }
-
 
 set_permissions() {
   # The following is the default rule, DO NOT remove
