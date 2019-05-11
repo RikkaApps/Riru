@@ -148,7 +148,7 @@ on_install() {
 
   if [[ "$ARCH" == "x86" || "$ARCH" == "x64" ]]; then
     ui_print "- Extracting x86/64 libraries"
-	unzip -o "$ZIPFILE" 'system_x86/*' -d $MODPATH >&2
+    unzip -o "$ZIPFILE" 'system_x86/*' -d $MODPATH >&2
     mv "$MODPATH/system_x86/lib" "$MODPATH/system/lib"
     mv "$MODPATH/system_x86/lib64" "$MODPATH/system/lib64"
   else
@@ -157,8 +157,8 @@ on_install() {
   fi
 
   if [[ "$IS64BIT" = false ]]; then
-	ui_print "- Removing 64-bit libraries"
-	rm -rf "$MODPATH/system/lib64"
+    ui_print "- Removing 64-bit libraries"
+    rm -rf "$MODPATH/system/lib64"
   fi
 
   ui_print "- Extracting extra files"

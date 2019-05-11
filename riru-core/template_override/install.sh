@@ -148,7 +148,7 @@ copy_file_from() {
     FULL_PATH="/system/$FROM_PATH/libmemtrack.so"
     if [[ -f "$FULL_PATH" ]]; then
       ui_print "- Found $FULL_PATH"
-	else
+    else
       abort "! $FULL_PATH not found"
     fi
   fi
@@ -162,8 +162,8 @@ on_install() {
   mkdir -p "$RIRU_PATH/modules"
 
   if [[ "$ARCH" == "x86" || "$ARCH" == "x64" ]]; then
-	ui_print "- Extracting x86/64 libraries"
-	unzip -o "$ZIPFILE" 'system_x86/*' -d $MODPATH >&2
+    ui_print "- Extracting x86/64 libraries"
+    unzip -o "$ZIPFILE" 'system_x86/*' -d $MODPATH >&2
     mv "$MODPATH/system_x86/lib" "$MODPATH/system/lib"
     mv "$MODPATH/system_x86/lib64" "$MODPATH/system/lib64"
   else
@@ -175,7 +175,7 @@ on_install() {
     copy_file_from lib64
   else
     ui_print "- Removing 64-bit libraries"
-	rm -rf "$MODPATH/system/lib64"
+    rm -rf "$MODPATH/system/lib64"
   fi
   copy_file_from lib
 
