@@ -42,10 +42,6 @@ Android NDK (把有 `ndk-build` 的目录加到 `PATH`)
 4. 发明你自己的魔法（
 5. 直接在命令行 (用 `gradlew`) 或者 Android Studio 执行 `:riru-your-module:assembleMagiskRelease`，zip 会被存到 `release`
 
-## core 提供的 API
-
-从 v8 开始，core 提供一些 API，详见 [riru.h](https://github.com/RikkaApps/Riru/blob/master/riru-module-template/jni/main/riru.h)。
-
 ## 自己的模块需要注意的地方
 
 * 不要掩盖 core 中 hook 的 `android.os.SystemProperties#native_set`，
@@ -59,11 +55,17 @@ Android NDK (把有 `ndk-build` 的目录加到 `PATH`)
 * 目前，一个模块版本只可支持一个 API 版本
 * 看 template 来知道具体做法
 
+### v4 (core v19+)
+
+* 在 `riru_module.prop` 加入 `api=4` 来声明 API 版本
+* 在 `config.sh` 检查并拒绝在 Riru v19 以下安装
+* 增加 Android Q beta 3 使用的 `specializeAppProcessPre` `specializeAppProcessPost`（请参看 template）
+
 ### v3 (core v18+)
 
 * 在 `riru_module.prop` 加入 `api=3` 来声明 API 版本
 * 在 `config.sh` 检查并拒绝在 Riru v18 以下安装
-* `nativeForkAndSpecializePre` 参数变化（相对 v2，末尾增加 `jstring *packageName, jobjectArray *packagesForUID, jobjectArray *visibleVolIDs`）
+* `nativeForkAndSpecializePre` 参数变化（相对 v2，末尾增加 `jstring *packageName, jobjectArray *packagesForUID, jstring *sandboxId`）
 
 ### v2 (core v16-v17.1)
 

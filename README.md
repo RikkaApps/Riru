@@ -45,10 +45,6 @@ Android NDK (add the directory with `ndk-build` to `PATH`)
 4. Write your code
 5. Run `:riru-your-module:assembleMagiskRelease` task in command line (use `gradlew`) or Android Studio, zip will be saved to `release`
 
-## APIs provided by core
-
-From v8, core starts to providing some APIs, see [riru.h](https://github.com/RikkaApps/Riru/blob/master/riru-module-template/jni/main/riru.h).
-
 ## Where your own module needs attention
 
 * DO NOT overwrite `android.os.SystemProperties#native_set` in core, or your data may be wiped
@@ -63,11 +59,17 @@ From v8, core starts to providing some APIs, see [riru.h](https://github.com/Rik
 * Currently, one module version can only support one API version
 * See template for details
 
+### v4 (core v19+)
+
+* Add `api=9` to `riru_module.prop` to declare API version
+* Check and deny installation if Riru version is below v19 in `config.sh`
+* Add `specializeAppProcessPre` `specializeAppProcessPost` used by Android Q beta 3 (see template)
+
 ### v3 (core v18+)
 
 * Add `api=3` to `riru_module.prop` to declare API version
 * Check and deny installation if Riru version is below v18 in `config.sh` 
-* Parameter of `nativeForkAndSpecializePre` changes (compare to v2, added `jstring *packageName, jobjectArray *packagesForUID, jobjectArray *visibleVolIDs` in the end)
+* Parameter of `nativeForkAndSpecializePre` changes (compare to v2, added `jstring *packageName, jobjectArray *packagesForUID, jstring *sandboxId` in the end)
 
 ### v2 (core v16-v17.1)
 
