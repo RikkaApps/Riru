@@ -46,14 +46,14 @@ __attribute__((visibility("default"))) void specializeAppProcessPre(
         jobjectArray *rlimits, jint *mountExternal, jstring *seInfo, jstring *niceName,
         jboolean *startChildZygote, jstring *instructionSet, jstring *appDataDir,
         jstring *packageName, jobjectArray *packagesForUID, jstring *sandboxId) {
-    // from Android Q beta 3
-    // in zygote process
+    // used by Android Q beta 3
+    // a process in the "process pool", after specializeAppProcess is called, this process become a app process
 }
 
 __attribute__((visibility("default"))) int specializeAppProcessPost(
         JNIEnv *env, jclass clazz) {
-    // from Android Q beta 3
-    // in app process
+    // used by Android Q beta 3
+    // become an app process
     return 0;
 }
 }
