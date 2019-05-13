@@ -10,5 +10,8 @@ MODDIR=${0%/*}
 #mkdir -p /sbin/riru
 #mount -o bind /sbin/.core/mirror/data/adb/riru /sbin/riru
 
+# Reset context in case
+chcon -R u:object_r:system_file:s0 $MODDIR
+
 ZYGOTE_RESTART=/data/misc/riru/bin/zygote_restart
 [[ ! -f "/data/misc/riru/config/disable_auto_restart" ]] && $ZYGOTE_RESTART
