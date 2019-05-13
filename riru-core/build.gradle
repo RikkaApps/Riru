@@ -25,7 +25,7 @@ def moduleName = "Riru - Core"
 def moduleAuthor = "Rikka"
 def moduleDescription = "Inject zygote process by replace libmemtrack.so, provide interface to other Riru modules."
 def versionName = "v19"
-def versionCode = 20
+def versionCode = 21
 
 def zipNameMagisk = "magisk-${project.name}-${versionName}.zip"
 
