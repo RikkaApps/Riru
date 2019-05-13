@@ -61,7 +61,7 @@ Android NDK (add the directory with `ndk-build` to `PATH`)
 
 ### v4 (core v19+)
 
-* Add `api=9` to `riru_module.prop` to declare API version
+* Add `api=4` to `riru_module.prop` to declare API version
 * Check and deny installation if Riru version is below v19 in `config.sh`
 * Add `specializeAppProcessPre` `specializeAppProcessPost` used by Android Q beta 3 (see template)
 
