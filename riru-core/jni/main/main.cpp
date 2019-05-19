@@ -22,6 +22,7 @@
 #include "module.h"
 #include "JNIHelper.h"
 #include "api.h"
+#include "version.h"
 
 #define CONFIG_DIR "/data/misc/riru"
 #define CONFIG_DIR_MAGISK "/sbin/riru"
@@ -131,11 +132,7 @@ static void load_modules() {
             if (sym)
                 ((void (*)(const char *)) sym)(module->name);
 
-#ifdef __LP64__
             LOGI("module loaded: %s (api %d)", module->name, module->apiVersion);
-#else
-            LOGI("module loaded: %s %u", module->name, get_modules()->size());
-#endif
 
             if (module->onModuleLoaded) {
                 LOGV("%s: onModuleLoaded", module->name);
@@ -325,9 +322,9 @@ void constructor() {
         return;
 
 #ifdef __LP64__
-    LOGI("riru in zygote64");
+    LOGI("Riru %s in zygote64", VERSION_NAME);
 #else
-    LOGI("riru in zygote");
+    LOGI("Riru %s in zygote", VERSION_NAME);
 #endif
 
     LOGI("config dir is %s", get_config_dir());
