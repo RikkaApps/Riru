@@ -2,7 +2,7 @@
 
 Riru 是一个简单但有用的东西。仅需要替换一个系统文件，就可以让 Riru 模块们进入应用进程或系统服务进程并执行他们的代码。
 
-Riru 这个名字是来自 https://www.pixiv.net/member_illust.php?mode=medium&illust_id=56169989
+Riru 这个名字来自 https://www.pixiv.net/member_illust.php?mode=medium&illust_id=74128856
 
 ## 需求
 
