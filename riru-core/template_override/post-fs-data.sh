@@ -10,6 +10,10 @@ MODDIR=${0%/*}
 #mkdir -p /sbin/riru
 #mount -o bind /sbin/.core/mirror/data/adb/riru /sbin/riru
 
+# Copy libmemtrack.so
+cp -f "/system/lib/libmemtrack.so" "$MODDIR/system/lib/libmemtrack_real.so"
+[[ -f "/system/lib64/libmemtrack.so" ]] && cp -f "/system/lib64/libmemtrack.so" "$MODDIR/system/lib64/libmemtrack_real.so"
+
 # Reset context in case
 chcon -R u:object_r:system_file:s0 $MODDIR
 

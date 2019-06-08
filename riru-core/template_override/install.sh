@@ -139,23 +139,6 @@ check_architecture() {
   fi
 }
 
-copy_file_from() {
-  FROM_PATH=$1
-  FULL_PATH="/system/$FROM_PATH/libmemtrack_real.so"
-  if [[ -f "$FULL_PATH" ]]; then
-    ui_print "- Found $FULL_PATH"
-  else
-    FULL_PATH="/system/$FROM_PATH/libmemtrack.so"
-    if [[ -f "$FULL_PATH" ]]; then
-      ui_print "- Found $FULL_PATH"
-    else
-      abort "! $FULL_PATH not found"
-    fi
-  fi
-
-  cp "$FULL_PATH" "$MODPATH/system/$FROM_PATH/libmemtrack_real.so" || abort "! Can't copy $FULL_PATH"
-}
-
 on_install() {
   check_architecture
 
@@ -171,13 +154,10 @@ on_install() {
     unzip -o "$ZIPFILE" 'system/*' -d $MODPATH >&2
   fi
 
-  if [[ "$IS64BIT" = true ]]; then
-    copy_file_from lib64
-  else
+  if [[ "$IS64BIT" == "false" ]]; then
     ui_print "- Removing 64-bit libraries"
     rm -rf "$MODPATH/system/lib64"
   fi
-  copy_file_from lib
 
   ui_print "- Extracting zygote_restart executable"
   mkdir -p "$RIRU_PATH/bin"
