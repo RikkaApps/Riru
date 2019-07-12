@@ -99,7 +99,7 @@ static void nativeForkAndSpecialize_pre(
 
 static void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, jint res) {
 
-    unhook_jniRegisterNativeMethods();
+    if (res == 0) unhook_jniRegisterNativeMethods();
 
     for (auto module : *get_modules()) {
         if (!module->forkAndSpecializePost)

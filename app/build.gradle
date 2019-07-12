@@ -3,7 +3,7 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
 def gitCommitCount = Integer.parseInt('git rev-list --count HEAD'.execute([], project.rootDir).text.trim())
-def baseVersionName = '19.1'
+def baseVersionName = '19.4'
 
 android {
     compileSdkVersion rootProject.ext.targetSdkVersion

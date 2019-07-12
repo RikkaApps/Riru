@@ -288,7 +288,7 @@ void unhook_jniRegisterNativeMethods() {
                    nullptr);
     if (xhook_refresh(0) == 0) {
         xhook_clear();
-        LOGI("hook removed");
+        LOGV("hook removed");
     }
 }
 
