@@ -165,8 +165,8 @@ static JNINativeMethod *onRegisterZygote(JNIEnv *env, const char *className,
                 newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_oreo;
             else if (strcmp(nativeForkAndSpecialize_p_sig, method.signature) == 0)
                 newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_p;
-            else if (strcmp(nativeForkAndSpecialize_q_sig, method.signature) == 0)
-                newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_q;
+            else if (strcmp(nativeForkAndSpecialize_q_beta4_sig, method.signature) == 0)
+                newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_q_beta4;
             else if (strcmp(nativeForkAndSpecialize_samsung_p_sig, method.signature) == 0)
                 newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_samsung_p;
             else if (strcmp(nativeForkAndSpecialize_samsung_o_sig, method.signature) == 0)
@@ -188,8 +188,10 @@ static JNINativeMethod *onRegisterZygote(JNIEnv *env, const char *className,
         } else if (strcmp(method.name, "nativeSpecializeAppProcess") == 0) {
             set_nativeSpecializeAppProcess(method.fnPtr);
 
-            if (strcmp(nativeSpecializeAppProcess_sig, method.signature) == 0)
-                newMethods[i].fnPtr = (void *) nativeSpecializeAppProcess;
+            if (strcmp(nativeSpecializeAppProcess_sig_q_beta4, method.signature) == 0)
+                newMethods[i].fnPtr = (void *) nativeSpecializeAppProcess_q_beta4;
+            else if (strcmp(nativeSpecializeAppProcess_sig_q, method.signature) == 0)
+                newMethods[i].fnPtr = (void *) nativeSpecializeAppProcess_q;
             else
                 LOGW("found nativeSpecializeAppProcess but signature %s mismatch", method.signature);
 

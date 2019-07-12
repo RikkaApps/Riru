@@ -9,7 +9,7 @@ void nativeForkAndSpecializePre(
         jintArray *fdsToClose, jintArray *fdsToIgnore, jboolean *is_child_zygote,
         jstring *instructionSet, jstring *appDataDir, jstring *packageName,
         jobjectArray *packagesForUID, jstring *sandboxId) {
-    // packageName, packagesForUID, sandboxId exists from Android Q
+    // packageName, packagesForUID, sandboxId added from Android Q beta 2, removed from beta 5
 }
 
 __attribute__((visibility("default")))
@@ -48,6 +48,8 @@ __attribute__((visibility("default"))) void specializeAppProcessPre(
         jstring *packageName, jobjectArray *packagesForUID, jstring *sandboxId) {
     // used by Android Q beta 3
     // a process in the "process pool", after specializeAppProcess is called, this process become a app process
+
+    // packageName, packagesForUID, sandboxId existed from Android Q beta 2, removed from beta 5
 }
 
 __attribute__((visibility("default"))) int specializeAppProcessPost(

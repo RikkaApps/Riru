@@ -9,11 +9,13 @@ import moe.riru.manager.R;
 @Keep
 public class NativeHelper {
 
+    private static final int V19_3 = 25;
+    private static final int V19_2 = 24;
     private static final int V19_1 = 22;
     private static final int V19 = 20;
     private static final int V18 = 19;
     private static final int V17_1 = 18;
-    private static final int MAX_VERSION = V19_1;
+    private static final int MAX_VERSION = V19_3;
 
     static {
         System.loadLibrary("helper");
@@ -29,6 +31,10 @@ public class NativeHelper {
         }
 
         switch (versionCode) {
+            case V19_3:
+                return "v19.3";
+            case V19_2:
+                return "v19.2";
             case V19_1:
                 return "v19.1";
             case V19:

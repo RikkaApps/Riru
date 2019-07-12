@@ -45,13 +45,14 @@ jint nativeForkAndSpecialize_p(
         jintArray fdsToClose, jintArray fdsToIgnore, jboolean is_child_zygote,
         jstring instructionSet, jstring appDataDir);
 
-const static char *nativeForkAndSpecialize_q_sig = "(II[II[[IILjava/lang/String;Ljava/lang/String;[I[IZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)I";
+// removed from beta5
+const static char *nativeForkAndSpecialize_q_beta4_sig = "(II[II[[IILjava/lang/String;Ljava/lang/String;[I[IZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)I";
 
-typedef jint (*nativeForkAndSpecialize_q_t)(
+typedef jint (*nativeForkAndSpecialize_q_beta4_t)(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jintArray, jintArray, jboolean, jstring, jstring, jstring, jobjectArray, jstring);
 
-jint nativeForkAndSpecialize_q(
+jint nativeForkAndSpecialize_q_beta4(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtime_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jstring se_name,
         jintArray fdsToClose, jintArray fdsToIgnore, jboolean is_child_zygote,
@@ -106,17 +107,27 @@ jint nativeForkAndSpecialize_samsung_m(
 
 // -----------------------------------------------------------------
 
-const static char *nativeSpecializeAppProcess_sig = "(II[II[[IILjava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)V";
-
-typedef void (*nativeSpecializeAppProcess_t)(
+// removed from beta5
+const static char *nativeSpecializeAppProcess_sig_q_beta4 = "(II[II[[IILjava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)V";
+typedef void (*nativeSpecializeAppProcess_q_beta4_t)(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jboolean, jstring, jstring, jstring, jobjectArray, jstring);
 
-void nativeSpecializeAppProcess(
+void nativeSpecializeAppProcess_q_beta4(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
         jboolean startChildZygote, jstring instructionSet, jstring appDataDir, jstring packageName,
         jobjectArray packagesForUID, jstring sandboxId);
+
+const static char *nativeSpecializeAppProcess_sig_q = "(II[II[[IILjava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;)V";
+typedef void (*nativeSpecializeAppProcess_t)(
+        JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
+        jboolean, jstring, jstring);
+
+void nativeSpecializeAppProcess_q(
+        JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
+        jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
+        jboolean startChildZygote, jstring instructionSet, jstring appDataDir);
 
 // -----------------------------------------------------------------
 
