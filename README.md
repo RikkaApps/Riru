@@ -2,7 +2,7 @@
 
 Riru is a very simple but useful thing. Only requires to replace one system file, it will provide the ability to Riru modules to run their code in apps' or system server's process.
 
-The name Riru coms from a charator. (https://www.pixiv.net/member_illust.php?mode=medium&illust_id=74128856)
+The name Riru comes from a character. (https://www.pixiv.net/member_illust.php?mode=medium&illust_id=74128856)
 
 [中文说明](https://github.com/RikkaApps/Riru/blob/master/README.zh-CN.md)
 
