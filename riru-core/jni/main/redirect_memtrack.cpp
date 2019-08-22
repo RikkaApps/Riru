@@ -43,6 +43,13 @@ FUNC_DEF(memtrack_proc_gl_pss, ssize_t, struct memtrack_proc *p) {
     return ((memtrack_proc_gl_pss_t) sym_memtrack_proc_gl_pss)(p);
 }
 
+FUNC_DEF(memtrack_proc_gl_pss_mapped, ssize_t, struct memtrack_proc *p) {
+    if (!sym_memtrack_proc_gl_pss_mapped)
+        return 0;
+
+    return ((memtrack_proc_gl_pss_mapped_t) sym_memtrack_proc_gl_pss_mapped)(p);
+}
+
 FUNC_DEF(memtrack_proc_gl_total, ssize_t, struct memtrack_proc *p) {
     if (!sym_memtrack_proc_gl_total)
         return 0;
@@ -55,6 +62,13 @@ FUNC_DEF(memtrack_proc_graphics_pss, ssize_t, struct memtrack_proc *p) {
         return 0;
 
     return ((memtrack_proc_graphics_pss_t) sym_memtrack_proc_graphics_pss)(p);
+}
+
+FUNC_DEF(memtrack_proc_graphics_pss_mapped, ssize_t, struct memtrack_proc *p) {
+    if (!sym_memtrack_proc_graphics_pss_mapped)
+        return 0;
+
+    return ((memtrack_proc_graphics_pss_mapped_t) sym_memtrack_proc_graphics_pss_mapped)(p);
 }
 
 FUNC_DEF(memtrack_proc_graphics_total, ssize_t, struct memtrack_proc *p) {
@@ -78,11 +92,61 @@ FUNC_DEF(memtrack_proc_other_pss, ssize_t, struct memtrack_proc *p) {
     return ((memtrack_proc_other_pss_t) sym_memtrack_proc_other_pss)(p);
 }
 
+FUNC_DEF(memtrack_proc_other_pss_mapped, ssize_t, struct memtrack_proc *p) {
+    if (!sym_memtrack_proc_other_pss_mapped)
+        return 0;
+
+    return ((memtrack_proc_other_pss_mapped_t) sym_memtrack_proc_other_pss_mapped)(p);
+}
+
+
 FUNC_DEF(memtrack_proc_other_total, ssize_t, struct memtrack_proc *p) {
     if (!sym_memtrack_proc_other_total)
         return 0;
 
     return ((memtrack_proc_other_total_t) sym_memtrack_proc_other_total)(p);
+}
+
+FUNC_DEF(memtrack_proc_multimedia_pss, ssize_t, struct memtrack_proc *p) {
+    if (!sym_memtrack_proc_multimedia_pss)
+        return 0;
+
+    return ((memtrack_proc_multimedia_pss_t) sym_memtrack_proc_multimedia_pss)(p);
+}
+
+FUNC_DEF(memtrack_proc_multimedia_pss_mapped, ssize_t, struct memtrack_proc *p) {
+    if (!sym_memtrack_proc_multimedia_pss_mapped)
+        return 0;
+
+    return ((memtrack_proc_multimedia_pss_mapped_t) sym_memtrack_proc_multimedia_pss_mapped)(p);
+}
+
+FUNC_DEF(memtrack_proc_multimedia_total, ssize_t, struct memtrack_proc *p) {
+    if (!sym_memtrack_proc_multimedia_total)
+        return 0;
+
+    return ((memtrack_proc_multimedia_total_t) sym_memtrack_proc_multimedia_total)(p);
+}
+
+FUNC_DEF(memtrack_proc_camera_pss, ssize_t, struct memtrack_proc *p) {
+    if (!sym_memtrack_proc_camera_pss)
+        return 0;
+
+    return ((memtrack_proc_camera_pss_t) sym_memtrack_proc_camera_pss)(p);
+}
+
+FUNC_DEF(memtrack_proc_camera_pss_mapped, ssize_t, struct memtrack_proc *p) {
+    if (!sym_memtrack_proc_camera_pss_mapped)
+        return 0;
+
+    return ((memtrack_proc_camera_pss_mapped_t) sym_memtrack_proc_camera_pss_mapped)(p);
+}
+
+FUNC_DEF(memtrack_proc_camera_total, ssize_t, struct memtrack_proc *p) {
+    if (!sym_memtrack_proc_camera_total)
+        return 0;
+
+    return ((memtrack_proc_camera_total_t) sym_memtrack_proc_camera_total)(p);
 }
 
 FUNC_DEF(_ZN7android2spINS_8hardware8memtrack4V1_09IMemtrackEED2Ev, void, int a1) {
