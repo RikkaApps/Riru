@@ -73,24 +73,24 @@ static void nativeForkAndSpecialize_pre(
         if (!module->forkAndSpecializePre)
             continue;
 
-        if (module->shouldSkipUid && ((shouldSkipUid_t) module->shouldSkipUid)(uid))
+        if (module->shouldSkipUid && ((shouldSkipUid_t *) module->shouldSkipUid)(uid))
             continue;
 
         if (!module->shouldSkipUid && shouldSkipUid(uid))
             continue;
 
         if (module->apiVersion >= 3) {
-            ((nativeForkAndSpecialize_pre_v3_t) module->forkAndSpecializePre)(
+            ((nativeForkAndSpecialize_pre_v3_t *) module->forkAndSpecializePre)(
                     env, clazz, &uid, &gid, &gids, &runtime_flags, &rlimits, &mount_external,
                     &se_info, &se_name, &fdsToClose, &fdsToIgnore, &is_child_zygote,
                     &instructionSet, &appDataDir, &packageName, &packagesForUID, &sandboxId);
         } else if (module->apiVersion == 2) {
-            ((nativeForkAndSpecialize_pre_v2_t) module->forkAndSpecializePre)(
+            ((nativeForkAndSpecialize_pre_v2_t *) module->forkAndSpecializePre)(
                     env, clazz, &uid, &gid, &gids, &runtime_flags, &rlimits, &mount_external,
                     &se_info, &se_name, &fdsToClose, &fdsToIgnore, &is_child_zygote,
                     &instructionSet, &appDataDir);
         } else {
-            ((nativeForkAndSpecialize_pre_t) module->forkAndSpecializePre)(
+            ((nativeForkAndSpecialize_pre_t *) module->forkAndSpecializePre)(
                     env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external, se_info,
                     se_name, fdsToClose, fdsToIgnore, is_child_zygote, instructionSet, appDataDir);
         }
@@ -105,7 +105,7 @@ static void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, ji
         if (!module->forkAndSpecializePost)
             continue;
 
-        if (module->shouldSkipUid && ((shouldSkipUid_t) module->shouldSkipUid)(uid))
+        if (module->shouldSkipUid && ((shouldSkipUid_t *) module->shouldSkipUid)(uid))
             continue;
 
         if (!module->shouldSkipUid && shouldSkipUid(uid))
@@ -124,7 +124,7 @@ static void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, ji
          * Don't known why, so we just don't print log in zygote and see what will happen
          */
         if (res == 0) LOGV("%s: forkAndSpecializePost", module->name);
-        ((nativeForkAndSpecialize_post_t) module->forkAndSpecializePost)(env, clazz, res);
+        ((nativeForkAndSpecialize_post_t *) module->forkAndSpecializePost)(env, clazz, res);
     }
 }
 
@@ -143,7 +143,7 @@ static void nativeSpecializeAppProcess_pre(
             continue;
 
         if (module->apiVersion >= 4) {
-            ((nativeSpecializeAppProcess_pre_t) module->specializeAppProcessPre)(
+            ((nativeSpecializeAppProcess_pre_t *) module->specializeAppProcessPre)(
                     env, clazz, &uid, &gid, &gids, &runtimeFlags, &rlimits, &mountExternal, &seInfo,
                     &niceName, &startChildZygote, &instructionSet, &appDataDir, &packageName,
                     &packagesForUID, &sandboxId);
@@ -161,7 +161,7 @@ static void nativeSpecializeAppProcess_post(JNIEnv *env, jclass clazz) {
 
         LOGV("%s: specializeAppProcessPost", module->name);
         if (module->apiVersion >= 4) {
-            ((nativeSpecializeAppProcess_post_t) module->specializeAppProcessPost)(env, clazz);
+            ((nativeSpecializeAppProcess_post_t *) module->specializeAppProcessPost)(env, clazz);
         }
     }
 }
@@ -179,11 +179,11 @@ static void nativeForkSystemServer_pre(
             continue;
 
         if (module->apiVersion >= 2) {
-            ((nativeForkSystemServer_pre_v2_t) module->forkSystemServerPre)(
+            ((nativeForkSystemServer_pre_v2_t *) module->forkSystemServerPre)(
                     env, clazz, &uid, &gid, &gids, &debug_flags, &rlimits, &permittedCapabilities,
                     &effectiveCapabilities);
         } else {
-            ((nativeForkSystemServer_pre_t) module->forkSystemServerPre)(
+            ((nativeForkSystemServer_pre_t *) module->forkSystemServerPre)(
                     env, clazz, uid, gid, gids, debug_flags, rlimits, permittedCapabilities,
                     effectiveCapabilities);
         }
@@ -196,7 +196,7 @@ static void nativeForkSystemServer_post(JNIEnv *env, jclass clazz, jint res) {
             continue;
 
         if (res == 0) LOGV("%s: forkSystemServerPost", module->name);
-        ((nativeForkSystemServer_post_t) module->forkSystemServerPost)(env, clazz, res);
+        ((nativeForkSystemServer_post_t *) module->forkSystemServerPost)(env, clazz, res);
     }
 }
 

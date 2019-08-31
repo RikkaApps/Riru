@@ -7,50 +7,48 @@
 
 #define MODULE_NAME_CORE "core"
 
-typedef void (*loaded_t)();
+using loaded_t=void();
 
 // ---------------------------------------------------------
 
-typedef void (*nativeForkAndSpecialize_pre_t)(
+using nativeForkAndSpecialize_pre_t = void(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jintArray, jintArray, jboolean, jstring, jstring);
 
-typedef void (*nativeForkAndSpecialize_pre_v2_t)(
+using nativeForkAndSpecialize_pre_v2_t = void(
         JNIEnv *, jclass, jint *, jint *, jintArray *, jint *, jobjectArray *, jint *, jstring *,
         jstring *, jintArray *, jintArray *, jboolean *, jstring *, jstring *);
 
-typedef void (*nativeForkAndSpecialize_pre_v3_t)(
+using nativeForkAndSpecialize_pre_v3_t = void(
         JNIEnv *, jclass, jint *, jint *, jintArray *, jint *, jobjectArray *, jint *, jstring *,
         jstring *, jintArray *, jintArray *, jboolean *, jstring *, jstring *, jstring *,
         jobjectArray *, jstring *);
 
-typedef int (*nativeForkAndSpecialize_post_t)(
+using nativeForkAndSpecialize_post_t = int(
         JNIEnv *, jclass, jint);
 
 // ---------------------------------------------------------
 
-typedef void (*nativeForkSystemServer_pre_t)(
+using nativeForkSystemServer_pre_t = void(
         JNIEnv *, jclass, uid_t, gid_t, jintArray,
         jint, jobjectArray, jlong, jlong);
 
-typedef void (*nativeForkSystemServer_pre_v2_t)(
+using nativeForkSystemServer_pre_v2_t = void(
         JNIEnv *, jclass, uid_t *, gid_t *, jintArray *, jint *, jobjectArray *, jlong *, jlong *);
 
-typedef int (*nativeForkSystemServer_post_t)(
-        JNIEnv *, jclass, jint);
+using nativeForkSystemServer_post_t = int(JNIEnv *, jclass, jint);
 
 // ---------------------------------------------------------
 
-typedef void (*nativeSpecializeAppProcess_pre_t)(
+using nativeSpecializeAppProcess_pre_t = void(
         JNIEnv *, jclass, jint *, jint *, jintArray *, jint *, jobjectArray *, jint *, jstring *,
         jstring *, jboolean *, jstring *, jstring *, jstring *, jobjectArray *, jstring *);
 
-typedef int (*nativeSpecializeAppProcess_post_t)(
-        JNIEnv *, jclass);
+using nativeSpecializeAppProcess_post_t = int(JNIEnv *, jclass);
 
-typedef int (*shouldSkipUid_t)(int);
+using shouldSkipUid_t = int(int);
 
-typedef int (*getApiVersion_t)();
+using getApiVersion_t = int();
 
 struct module {
     void *handle{};

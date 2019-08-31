@@ -48,7 +48,7 @@ static int isQ() {
 
 static const char *config_dir = nullptr;
 
-static const char* get_config_dir() {
+static const char *get_config_dir() {
     if (config_dir) return config_dir;
 
     if (access(CONFIG_DIR_MAGISK, R_OK) == 0) {
@@ -122,7 +122,7 @@ static void load_modules() {
                 module->getApiVersion = dlsym(handle, "getApiVersion");
 
                 if (module->getApiVersion) {
-                    module->apiVersion = ((getApiVersion_t) module->getApiVersion)();
+                    module->apiVersion = ((getApiVersion_t *) module->getApiVersion)();
                 }
             } else {
                 module->apiVersion = moduleApiVersion;
@@ -137,7 +137,7 @@ static void load_modules() {
             if (module->onModuleLoaded) {
                 LOGV("%s: onModuleLoaded", module->name);
 
-                ((loaded_t) module->onModuleLoaded)();
+                ((loaded_t *) module->onModuleLoaded)();
             }
         }
     }
@@ -193,7 +193,8 @@ static JNINativeMethod *onRegisterZygote(JNIEnv *env, const char *className,
             else if (strcmp(nativeSpecializeAppProcess_sig_q, method.signature) == 0)
                 newMethods[i].fnPtr = (void *) nativeSpecializeAppProcess_q;
             else
-                LOGW("found nativeSpecializeAppProcess but signature %s mismatch", method.signature);
+                LOGW("found nativeSpecializeAppProcess but signature %s mismatch",
+                     method.signature);
 
             if (newMethods[i].fnPtr != methods[i].fnPtr) {
                 LOGI("replaced com.android.internal.os.Zygote#nativeSpecializeAppProcess");
@@ -302,7 +303,8 @@ static void read_prop() {
 
     __system_property_get("ro.build.version.release", androidVersionName);
 
-    LOGI("system version %s (api %d, preview_sdk %d)", androidVersionName, sdkLevel, previewSdkLevel);
+    LOGI("system version %s (api %d, preview_sdk %d)", androidVersionName, sdkLevel,
+         previewSdkLevel);
 }
 
 extern "C" void constructor() __attribute__((constructor));
