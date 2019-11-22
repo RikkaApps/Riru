@@ -272,7 +272,7 @@ NEW_FUNC_DEF(int, jniRegisterNativeMethods, JNIEnv *env, const char *className,
     if (strcmp("com/android/internal/os/Zygote", className) == 0) {
         newMethods = onRegisterZygote(env, className, methods, numMethods);
     } else if (strcmp("android/os/SystemProperties", className) == 0) {
-        // hook android.os.SystemProperties#native_set to prevent a critical problem on Android 9+
+        // hook android.os.SystemProperties#native_set to prevent a critical problem on Android 9
         // see comment of SystemProperties_set in jni_native_method.cpp for detail
         newMethods = onRegisterSystemProperties(env, className, methods, numMethods);
     }
