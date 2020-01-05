@@ -83,3 +83,5 @@ Android NDK (把有 `ndk-build` 的目录加到 `PATH`)
 ## 模块
 
 [Riru-LocationReportEnabler](https://github.com/RikkaApps/Riru-LocationReportEnabler) (also a good example)
+
+[Riru-EdXposed](https://github.com/ElderDrivers/EdXposed) (port Xposed to Android P & Q)
