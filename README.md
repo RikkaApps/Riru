@@ -86,3 +86,5 @@ Current only support Magisk.
 ## Modules
 
 [Riru-LocationReportEnabler](https://github.com/RikkaApps/Riru-LocationReportEnabler) (also a good example)
+
+[Riru-EdXposed](https://github.com/ElderDrivers/EdXposed) (port Xposed to Android P & Q)
