@@ -1,4 +1,5 @@
 RIRU_PATH="/data/misc/riru"
+MODULEID="%%%ID%%%"
 
 check_riru_version() {
   [[ ! -f "$RIRU_PATH/api_version" ]] && abort "! Please Install Riru - Core v19 or above"
@@ -33,10 +34,13 @@ fi
 
 ui_print "- Copying extra files"
 
-TARGET="${RIRU_PATH}/modules/%%%ID%%%"
+TARGET="${RIRU_PATH}/modules/${MODULEID}"
 
 [[ -d "${TARGET}" ]] || mkdir -p "${TARGET}" || abort "! Can't mkdir -p ${TARGET}"
 
 cp "${MODPATH}/module.prop" "${TARGET}/module.prop" || abort "! Can't create ${TARGET}/module.prop"
 
-ui_print "- Files copied"
+ui_print "- Creating uninstall shell"
+
+echo \#\!/sbin/sh > "${MODPATH}/uninstall.sh"
+echo "rm -rf /data/misc/riru/modules/${MODULEID}" >> "${MODPATH}/uninstall.sh"
