@@ -29,9 +29,9 @@ def versionName = "v4"
 def versionCode = 4
 def riruApi = 4
 
-def moduleIdMagisk = "riru-$moduleId".replace('_', "-") // use '_' for so file, '-' for Magisk module name
+def moduleIdMagisk = "riru-$moduleId"
 def moduleNameMagisk = "Riru - $moduleName"
-def moduleDescriptionMagisk = "$moduleDescription Requires Riru - Core v18 or above installed."
+def moduleDescriptionMagisk = "$moduleDescription Requires Riru - Core v19 or above installed."
 def zipNameMagisk = "magisk-${project.name}-${versionName}.zip"
 
 def isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows()
@@ -40,24 +40,14 @@ def zipPathMagiskRelease = "$buildDir/tmp/release/magisk"
 
 import org.apache.tools.ant.filters.FixCrLfFilter
 
-task copyRiruPropMagiskRelease(type: Copy) {
-    from 'template_override/riru_module.prop'
-    into "$zipPathMagiskRelease/data/misc/riru/modules/$moduleId"
+task copyCustomizeMagiskRelease(type: Copy) {
+    from 'template_override/customize.sh'
+    into zipPathMagiskRelease
     filter { line ->
-        line.replaceAll('%%%NAME%%%', moduleName)
-                .replaceAll('%%%AUTHOR%%%', moduleAuthor)
-                .replaceAll('%%%VERSION_NAME%%%', versionName)
-                .replaceAll('%%%VERSION_CODE%%%', versionCode.toString())
-                .replaceAll('%%%DESCRIPTION%%%', moduleDescription)
-                .replaceAll('%%%API%%%', riruApi.toString())
+        line.replaceAll('%%%ID%%%', moduleId)
     }
     filter(FixCrLfFilter.class,
             eol: FixCrLfFilter.CrLf.newInstance("lf"))
-
-    doLast {
-        file("$zipPathMagiskRelease/riru_module.prop").delete()
-        file("$zipPathMagiskRelease/data/misc/riru/modules/$moduleId/riru_module.prop").renameTo("$zipPathMagiskRelease/data/misc/riru/modules/$moduleId/module.prop")
-    }
 }
 
 task copyFilesMagiskRelease(type: Copy) {
@@ -70,12 +60,13 @@ task copyFilesMagiskRelease(type: Copy) {
                 .replaceAll('%%%VERSION_CODE%%%', versionCode.toString())
                 .replaceAll('%%%AUTHOR%%%', moduleAuthor)
                 .replaceAll('%%%DESCRIPTION%%%', moduleDescriptionMagisk)
+                .replaceAll('%%%API%%%', riruApi.toString())
     }
     filter(FixCrLfFilter.class,
             eol: FixCrLfFilter.CrLf.newInstance("lf"))
 
-    finalizedBy('copyRiruPropMagiskRelease')
-
+	finalizedBy('copyCustomizeMagiskRelease')
+	
     doLast {
         file("$zipPathMagiskRelease/system").mkdirs()
         file("$zipPathMagiskRelease/system_x86").mkdirs()
