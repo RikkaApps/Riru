@@ -434,18 +434,35 @@ void nativeSpecializeAppProcess_q(
 // -----------------------------------------------------------------
 
 jint nativeForkSystemServer(
-        JNIEnv *env, jclass clazz, uid_t uid, gid_t gid, jintArray gids, jint debug_flags,
+        JNIEnv *env, jclass clazz, uid_t uid, gid_t gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jlong permittedCapabilities, jlong effectiveCapabilities) {
 
     nativeForkSystemServer_pre(
-            env, clazz, uid, gid, gids, debug_flags, rlimits, permittedCapabilities,
+            env, clazz, uid, gid, gids, runtimeFlags, rlimits, permittedCapabilities,
             effectiveCapabilities);
 
     jint res = ((nativeForkSystemServer_t *) _nativeForkSystemServer)(
-            env, clazz, uid, gid, gids, debug_flags, rlimits, permittedCapabilities,
+            env, clazz, uid, gid, gids, runtimeFlags, rlimits, permittedCapabilities,
             effectiveCapabilities);
 
     nativeForkSystemServer_post(env, clazz, res);
+    return res;
+}
+
+jint nativeForkSystemServer_samsung_q(
+        JNIEnv *env, jclass cls, uid_t uid, gid_t gid, jintArray gids, jint runtimeFlags,
+        jint space, jint accessInfo, jobjectArray rlimits, jlong permittedCapabilities,
+        jlong effectiveCapabilities) {
+
+    nativeForkSystemServer_pre(
+            env, cls, uid, gid, gids, runtimeFlags, rlimits, permittedCapabilities,
+            effectiveCapabilities);
+
+    jint res = ((nativeForkSystemServer_samsung_q_t *) _nativeForkSystemServer)(
+            env, cls, uid, gid, gids, runtimeFlags, space, accessInfo, rlimits, permittedCapabilities,
+            effectiveCapabilities);
+
+    nativeForkSystemServer_post(env, cls, res);
     return res;
 }
 

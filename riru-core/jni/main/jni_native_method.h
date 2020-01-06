@@ -109,6 +109,7 @@ jint nativeForkAndSpecialize_samsung_m(
 
 // removed from beta5
 const static char *nativeSpecializeAppProcess_sig_q_beta4 = "(II[II[[IILjava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)V";
+
 using nativeSpecializeAppProcess_q_beta4_t = void(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jboolean, jstring, jstring, jstring, jobjectArray, jstring);
@@ -120,6 +121,7 @@ void nativeSpecializeAppProcess_q_beta4(
         jobjectArray packagesForUID, jstring sandboxId);
 
 const static char *nativeSpecializeAppProcess_sig_q = "(II[II[[IILjava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;)V";
+
 using nativeSpecializeAppProcess_t = void(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jboolean, jstring, jstring);
@@ -137,8 +139,20 @@ using nativeForkSystemServer_t = jint(
         JNIEnv *, jclass, uid_t, gid_t, jintArray, jint, jobjectArray, jlong, jlong);
 
 jint nativeForkSystemServer(
-        JNIEnv *env, jclass, uid_t uid, gid_t gid, jintArray gids, jint debug_flags,
+        JNIEnv *env, jclass, uid_t uid, gid_t gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jlong permittedCapabilities, jlong effectiveCapabilities);
+
+const static char *nativeForkSystemServer_samsung_q_sig = "(II[IIII[[IJJ)I";
+
+using nativeForkSystemServer_samsung_q_t = jint(
+        JNIEnv *, jclass, uid_t, gid_t, jintArray, jint, jint, jint, jobjectArray, jlong, jlong);
+
+jint nativeForkSystemServer_samsung_q(
+        JNIEnv *env, jclass, uid_t uid, gid_t gid, jintArray gids, jint runtimeFlags,
+        jint space, jint accessInfo, jobjectArray rlimits, jlong permittedCapabilities,
+        jlong effectiveCapabilities);
+
+// -----------------------------------------------------------------
 
 using SystemProperties_set_t = jint(JNIEnv *, jobject, jstring, jstring);
 
