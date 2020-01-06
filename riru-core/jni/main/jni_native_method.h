@@ -13,7 +13,7 @@ void set_SystemProperties_set(void *addr);
 
 const static char *nativeForkAndSpecialize_marshmallow_sig = "(II[II[[IILjava/lang/String;Ljava/lang/String;[ILjava/lang/String;Ljava/lang/String;)I";
 
-typedef jint (*nativeForkAndSpecialize_marshmallow_t)(
+using nativeForkAndSpecialize_marshmallow_t = jint(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jintArray, jstring, jstring);
 
@@ -24,7 +24,7 @@ jint nativeForkAndSpecialize_marshmallow(
 
 const static char *nativeForkAndSpecialize_oreo_sig = "(II[II[[IILjava/lang/String;Ljava/lang/String;[I[ILjava/lang/String;Ljava/lang/String;)I";
 
-typedef jint (*nativeForkAndSpecialize_oreo_t)(
+using nativeForkAndSpecialize_oreo_t = jint(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jintArray, jintArray, jstring, jstring);
 
@@ -35,7 +35,7 @@ jint nativeForkAndSpecialize_oreo(
 
 const static char *nativeForkAndSpecialize_p_sig = "(II[II[[IILjava/lang/String;Ljava/lang/String;[I[IZLjava/lang/String;Ljava/lang/String;)I";
 
-typedef jint (*nativeForkAndSpecialize_p_t)(
+using nativeForkAndSpecialize_p_t = jint(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jintArray, jintArray, jboolean, jstring, jstring);
 
@@ -48,7 +48,7 @@ jint nativeForkAndSpecialize_p(
 // removed from beta5
 const static char *nativeForkAndSpecialize_q_beta4_sig = "(II[II[[IILjava/lang/String;Ljava/lang/String;[I[IZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)I";
 
-typedef jint (*nativeForkAndSpecialize_q_beta4_t)(
+using nativeForkAndSpecialize_q_beta4_t = jint(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jintArray, jintArray, jboolean, jstring, jstring, jstring, jobjectArray, jstring);
 
@@ -61,7 +61,7 @@ jint nativeForkAndSpecialize_q_beta4(
 
 const static char *nativeForkAndSpecialize_samsung_p_sig = "(II[II[[IILjava/lang/String;IILjava/lang/String;[I[IZLjava/lang/String;Ljava/lang/String;)I";
 
-typedef jint (*nativeForkAndSpecialize_samsung_p_t)(
+using nativeForkAndSpecialize_samsung_p_t = jint(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jint, jint,
         jstring, jintArray, jintArray, jboolean, jstring, jstring);
 
@@ -73,7 +73,7 @@ jint nativeForkAndSpecialize_samsung_p(
 
 const static char *nativeForkAndSpecialize_samsung_o_sig = "(II[II[[IILjava/lang/String;IILjava/lang/String;[I[ILjava/lang/String;Ljava/lang/String;)I";
 
-typedef jint (*nativeForkAndSpecialize_samsung_o_t)(
+using nativeForkAndSpecialize_samsung_o_t = jint(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jint, jint,
         jstring, jintArray, jintArray, jstring, jstring);
 
@@ -85,7 +85,7 @@ jint nativeForkAndSpecialize_samsung_o(
 
 const static char *nativeForkAndSpecialize_samsung_n_sig = "(II[II[[IILjava/lang/String;IILjava/lang/String;[ILjava/lang/String;Ljava/lang/String;I)I";
 
-typedef jint (*nativeForkAndSpecialize_samsung_n_t)(
+using nativeForkAndSpecialize_samsung_n_t = jint(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jint, jint,
         jstring, jintArray, jstring, jstring, jint);
 
@@ -96,7 +96,7 @@ jint nativeForkAndSpecialize_samsung_n(
 
 const static char *nativeForkAndSpecialize_samsung_m_sig = "(II[II[[IILjava/lang/String;IILjava/lang/String;[ILjava/lang/String;Ljava/lang/String;)I";
 
-typedef jint (*nativeForkAndSpecialize_samsung_m_t)(
+using nativeForkAndSpecialize_samsung_m_t = jint(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jint, jint,
         jstring, jintArray, jstring, jstring);
 
@@ -109,7 +109,7 @@ jint nativeForkAndSpecialize_samsung_m(
 
 // removed from beta5
 const static char *nativeSpecializeAppProcess_sig_q_beta4 = "(II[II[[IILjava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)V";
-typedef void (*nativeSpecializeAppProcess_q_beta4_t)(
+using nativeSpecializeAppProcess_q_beta4_t = void(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jboolean, jstring, jstring, jstring, jobjectArray, jstring);
 
@@ -120,7 +120,7 @@ void nativeSpecializeAppProcess_q_beta4(
         jobjectArray packagesForUID, jstring sandboxId);
 
 const static char *nativeSpecializeAppProcess_sig_q = "(II[II[[IILjava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;)V";
-typedef void (*nativeSpecializeAppProcess_t)(
+using nativeSpecializeAppProcess_t = void(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jboolean, jstring, jstring);
 
@@ -133,14 +133,14 @@ void nativeSpecializeAppProcess_q(
 
 const static char *nativeForkSystemServer_sig = "(II[II[[IJJ)I";
 
-typedef jint (*nativeForkSystemServer_t)(
+using nativeForkSystemServer_t = jint(
         JNIEnv *, jclass, uid_t, gid_t, jintArray, jint, jobjectArray, jlong, jlong);
 
 jint nativeForkSystemServer(
         JNIEnv *env, jclass, uid_t uid, gid_t gid, jintArray gids, jint debug_flags,
         jobjectArray rlimits, jlong permittedCapabilities, jlong effectiveCapabilities);
 
-typedef jint (*SystemProperties_set_t)(JNIEnv *, jobject, jstring, jstring);
+using SystemProperties_set_t = jint(JNIEnv *, jobject, jstring, jstring);
 
 void SystemProperties_set(JNIEnv *env, jobject clazz, jstring keyJ, jstring valJ);
 

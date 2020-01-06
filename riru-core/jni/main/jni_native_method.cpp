@@ -218,7 +218,7 @@ jint nativeForkAndSpecialize_marshmallow(
                                 instructionSet, appDataDir, packageName, packagesForUID,
                                 sandboxId);
 
-    jint res = ((nativeForkAndSpecialize_marshmallow_t) _nativeForkAndSpecialize)(
+    jint res = ((nativeForkAndSpecialize_marshmallow_t *) _nativeForkAndSpecialize)(
             env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external, se_info, se_name,
             fdsToClose, instructionSet, appDataDir);
 
@@ -241,7 +241,7 @@ jint nativeForkAndSpecialize_oreo(
                                 instructionSet, appDataDir, packageName, packagesForUID,
                                 sandboxId);
 
-    jint res = ((nativeForkAndSpecialize_oreo_t) _nativeForkAndSpecialize)(
+    jint res = ((nativeForkAndSpecialize_oreo_t *) _nativeForkAndSpecialize)(
             env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external, se_info, se_name,
             fdsToClose, fdsToIgnore, instructionSet, appDataDir);
 
@@ -264,7 +264,7 @@ jint nativeForkAndSpecialize_p(
                                 instructionSet, appDataDir, packageName, packagesForUID,
                                 sandboxId);
 
-    jint res = ((nativeForkAndSpecialize_p_t) _nativeForkAndSpecialize)(
+    jint res = ((nativeForkAndSpecialize_p_t *) _nativeForkAndSpecialize)(
             env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external, se_info, se_name,
             fdsToClose, fdsToIgnore, is_child_zygote, instructionSet, appDataDir);
 
@@ -284,7 +284,7 @@ jint nativeForkAndSpecialize_q_beta4(
                                 instructionSet, appDataDir, packageName, packagesForUID,
                                 sandboxId);
 
-    jint res = ((nativeForkAndSpecialize_q_beta4_t) _nativeForkAndSpecialize)(
+    jint res = ((nativeForkAndSpecialize_q_beta4_t *) _nativeForkAndSpecialize)(
             env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external, se_info, se_name,
             fdsToClose, fdsToIgnore, is_child_zygote, instructionSet, appDataDir, packageName,
             packagesForUID, sandboxId);
@@ -308,7 +308,7 @@ jint nativeForkAndSpecialize_samsung_p(
                                 instructionSet, appDataDir, packageName, packagesForUID,
                                 sandboxId);
 
-    jint res = ((nativeForkAndSpecialize_samsung_p_t) _nativeForkAndSpecialize)(
+    jint res = ((nativeForkAndSpecialize_samsung_p_t *) _nativeForkAndSpecialize)(
             env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external, se_info, category,
             accessInfo, se_name, fdsToClose, fdsToIgnore, is_child_zygote, instructionSet,
             appDataDir);
@@ -333,7 +333,7 @@ jint nativeForkAndSpecialize_samsung_o(
                                 instructionSet, appDataDir, packageName, packagesForUID,
                                 sandboxId);
 
-    jint res = ((nativeForkAndSpecialize_samsung_o_t) _nativeForkAndSpecialize)(
+    jint res = ((nativeForkAndSpecialize_samsung_o_t *) _nativeForkAndSpecialize)(
             env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external, se_info, category,
             accessInfo, se_name, fdsToClose, fdsToIgnore, instructionSet, appDataDir);
 
@@ -358,7 +358,7 @@ jint nativeForkAndSpecialize_samsung_n(
                                 instructionSet, appDataDir, packageName, packagesForUID,
                                 sandboxId);
 
-    jint res = ((nativeForkAndSpecialize_samsung_n_t) _nativeForkAndSpecialize)(
+    jint res = ((nativeForkAndSpecialize_samsung_n_t *) _nativeForkAndSpecialize)(
             env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external, se_info, category,
             accessInfo, se_name, fdsToClose, instructionSet, appDataDir, a1);
 
@@ -382,7 +382,7 @@ jint nativeForkAndSpecialize_samsung_m(
                                 instructionSet, appDataDir, packageName, packagesForUID,
                                 sandboxId);
 
-    jint res = ((nativeForkAndSpecialize_samsung_m_t) _nativeForkAndSpecialize)(
+    jint res = ((nativeForkAndSpecialize_samsung_m_t *) _nativeForkAndSpecialize)(
             env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external, se_info, category,
             accessInfo, se_name, fdsToClose, instructionSet, appDataDir);
 
@@ -403,7 +403,7 @@ void nativeSpecializeAppProcess_q_beta4(
             startChildZygote, instructionSet, appDataDir, packageName, packagesForUID,
             sandboxId);
 
-    ((nativeSpecializeAppProcess_q_beta4_t) _nativeSpecializeAppProcess)(
+    ((nativeSpecializeAppProcess_q_beta4_t *) _nativeSpecializeAppProcess)(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
             startChildZygote, instructionSet, appDataDir, packageName, packagesForUID,
             sandboxId);
@@ -424,7 +424,7 @@ void nativeSpecializeAppProcess_q(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
             startChildZygote, instructionSet, appDataDir, packageName, packagesForUID, sandboxId);
 
-    ((nativeSpecializeAppProcess_t) _nativeSpecializeAppProcess)(
+    ((nativeSpecializeAppProcess_t *) _nativeSpecializeAppProcess)(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
             startChildZygote, instructionSet, appDataDir);
 
@@ -441,7 +441,7 @@ jint nativeForkSystemServer(
             env, clazz, uid, gid, gids, debug_flags, rlimits, permittedCapabilities,
             effectiveCapabilities);
 
-    jint res = ((nativeForkSystemServer_t) _nativeForkSystemServer)(
+    jint res = ((nativeForkSystemServer_t *) _nativeForkSystemServer)(
             env, clazz, uid, gid, gids, debug_flags, rlimits, permittedCapabilities,
             effectiveCapabilities);
 
@@ -470,7 +470,7 @@ void SystemProperties_set(JNIEnv *env, jobject clazz, jstring keyJ, jstring valJ
     int no_throw = sscanf(key, "sys.user.%[^.].ce_available", user) == 1;
     env->ReleaseStringUTFChars(keyJ, key);
 
-    ((SystemProperties_set_t) _SystemProperties_set)(env, clazz, keyJ, valJ);
+    ((SystemProperties_set_t *) _SystemProperties_set)(env, clazz, keyJ, valJ);
 
     jthrowable exception = env->ExceptionOccurred();
     if (exception && no_throw) {
