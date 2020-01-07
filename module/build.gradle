@@ -30,7 +30,7 @@ def zipName = "magisk-${moduleProp['id']}-${moduleProp['version']}.zip"
 import java.nio.file.Files
 import java.security.MessageDigest
 
-static def calcSha1(file) {
+static def sha256sum(file) {
     def md = MessageDigest.getInstance("SHA-256")
     file.eachByte 4096, { bytes, size ->
         md.update(bytes, 0, size);
@@ -38,7 +38,7 @@ static def calcSha1(file) {
     return md.digest().encodeHex()
 }
 
-static def renameOrFail(File from, File to) {
+static def renameOrFail(from, to) {
     if (!from.renameTo(to)) {
         throw new IOException("Unable reanme file $from to $to")
     }
@@ -90,7 +90,7 @@ android.libraryVariants.all { variant ->
             exclude "README.md", "META-INF"
         }.visit { f ->
             if (f.directory) return
-            file(f.file.path + ".sha256sum").text = calcSha1(f.file)
+            file(f.file.path + ".sha256sum").text = sha256sum(f.file)
         }
     }
     task.finalizedBy zipMagiskMoudle

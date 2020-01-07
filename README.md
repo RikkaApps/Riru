@@ -4,8 +4,6 @@ Riru is a very simple but useful thing. Only requires to replace one system file
 
 The name Riru comes from a character. (https://www.pixiv.net/member_illust.php?mode=medium&illust_id=74128856)
 
-[中文说明](https://github.com/RikkaApps/Riru/blob/master/README.zh-CN.md)
-
 ## Requirements
 
 * Rooted Android 6.0+ devices 
@@ -27,64 +25,14 @@ Then we can call `RegisterNatives` again to replace them.
 
 There is only one `libmemtrack.so`, if someone wants to do something by replacing it, others can't. So I made Riru occupy libmemtrack but provide the ability to make modules.
 
-## Build Requirements
+## Build
 
-Android NDK (add the directory with `ndk-build` to `PATH`)
-
-## Build core
-
-* Magisk Module
-
-  Run `:riru-core:assembleMagiskRelease` task in the command line (use `gradlew`) or Android Studio, zip will be saved to `release`
-
-## Build your own module
-
-1. Copy `riru-module-template` and rename to your name
-2. Change module name in `riru-your-module/jni/main/Android.mk`
-3. Change module information in `build.gradle`
-4. Write your code
-5. Run `:riru-your-module:assembleMagiskRelease` task in command line (use `gradlew`) or Android Studio, zip will be saved to `release`
-
-## Where your own module needs attention
-
-* DO NOT overwrite `android.os.SystemProperties#native_set` in core, or your data may be wiped
-  ([Detail info](https://github.com/RikkaApps/Riru/blob/v7/riru-core/jni/main/jni_native_method.cpp#L162-L176))
-  (If you really need to hook this, remember to clear exception)
-* DO NO print log (`__android_log_print`) in `nativeForkAndSpecialize(Pre/Post)` `nativeForkSystemServer(Pre/Post)` when in zygote process, or it may cause zygote not work
-  (magic not confirmed, [Detail info](https://github.com/RikkaApps/Riru/blob/77adfd6a4a6a81bfd20569c910bc4854f2f84f5e/riru-core/jni/main/jni_native_method.cpp#L55-L66))
-* Add `-ffixed-x18` to both compiler and linker parameter, or it will cause problems on Android Q (see template)
-
-## Riru API
-
-* Currently, one module version can only support one API version
-* See template for details
-
-### v4 (core v19+)
-
-* Add `api=4` to `riru_module.prop` to declare API version
-* Check and deny installation if Riru version is below v19 in `config.sh`
-* Add `specializeAppProcessPre` `specializeAppProcessPost` used by Android Q beta 3 (see template)
-
-### v3 (core v18+)
-
-* Add `api=3` to `riru_module.prop` to declare API version
-* Check and deny installation if Riru version is below v18 in `config.sh` 
-* Parameter of `nativeForkAndSpecializePre` changes (compare to v2, added `jstring *packageName, jobjectArray *packagesForUID, jstring *sandboxId` in the end)
-
-### v2 (core v16-v17.1)
-
-* Export `int getApiVersion() { return 2; }` to declare API version
-* Parameter of `nativeForkAndSpecializePre` changes (compare to v1, all parameter is pointer)
+Run gradle task `:module:assembleRelease` task from Android Studio or command line, zip will be saved to `out`.
 
 ## Install
 
-Current only support Magisk.
+Install zip in Magisk Manager.
 
-1. Install core zip in Magisk
-2. Install module zip in Magisk
+## Create your own module
 
-## Modules
-
-[Riru-LocationReportEnabler](https://github.com/RikkaApps/Riru-LocationReportEnabler) (also a good example)
-
-[Riru-EdXposed](https://github.com/ElderDrivers/EdXposed) (port Xposed to Android P & Q)
+[View template](https://github.com/RikkaApps/Riru-Template)
