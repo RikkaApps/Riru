@@ -1,0 +1,103 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion rootProject.ext.targetSdkVersion
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+    }
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+            version "3.10.2"
+        }
+    }
+}
+
+def moduleProp = [
+        id         : "riru-core",
+        name       : "Riru - Core",
+        version    : "v19.6",
+        versionCode: "28",
+        author     : "Rikka",
+        description: "Inject zygote process by replace libmemtrack.so, provide interface to other Riru modules."
+]
+
+def outDir = file("$rootDir/out")
+def magiskDir = file("$outDir/magisk_module")
+def zipName = "magisk-${moduleProp['id']}-${moduleProp['version']}.zip"
+
+import java.nio.file.Files
+import java.security.MessageDigest
+
+static def calcSha1(file) {
+    def md = MessageDigest.getInstance("SHA-256")
+    file.eachByte 4096, { bytes, size ->
+        md.update(bytes, 0, size);
+    }
+    return md.digest().encodeHex()
+}
+
+static def renameOrFail(File from, File to) {
+    if (!from.renameTo(to)) {
+        throw new IOException("Unable reanme file $from to $to")
+    }
+}
+
+android.libraryVariants.all { variant ->
+    def task = variant.assembleProvider.get()
+    task.doLast {
+        // clear
+        delete { delete magiskDir }
+
+        // copy from template
+        copy {
+            from "$rootDir/template/magisk_module"
+            into magiskDir.path
+        }
+        // copy .git files manually since gradle exclude it by default
+        Files.copy(file("$rootDir/template/magisk_module/.gitattributes").toPath(), file("${magiskDir.path}/.gitattributes").toPath())
+
+        // generate module.prop
+        def modulePropText = ""
+        moduleProp.each { k, v -> modulePropText += "$k=$v\n" }
+        modulePropText = modulePropText.trim()
+        file("$magiskDir/module.prop").text = modulePropText
+
+        // copy native files
+        def nativeOutDir = file("build/intermediates/cmake/$variant.name/obj")
+
+        file("$magiskDir/system").mkdirs()
+        file("$magiskDir/system_x86").mkdirs()
+        renameOrFail(file("$nativeOutDir/arm64-v8a"), file("$magiskDir/system/lib64"))
+        renameOrFail(file("$nativeOutDir/armeabi-v7a"), file("$magiskDir/system/lib"))
+        renameOrFail(file("$nativeOutDir/x86_64"), file("$magiskDir/system_x86/lib64"))
+        renameOrFail(file("$nativeOutDir/x86"), file("$magiskDir/system_x86/lib"))
+
+        renameOrFail(file("$magiskDir/system/lib/libriru-core.so"), file("$magiskDir/system/lib/libmemtrack.so"))
+        renameOrFail(file("$magiskDir/system/lib64/libriru-core.so"), file("$magiskDir/system/lib64/libmemtrack.so"))
+        renameOrFail(file("$magiskDir/system_x86/lib/libriru-core.so"), file("$magiskDir/system_x86/lib/libmemtrack.so"))
+        renameOrFail(file("$magiskDir/system_x86/lib64/libriru-core.so"), file("$magiskDir/system_x86/lib64/libmemtrack.so"))
+
+        file("$magiskDir/zygote_restart").mkdir()
+        renameOrFail(file("$magiskDir/system/lib/zygote_restart"), file("$magiskDir/zygote_restart/zygote_restart_arm"))
+        renameOrFail(file("$magiskDir/system/lib64/zygote_restart"), file("$magiskDir/zygote_restart/zygote_restart_arm64"))
+        renameOrFail(file("$magiskDir/system_x86/lib/zygote_restart"), file("$magiskDir/zygote_restart/ygote_restart_x86"))
+        renameOrFail(file("$magiskDir/system_x86/lib64/zygote_restart"), file("$magiskDir/zygote_restart/zygote_restart_x64"))
+
+        // generate sha1sum
+        fileTree("$magiskDir").matching {
+            exclude "README.md", "META-INF"
+        }.visit { f ->
+            if (f.directory) return
+            file(f.file.path + ".sha256sum").text = calcSha1(f.file)
+        }
+    }
+    task.finalizedBy zipMagiskMoudle
+}
+
+task zipMagiskMoudle(type: Zip) {
+    from magiskDir
+    archiveName zipName
+    destinationDir outDir
+}

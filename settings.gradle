@@ -1,1 +1,1 @@
-include ':riru-core', ':riru-module-template', ':riru-location-report-enabler', ':riru-storage-redirect', ':app'
+include ':module', ':app'

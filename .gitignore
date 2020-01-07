@@ -9,7 +9,8 @@
 .DS_Store
 /build
 /captures
-/release
+/out
 .externalNativeBuild
+.cxx
 elf-cleaner.sh
 settings.gradle
