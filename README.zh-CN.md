@@ -34,4 +34,4 @@ JNI 函数 (`com.android.internal.os.Zygote#nativeForkAndSpecialize` & `com.andr
 
 ## 创造你自己的模块
 
-[查看模板](https://github.com/RikkaApps/Riru-Template)
+[查看模板](https://github.com/RikkaApps/Riru-ModuleTemplate)

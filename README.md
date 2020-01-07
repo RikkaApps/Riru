@@ -35,4 +35,4 @@ Install zip in Magisk Manager.
 
 ## Create your own module
 
-[View template](https://github.com/RikkaApps/Riru-Template)
+[View template](https://github.com/RikkaApps/Riru-ModuleTemplate)
