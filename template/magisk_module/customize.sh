@@ -19,7 +19,7 @@ fi
 . $TMPDIR/verify.sh
 
 ui_print "- Extracting module files"
-vunzip -o "$ZIPFILE" 'module.prop' 'post-fs-data.sh' -d "$MODPATH"
+vunzip -o "$ZIPFILE" 'module.prop' 'post-fs-data.sh' 'uninstall.sh' -d "$MODPATH"
 
 mkdir -p "$RIRU_PATH/modules"
 
