@@ -1,3 +1,8 @@
+import org.apache.tools.ant.filters.FixCrLfFilter
+
+import java.nio.file.Files
+import java.security.MessageDigest
+
 apply plugin: 'com.android.library'
 
 android {
@@ -14,6 +19,7 @@ android {
     }
 }
 
+def apiVersion = 4
 def moduleProp = [
         id         : "riru-core",
         name       : "Riru - Core",
@@ -27,8 +33,6 @@ def outDir = file("$rootDir/out")
 def magiskDir = file("$outDir/magisk_module")
 def zipName = "magisk-${moduleProp['id']}-${moduleProp['version']}.zip"
 
-import java.nio.file.Files
-import java.security.MessageDigest
 
 static def sha256sum(file) {
     def md = MessageDigest.getInstance("SHA-256")
@@ -54,7 +58,20 @@ android.libraryVariants.all { variant ->
         copy {
             from "$rootDir/template/magisk_module"
             into magiskDir.path
+            exclude 'customize.sh'
         }
+        copy {
+            from file("$rootDir/template/magisk_module/customize.sh")
+            into magiskDir.path
+            filter { line ->
+                line.replaceAll('%%%RIRU_API%%%', apiVersion.toString())
+                        .replaceAll('%%%RIRU_VERSION_CODE%%%', moduleProp['versionCode'].toString())
+                        .replaceAll('%%%RIRU_VERSION_NAME%%%', moduleProp['version'].toString())
+            }
+            filter(FixCrLfFilter.class,
+                    eol: FixCrLfFilter.CrLf.newInstance("lf"))
+        }
+
         // copy .git files manually since gradle exclude it by default
         Files.copy(file("$rootDir/template/magisk_module/.gitattributes").toPath(), file("${magiskDir.path}/.gitattributes").toPath())
 

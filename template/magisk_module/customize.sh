@@ -1,6 +1,8 @@
 SKIPUNZIP=1
 RIRU_PATH="/data/misc/riru"
-RIRU_API=4
+RIRU_API="%%%RIRU_API%%%"
+RIRU_VERSION_CODE="%%%RIRU_VERSION_CODE%%%"
+RIRU_VERSION_NAME="%%%RIRU_VERSION_NAME%%%"
 
 # check architecture
 if [[ "$ARCH" != "arm" && "$ARCH" != "arm64" && "$ARCH" != "x86" && "$ARCH" != "x64" ]]; then
@@ -51,9 +53,13 @@ extract "$ZIPFILE" "zygote_restart/zygote_restart_$ARCH" "$RIRU_PATH/bin" "true"
 mv "$RIRU_PATH/bin/zygote_restart_$ARCH" "$RIRU_PATH/bin/zygote_restart"
 set_perm "$RIRU_PATH/bin/zygote_restart" 0 0 0700 u:object_r:system_file:s0
 
-ui_print "- Writing api version file"
-echo -n "$RIRU_API" > "$RIRU_PATH/api_version"
-set_perm "$RIRU_PATH/api_version" 0 0 0600 u:object_r:system_file:s0
+ui_print "- Writing Riru files"
+echo -n "$RIRU_API" > "$RIRU_PATH/api_version.new"
+echo -n "$RIRU_VERSION_NAME" > "$RIRU_PATH/version_name.new"
+echo -n "$RIRU_VERSION_CODE" > "$RIRU_PATH/version_code.new"
+set_perm "$RIRU_PATH/api_version.new" 0 0 0600 u:object_r:system_file:s0
+set_perm "$RIRU_PATH/version_name.new" 0 0 0600 u:object_r:system_file:s0
+set_perm "$RIRU_PATH/version_code.new" 0 0 0600 u:object_r:system_file:s0
 
 ui_print "- Setting permissions"
 set_perm_recursive "$MODPATH" 0 0 0755 0644
