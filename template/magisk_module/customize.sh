@@ -18,28 +18,36 @@ if [[ ! -f "$TMPDIR/verify.sh" ]]; then
 fi
 . $TMPDIR/verify.sh
 
-ui_print "- Extracting module files"
-vunzip -o "$ZIPFILE" 'module.prop' 'post-fs-data.sh' 'uninstall.sh' -d "$MODPATH"
+ui_print "- Extracting Magisk files"
+
+extract "$ZIPFILE" 'module.prop' "$MODPATH"
+extract "$ZIPFILE" 'post-fs-data.sh' "$MODPATH"
+extract "$ZIPFILE" 'uninstall.sh' "$MODPATH"
 
 mkdir -p "$RIRU_PATH/modules"
 
 if [[ "$ARCH" == "x86" || "$ARCH" == "x64" ]]; then
-  ui_print "- Extracting x86/64 libraries"
-  vunzip -o "$ZIPFILE" 'system_x86/*' -d "$MODPATH"
+  ui_print "- Extracting x86 libraries"
+  extract "$ZIPFILE" 'system_x86/lib/libmemtrack.so' "$MODPATH"
   mv "$MODPATH/system_x86/lib" "$MODPATH/system/lib"
-  mv "$MODPATH/system_x86/lib64" "$MODPATH/system/lib64"
-else
-  ui_print "- Extracting arm/arm64 libraries"
-  vunzip -o "$ZIPFILE" 'system/*' -d "$MODPATH"
-fi
 
-if [[ "$IS64BIT" == "false" ]]; then
-  ui_print "- Removing 64-bit libraries"
-  rm -rf "$MODPATH/system/lib64"
+  if [[ "$IS64BIT" == "true" ]]; then
+    ui_print "- Extracting x64 libraries"
+    extract "$ZIPFILE" 'system_x86/lib64/libmemtrack.so' "$MODPATH"
+    mv "$MODPATH/system_x86/lib64" "$MODPATH/system/lib64"
+  fi
+else
+  ui_print "- Extracting arm libraries"
+  extract "$ZIPFILE" 'system/lib/libmemtrack.so' "$MODPATH"
+
+  if [[ "$IS64BIT" == "true" ]]; then
+    ui_print "- Extracting arm64 libraries"
+    extract "$ZIPFILE" 'system/lib64/libmemtrack.so' "$MODPATH"
+  fi
 fi
 
 ui_print "- Extracting zygote_restart executable"
-vunzip -j "$ZIPFILE" "zygote_restart/zygote_restart_$ARCH" -d "$RIRU_PATH/bin"
+extract "$ZIPFILE" "zygote_restart/zygote_restart_$ARCH" "$RIRU_PATH/bin" "true"
 mv "$RIRU_PATH/bin/zygote_restart_$ARCH" "$RIRU_PATH/bin/zygote_restart"
 set_perm "$RIRU_PATH/bin/zygote_restart" 0 0 0700 u:object_r:system_file:s0
 
