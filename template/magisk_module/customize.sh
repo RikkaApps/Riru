@@ -27,6 +27,7 @@ extract "$ZIPFILE" 'post-fs-data.sh' "$MODPATH"
 extract "$ZIPFILE" 'uninstall.sh' "$MODPATH"
 
 mkdir -p "$RIRU_PATH/modules"
+mkdir -p "$RIRU_PATH/bin"
 
 if [[ "$ARCH" == "x86" || "$ARCH" == "x64" ]]; then
   ui_print "- Extracting x86 libraries"
