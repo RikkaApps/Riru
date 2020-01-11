@@ -99,7 +99,7 @@ android.libraryVariants.all { variant ->
         file("$magiskDir/zygote_restart").mkdir()
         renameOrFail(file("$magiskDir/system/lib/zygote_restart"), file("$magiskDir/zygote_restart/zygote_restart_arm"))
         renameOrFail(file("$magiskDir/system/lib64/zygote_restart"), file("$magiskDir/zygote_restart/zygote_restart_arm64"))
-        renameOrFail(file("$magiskDir/system_x86/lib/zygote_restart"), file("$magiskDir/zygote_restart/ygote_restart_x86"))
+        renameOrFail(file("$magiskDir/system_x86/lib/zygote_restart"), file("$magiskDir/zygote_restart/zygote_restart_x86"))
         renameOrFail(file("$magiskDir/system_x86/lib64/zygote_restart"), file("$magiskDir/zygote_restart/zygote_restart_x64"))
 
         // generate sha1sum
