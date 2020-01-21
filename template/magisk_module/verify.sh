@@ -17,9 +17,6 @@ extract() {
   opts="-o"
   [[ $junk_paths == "true" ]] && opts="-oj"
 
-  unzip $opts "$zip" "$file" -d "$dir" >&2
-  [[ -f $file_path ]] || abort_verify "$file not exists"
-
   file_path=""
   hash_path=""
   if [[ $junk_paths == "true" ]]; then
@@ -29,6 +26,9 @@ extract() {
     file_path="$dir/$file"
     hash_path="$TMPDIR_FOR_VERIFY/$file.sha256sum"
   fi
+
+  unzip $opts "$zip" "$file" -d "$dir" >&2
+  [[ -f $file_path ]] || abort_verify "$file not exists"
 
   unzip $opts "$zip" "$file.sha256sum" -d "$TMPDIR_FOR_VERIFY" >&2
   [[ -f $hash_path ]] || abort_verify "$file.sha256sum not exists"
