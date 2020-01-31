@@ -4,6 +4,13 @@ RIRU_API="%%%RIRU_API%%%"
 RIRU_VERSION_CODE="%%%RIRU_VERSION_CODE%%%"
 RIRU_VERSION_NAME="%%%RIRU_VERSION_NAME%%%"
 
+# check android
+if [[ $API -lt 23 ]]; then
+  abort "! Unsupported sdk: $API"
+else
+  ui_print "- Device sdk: $API"
+fi
+
 # check architecture
 if [[ "$ARCH" != "arm" && "$ARCH" != "arm64" && "$ARCH" != "x86" && "$ARCH" != "x64" ]]; then
   abort "! Unsupported platform: $ARCH"
