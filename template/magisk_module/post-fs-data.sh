@@ -16,11 +16,11 @@ move_new_file "$RIRU_PATH/version_code"
 
 # Copy libmemtrack.so
 cp -f "/system/lib/libmemtrack.so" "$MODDIR/system/lib/libmemtrack_real.so"
-[[ -f "/system/lib64/libmemtrack.so" ]] && cp -f "/system/lib64/libmemtrack.so" "$MODDIR/system/lib64/libmemtrack_real.so"
+[ -f "/system/lib64/libmemtrack.so" ] && cp -f "/system/lib64/libmemtrack.so" "$MODDIR/system/lib64/libmemtrack_real.so"
 
 # Reset context in case
 chcon -R u:object_r:system_file:s0 "$MODDIR"
 
 # Restart zygote if needed
 ZYGOTE_RESTART=$RIRU_PATH/bin/zygote_restart
-[[ ! -f "$RIRU_PATH/config/disable_auto_restart" ]] && $ZYGOTE_RESTART
+[ ! -f "$RIRU_PATH/config/disable_auto_restart" ] && $ZYGOTE_RESTART
