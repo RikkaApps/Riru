@@ -14,6 +14,11 @@ implied warranty.
 
 #ifndef H_PMPARSER
 #define H_PMPARSER
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -92,8 +97,8 @@ void _pmparser_split_line(char*buf,char*addr1,char*addr2,char*perm, char* offset
  */
 void pmparser_print(procmaps_struct* map,int order);
 
-
-
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif
