@@ -411,7 +411,7 @@ void nativeSpecializeAppProcess_q_beta4(
     nativeSpecializeAppProcess_post(env, clazz);
 }
 
-void nativeSpecializeAppProcess_q(
+void nativeSpecializeAppProcess(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
         jboolean startChildZygote, jstring instructionSet, jstring appDataDir) {
@@ -427,6 +427,26 @@ void nativeSpecializeAppProcess_q(
     ((nativeSpecializeAppProcess_t *) _nativeSpecializeAppProcess)(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
             startChildZygote, instructionSet, appDataDir);
+
+    nativeSpecializeAppProcess_post(env, clazz);
+}
+
+void nativeSpecializeAppProcess_samsung(
+        JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
+        jobjectArray rlimits, jint mountExternal, jstring seInfo, jint space, jint accessInfo,
+        jstring niceName, jboolean startChildZygote, jstring instructionSet, jstring appDataDir) {
+
+    jstring packageName = nullptr;
+    jobjectArray packagesForUID = nullptr;
+    jstring sandboxId = nullptr;
+
+    nativeSpecializeAppProcess_pre(
+            env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
+            startChildZygote, instructionSet, appDataDir, packageName, packagesForUID, sandboxId);
+
+    ((nativeSpecializeAppProcess_samsung_t *) _nativeSpecializeAppProcess)(
+            env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, space,
+            accessInfo, niceName, startChildZygote, instructionSet, appDataDir);
 
     nativeSpecializeAppProcess_post(env, clazz);
 }

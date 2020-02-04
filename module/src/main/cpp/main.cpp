@@ -23,13 +23,16 @@
 #include "JNIHelper.h"
 #include "api.h"
 #include "version.h"
+#include "native_method.h"
 
 #define CONFIG_DIR "/data/misc/riru"
 #define CONFIG_DIR_MAGISK "/sbin/riru"
 
 #ifdef __LP64__
+#define ZYGOTE_NAME "zygote64"
 #define MODULE_PATH_FMT "/system/lib64/libriru_%s.so"
 #else
+#define ZYGOTE_NAME "zygote"
 #define MODULE_PATH_FMT "/system/lib/libriru_%s.so"
 #endif
 
@@ -190,8 +193,10 @@ static JNINativeMethod *onRegisterZygote(JNIEnv *env, const char *className,
 
             if (strcmp(nativeSpecializeAppProcess_sig_q_beta4, method.signature) == 0)
                 newMethods[i].fnPtr = (void *) nativeSpecializeAppProcess_q_beta4;
-            else if (strcmp(nativeSpecializeAppProcess_sig_q, method.signature) == 0)
-                newMethods[i].fnPtr = (void *) nativeSpecializeAppProcess_q;
+            else if (strcmp(nativeSpecializeAppProcess_sig, method.signature) == 0)
+                newMethods[i].fnPtr = (void *) nativeSpecializeAppProcess;
+            else if (strcmp(nativeSpecializeAppProcess_sig_samsung, method.signature) == 0)
+                newMethods[i].fnPtr = (void *) nativeSpecializeAppProcess_samsung;
             else
                 LOGW("found nativeSpecializeAppProcess but signature %s mismatch",
                      method.signature);
@@ -281,6 +286,9 @@ NEW_FUNC_DEF(int, jniRegisterNativeMethods, JNIEnv *env, const char *className,
 
     int res = old_jniRegisterNativeMethods(env, className, newMethods ? newMethods : methods,
                                            numMethods);
+    /*if (!newMethods) {
+        NativeMethod::jniRegisterNativeMethodsPost(env, className, methods, numMethods);
+    }*/
     delete newMethods;
     return res;
 }
@@ -327,11 +335,7 @@ void constructor() {
     if (!strstr(cmdline, "--zygote"))
         return;
 
-#ifdef __LP64__
-    LOGI("Riru %s in zygote64", VERSION_NAME);
-#else
-    LOGI("Riru %s in zygote", VERSION_NAME);
-#endif
+    LOGI("Riru %s in %s", VERSION_NAME, ZYGOTE_NAME);
 
     LOGI("config dir is %s", get_config_dir());
 

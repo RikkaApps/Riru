@@ -120,16 +120,27 @@ void nativeSpecializeAppProcess_q_beta4(
         jboolean startChildZygote, jstring instructionSet, jstring appDataDir, jstring packageName,
         jobjectArray packagesForUID, jstring sandboxId);
 
-const static char *nativeSpecializeAppProcess_sig_q = "(II[II[[IILjava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;)V";
+const static char *nativeSpecializeAppProcess_sig = "(II[II[[IILjava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;)V";
 
 using nativeSpecializeAppProcess_t = void(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jboolean, jstring, jstring);
 
-void nativeSpecializeAppProcess_q(
+void nativeSpecializeAppProcess(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
         jboolean startChildZygote, jstring instructionSet, jstring appDataDir);
+
+const static char *nativeSpecializeAppProcess_sig_samsung ="(II[II[[IILjava/lang/String;IILjava/lang/String;ZLjava/lang/String;Ljava/lang/String;)V";
+
+using nativeSpecializeAppProcess_samsung_t = void(
+        JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jint,
+        jint, jstring, jboolean, jstring, jstring);
+
+void nativeSpecializeAppProcess_samsung(
+        JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
+        jobjectArray rlimits, jint mountExternal, jstring seInfo, jint space, jint accessInfo,
+        jstring niceName, jboolean startChildZygote, jstring instructionSet, jstring appDataDir);
 
 // -----------------------------------------------------------------
 
