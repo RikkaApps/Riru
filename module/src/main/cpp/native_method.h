@@ -5,7 +5,8 @@
 
 namespace NativeMethod {
 
-    void init();
+    void jniRegisterNativeMethodsPost(JNIEnv *env, const char *className,
+                                      const JNINativeMethod *methods, int numMethods);
 
     int getOffset();
 
