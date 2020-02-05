@@ -5,7 +5,7 @@ RIRU_VERSION_CODE="%%%RIRU_VERSION_CODE%%%"
 RIRU_VERSION_NAME="%%%RIRU_VERSION_NAME%%%"
 
 # check android
-if [[ $API -lt 23 ]]; then
+if [ "$API" -lt 23 ]; then
   abort "! Unsupported sdk: $API"
 else
   ui_print "- Device sdk: $API"
