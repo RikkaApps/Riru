@@ -64,13 +64,30 @@ extract "$ZIPFILE" "zygote_restart/zygote_restart_$ARCH" "$RIRU_PATH/bin" true
 mv "$RIRU_PATH/bin/zygote_restart_$ARCH" "$RIRU_PATH/bin/zygote_restart"
 set_perm "$RIRU_PATH/bin/zygote_restart" 0 0 0700
 
+# no .new if first install
+if [ -f "$RIRU_PATH/api_version" ]; then
+  API_FILE="api_version.new"
+else
+  API_FILE="api_version"
+fi
+if [ -f "$RIRU_PATH/version_name" ]; then
+  VERSION_FILE="version_name.new"
+else
+  VERSION_FILE="version_name"
+fi
+if [ -f "$RIRU_PATH/version_code" ]; then
+  VERCODE_FILE="version_code.new"
+else
+  VERCODE_FILE="version_code"
+fi
+
 ui_print "- Writing Riru files"
-echo -n "$RIRU_API" > "$RIRU_PATH/api_version.new"
-echo -n "$RIRU_VERSION_NAME" > "$RIRU_PATH/version_name.new"
-echo -n "$RIRU_VERSION_CODE" > "$RIRU_PATH/version_code.new"
-set_perm "$RIRU_PATH/api_version.new" 0 0 0600
-set_perm "$RIRU_PATH/version_name.new" 0 0 0600
-set_perm "$RIRU_PATH/version_code.new" 0 0 0600
+echo -n "$RIRU_API" > "$RIRU_PATH/$API_FILE"
+echo -n "$RIRU_VERSION_NAME" > "$RIRU_PATH/$VERSION_FILE"
+echo -n "$RIRU_VERSION_CODE" > "$RIRU_PATH/$VERCODE_FILE"
+set_perm "$RIRU_PATH/$API_FILE" 0 0 0600
+set_perm "$RIRU_PATH/$VERSION_FILE" 0 0 0600
+set_perm "$RIRU_PATH/$VERCODE_FILE" 0 0 0600
 
 ui_print "- Setting permissions"
 set_perm_recursive "$MODPATH" 0 0 0755 0644
