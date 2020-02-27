@@ -10,7 +10,7 @@ See [https://github.com/RikkaApps/Riru](https://github.com/RikkaApps/Riru) for m
 
 ### v19.7 (29)
 
-- Support Samsung Q with "usap" enabled (this really should happens only on custom ROMs?)
+- Support Samsung Q with "usap" enabled (this should happens only on custom ROMs?)
 
 ### v19.6 (28)
 

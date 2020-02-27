@@ -22,7 +22,7 @@ android {
 def apiVersion = 4
 def moduleProp = [
         id         : "riru-core",
-        name       : "Riru - Core",
+        name       : "Riru (Riru - Core)",
         version    : "v19.7",
         versionCode: "29",
         author     : "Rikka",
