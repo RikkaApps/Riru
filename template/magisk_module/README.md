@@ -8,6 +8,11 @@ See [https://github.com/RikkaApps/Riru](https://github.com/RikkaApps/Riru) for m
 
 ## Changelog
 
+### v19.8 (30)
+
+- Fix install script for x86 ([#91](https://github.com/RikkaApps/Riru/pull/91))
+- Allow uid 1000 to access `/data/misc/riru`
+
 ### v19.7 (29)
 
 - Support Samsung Q with "usap" enabled (this should happens only on custom ROMs?)
