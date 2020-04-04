@@ -55,8 +55,8 @@ fi
 
 mkdir -p "$RIRU_PATH/modules"
 mkdir -p "$RIRU_PATH/bin"
-set_perm "$RIRU_PATH" 0 0 0700
-set_perm "$RIRU_PATH/modules" 0 0 0700
+set_perm "$RIRU_PATH" 0 1000 0770
+set_perm "$RIRU_PATH/modules" 0 1000 0770
 set_perm "$RIRU_PATH/bin" 0 0 0700
 
 ui_print "- Extracting zygote_restart executable"
