@@ -24,14 +24,17 @@ using nativeForkAndSpecialize_pre_v3_t = void(
         jstring *, jintArray *, jintArray *, jboolean *, jstring *, jstring *, jstring *,
         jobjectArray *, jstring *);
 
+using nativeForkAndSpecialize_pre_v5_t = void(
+        JNIEnv *, jclass, jint *, jint *, jintArray *, jint *, jobjectArray *, jint *, jstring *,
+        jstring *, jintArray *, jintArray *, jboolean *, jstring *, jstring *, jboolean *, jobjectArray *);
+
 using nativeForkAndSpecialize_post_t = int(
         JNIEnv *, jclass, jint);
 
 // ---------------------------------------------------------
 
 using nativeForkSystemServer_pre_t = void(
-        JNIEnv *, jclass, uid_t, gid_t, jintArray,
-        jint, jobjectArray, jlong, jlong);
+        JNIEnv *, jclass, uid_t, gid_t, jintArray, jint, jobjectArray, jlong, jlong);
 
 using nativeForkSystemServer_pre_v2_t = void(
         JNIEnv *, jclass, uid_t *, gid_t *, jintArray *, jint *, jobjectArray *, jlong *, jlong *);
@@ -40,9 +43,13 @@ using nativeForkSystemServer_post_t = int(JNIEnv *, jclass, jint);
 
 // ---------------------------------------------------------
 
-using nativeSpecializeAppProcess_pre_t = void(
+using nativeSpecializeAppProcess_pre_v4_t = void(
         JNIEnv *, jclass, jint *, jint *, jintArray *, jint *, jobjectArray *, jint *, jstring *,
         jstring *, jboolean *, jstring *, jstring *, jstring *, jobjectArray *, jstring *);
+
+using nativeSpecializeAppProcess_pre_v5_t = void(
+        JNIEnv *, jclass, jint *, jint *, jintArray *, jint *, jobjectArray *, jint *, jstring *,
+        jstring *, jboolean *, jstring *, jstring *, jboolean *, jobjectArray *);
 
 using nativeSpecializeAppProcess_post_t = int(JNIEnv *, jclass);
 
