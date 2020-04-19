@@ -5,11 +5,26 @@ import java.security.MessageDigest
 
 apply plugin: 'com.android.library'
 
+def apiVersion = 5
+def moduleProp = [
+        id         : "riru-core",
+        name       : "Riru (Riru - Core)",
+        version    : "v20.0",
+        versionCode: "31",
+        author     : "Rikka",
+        description: "Inject zygote process by replace libmemtrack.so, provide interface to other Riru modules."
+]
+
 android {
     compileSdkVersion rootProject.ext.targetSdkVersion
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
+        externalNativeBuild {
+            cmake {
+                arguments "-DRIRU_VERSION_NAME:STRING=${moduleProp['version']}", "-DRIRU_VERSION_CODE:STRING=${moduleProp['versionCode']}"
+            }
+        }
     }
     externalNativeBuild {
         cmake {
@@ -19,20 +34,9 @@ android {
     }
 }
 
-def apiVersion = 4
-def moduleProp = [
-        id         : "riru-core",
-        name       : "Riru (Riru - Core)",
-        version    : "v19.8",
-        versionCode: "30",
-        author     : "Rikka",
-        description: "Inject zygote process by replace libmemtrack.so, provide interface to other Riru modules."
-]
-
 def outDir = file("$rootDir/out")
 def magiskDir = file("$outDir/magisk_module")
-def zipName = "magisk-${moduleProp['id']}-${moduleProp['version']}.zip"
-
+def zipName = "magisk-riru-${moduleProp['version']}.zip"
 
 static def sha256sum(file) {
     def md = MessageDigest.getInstance("SHA-256")
@@ -91,10 +95,10 @@ android.libraryVariants.all { variant ->
         renameOrFail(file("$nativeOutDir/x86_64"), file("$magiskDir/system_x86/lib64"))
         renameOrFail(file("$nativeOutDir/x86"), file("$magiskDir/system_x86/lib"))
 
-        renameOrFail(file("$magiskDir/system/lib/libriru-core.so"), file("$magiskDir/system/lib/libmemtrack.so"))
-        renameOrFail(file("$magiskDir/system/lib64/libriru-core.so"), file("$magiskDir/system/lib64/libmemtrack.so"))
-        renameOrFail(file("$magiskDir/system_x86/lib/libriru-core.so"), file("$magiskDir/system_x86/lib/libmemtrack.so"))
-        renameOrFail(file("$magiskDir/system_x86/lib64/libriru-core.so"), file("$magiskDir/system_x86/lib64/libmemtrack.so"))
+        renameOrFail(file("$magiskDir/system/lib/libriru.so"), file("$magiskDir/system/lib/libmemtrack.so"))
+        renameOrFail(file("$magiskDir/system/lib64/libriru.so"), file("$magiskDir/system/lib64/libmemtrack.so"))
+        renameOrFail(file("$magiskDir/system_x86/lib/libriru.so"), file("$magiskDir/system_x86/lib/libmemtrack.so"))
+        renameOrFail(file("$magiskDir/system_x86/lib64/libriru.so"), file("$magiskDir/system_x86/lib64/libmemtrack.so"))
 
         file("$magiskDir/zygote_restart").mkdir()
         renameOrFail(file("$magiskDir/system/lib/zygote_restart"), file("$magiskDir/zygote_restart/zygote_restart_arm"))

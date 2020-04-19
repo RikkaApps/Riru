@@ -22,7 +22,6 @@
 #include "module.h"
 #include "JNIHelper.h"
 #include "api.h"
-#include "version.h"
 #include "native_method.h"
 
 #define CONFIG_DIR "/data/misc/riru"
@@ -335,7 +334,7 @@ void constructor() {
     if (!strstr(cmdline, "--zygote"))
         return;
 
-    LOGI("Riru %s in %s", VERSION_NAME, ZYGOTE_NAME);
+    LOGI("Riru %s (%d) in %s", RIRU_VERSION_NAME, RIRU_VERSION_CODE, ZYGOTE_NAME);
 
     LOGI("config dir is %s", get_config_dir());
 
