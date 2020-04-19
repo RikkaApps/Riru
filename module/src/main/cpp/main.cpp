@@ -161,14 +161,15 @@ static JNINativeMethod *onRegisterZygote(JNIEnv *env, const char *className,
         if (strcmp(method.name, "nativeForkAndSpecialize") == 0) {
             set_nativeForkAndSpecialize(method.fnPtr);
 
-            if (strcmp(nativeForkAndSpecialize_marshmallow_sig, method.signature) == 0)
-                newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_marshmallow;
-            else if (strcmp(nativeForkAndSpecialize_oreo_sig, method.signature) == 0)
-                newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_oreo;
+            if (strcmp(nativeForkAndSpecialize_r_sig, method.signature) == 0)
+                newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_r;
             else if (strcmp(nativeForkAndSpecialize_p_sig, method.signature) == 0)
                 newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_p;
-            else if (strcmp(nativeForkAndSpecialize_q_beta4_sig, method.signature) == 0)
-                newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_q_beta4;
+            else if (strcmp(nativeForkAndSpecialize_oreo_sig, method.signature) == 0)
+                newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_oreo;
+            else if (strcmp(nativeForkAndSpecialize_marshmallow_sig, method.signature) == 0)
+                newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_marshmallow;
+
             else if (strcmp(nativeForkAndSpecialize_samsung_p_sig, method.signature) == 0)
                 newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_samsung_p;
             else if (strcmp(nativeForkAndSpecialize_samsung_o_sig, method.signature) == 0)
@@ -190,8 +191,8 @@ static JNINativeMethod *onRegisterZygote(JNIEnv *env, const char *className,
         } else if (strcmp(method.name, "nativeSpecializeAppProcess") == 0) {
             set_nativeSpecializeAppProcess(method.fnPtr);
 
-            if (strcmp(nativeSpecializeAppProcess_sig_q_beta4, method.signature) == 0)
-                newMethods[i].fnPtr = (void *) nativeSpecializeAppProcess_q_beta4;
+            if (strcmp(nativeSpecializeAppProcess_r_sig, method.signature) == 0)
+                newMethods[i].fnPtr = (void *) nativeSpecializeAppProcess_r;
             else if (strcmp(nativeSpecializeAppProcess_sig, method.signature) == 0)
                 newMethods[i].fnPtr = (void *) nativeSpecializeAppProcess;
             else if (strcmp(nativeSpecializeAppProcess_sig_samsung, method.signature) == 0)

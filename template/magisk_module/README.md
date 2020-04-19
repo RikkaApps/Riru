@@ -8,6 +8,10 @@ See [https://github.com/RikkaApps/Riru](https://github.com/RikkaApps/Riru) for m
 
 ## Changelog
 
+### v20.1 (32) (2020-04-21)
+
+- Works Android R DP2
+
 ### v19.8 (30)
 
 - Fix install script for x86 ([#91](https://github.com/RikkaApps/Riru/pull/91))

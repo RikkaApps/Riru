@@ -64,8 +64,7 @@ static void nativeForkAndSpecialize_pre(
         JNIEnv *env, jclass clazz, jint &uid, jint &gid, jintArray &gids, jint &runtime_flags,
         jobjectArray &rlimits, jint &mount_external, jstring &se_info, jstring &se_name,
         jintArray &fdsToClose, jintArray &fdsToIgnore, jboolean &is_child_zygote,
-        jstring &instructionSet, jstring &appDataDir, jstring &packageName,
-        jobjectArray &packagesForUID, jstring &sandboxId) {
+        jstring &instructionSet, jstring &appDataDir, jboolean &isTopApp, jobjectArray &pkgDataInfoList) {
 
     nativeForkAndSpecialize_calls_count++;
 
@@ -79,7 +78,16 @@ static void nativeForkAndSpecialize_pre(
         if (!module->shouldSkipUid && shouldSkipUid(uid))
             continue;
 
-        if (module->apiVersion >= 3) {
+        if (module->apiVersion >= 5) {
+            ((nativeForkAndSpecialize_pre_v5_t *) module->forkAndSpecializePre)(
+                    env, clazz, &uid, &gid, &gids, &runtime_flags, &rlimits, &mount_external,
+                    &se_info, &se_name, &fdsToClose, &fdsToIgnore, &is_child_zygote,
+                    &instructionSet, &appDataDir, &isTopApp, &pkgDataInfoList);
+        } else if (module->apiVersion >= 3) {
+            jstring packageName = nullptr;
+            jobjectArray packagesForUID = nullptr;
+            jstring sandboxId = nullptr;
+
             ((nativeForkAndSpecialize_pre_v3_t *) module->forkAndSpecializePre)(
                     env, clazz, &uid, &gid, &gids, &runtime_flags, &rlimits, &mount_external,
                     &se_info, &se_name, &fdsToClose, &fdsToIgnore, &is_child_zygote,
@@ -133,8 +141,8 @@ static void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, ji
 static void nativeSpecializeAppProcess_pre(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
-        jboolean startChildZygote, jstring instructionSet, jstring appDataDir, jstring packageName,
-        jobjectArray packagesForUID, jstring sandboxId) {
+        jboolean startChildZygote, jstring instructionSet, jstring appDataDir,
+        jboolean &isTopApp, jobjectArray &pkgDataInfoList) {
 
     nativeSpecializeAppProcess_calls_count++;
 
@@ -142,8 +150,17 @@ static void nativeSpecializeAppProcess_pre(
         if (!module->specializeAppProcessPre)
             continue;
 
-        if (module->apiVersion >= 4) {
-            ((nativeSpecializeAppProcess_pre_t *) module->specializeAppProcessPre)(
+        if (module->apiVersion >= 5) {
+            ((nativeSpecializeAppProcess_pre_v5_t *) module->specializeAppProcessPre)(
+                    env, clazz, &uid, &gid, &gids, &runtimeFlags, &rlimits, &mountExternal, &seInfo,
+                    &niceName, &startChildZygote, &instructionSet, &appDataDir, &isTopApp,
+                    &pkgDataInfoList);
+        } else if (module->apiVersion >= 4) {
+            jstring packageName = nullptr;
+            jobjectArray packagesForUID = nullptr;
+            jstring sandboxId = nullptr;
+
+            ((nativeSpecializeAppProcess_pre_v4_t *) module->specializeAppProcessPre)(
                     env, clazz, &uid, &gid, &gids, &runtimeFlags, &rlimits, &mountExternal, &seInfo,
                     &niceName, &startChildZygote, &instructionSet, &appDataDir, &packageName,
                     &packagesForUID, &sandboxId);
@@ -209,14 +226,12 @@ jint nativeForkAndSpecialize_marshmallow(
 
     jintArray fdsToIgnore = nullptr;
     jboolean is_child_zygote = JNI_FALSE;
-    jstring packageName = nullptr;
-    jobjectArray packagesForUID = nullptr;
-    jstring sandboxId = nullptr;
+    jboolean isTopApp = JNI_FALSE;
+    jobjectArray pkgDataInfoList = nullptr;
 
     nativeForkAndSpecialize_pre(env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external,
                                 se_info, se_name, fdsToClose, fdsToIgnore, is_child_zygote,
-                                instructionSet, appDataDir, packageName, packagesForUID,
-                                sandboxId);
+                                instructionSet, appDataDir, isTopApp, pkgDataInfoList);
 
     jint res = ((nativeForkAndSpecialize_marshmallow_t *) _nativeForkAndSpecialize)(
             env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external, se_info, se_name,
@@ -232,14 +247,12 @@ jint nativeForkAndSpecialize_oreo(
         jintArray fdsToClose, jintArray fdsToIgnore, jstring instructionSet, jstring appDataDir) {
 
     jboolean is_child_zygote = JNI_FALSE;
-    jstring packageName = nullptr;
-    jobjectArray packagesForUID = nullptr;
-    jstring sandboxId = nullptr;
+    jboolean isTopApp = JNI_FALSE;
+    jobjectArray pkgDataInfoList = nullptr;
 
     nativeForkAndSpecialize_pre(env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external,
                                 se_info, se_name, fdsToClose, fdsToIgnore, is_child_zygote,
-                                instructionSet, appDataDir, packageName, packagesForUID,
-                                sandboxId);
+                                instructionSet, appDataDir, isTopApp, pkgDataInfoList);
 
     jint res = ((nativeForkAndSpecialize_oreo_t *) _nativeForkAndSpecialize)(
             env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external, se_info, se_name,
@@ -255,14 +268,12 @@ jint nativeForkAndSpecialize_p(
         jintArray fdsToClose, jintArray fdsToIgnore, jboolean is_child_zygote,
         jstring instructionSet, jstring appDataDir) {
 
-    jstring packageName = nullptr;
-    jobjectArray packagesForUID = nullptr;
-    jstring sandboxId = nullptr;
+    jboolean isTopApp = JNI_FALSE;
+    jobjectArray pkgDataInfoList = nullptr;
 
     nativeForkAndSpecialize_pre(env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external,
                                 se_info, se_name, fdsToClose, fdsToIgnore, is_child_zygote,
-                                instructionSet, appDataDir, packageName, packagesForUID,
-                                sandboxId);
+                                instructionSet, appDataDir, isTopApp, pkgDataInfoList);
 
     jint res = ((nativeForkAndSpecialize_p_t *) _nativeForkAndSpecialize)(
             env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external, se_info, se_name,
@@ -272,22 +283,19 @@ jint nativeForkAndSpecialize_p(
     return res;
 }
 
-jint nativeForkAndSpecialize_q_beta4(
+jint nativeForkAndSpecialize_r(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtime_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jstring se_name,
         jintArray fdsToClose, jintArray fdsToIgnore, jboolean is_child_zygote,
-        jstring instructionSet, jstring appDataDir, jstring packageName,
-        jobjectArray packagesForUID, jstring sandboxId) {
+        jstring instructionSet, jstring appDataDir, jboolean isTopApp, jobjectArray pkgDataInfoList) {
 
     nativeForkAndSpecialize_pre(env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external,
                                 se_info, se_name, fdsToClose, fdsToIgnore, is_child_zygote,
-                                instructionSet, appDataDir, packageName, packagesForUID,
-                                sandboxId);
+                                instructionSet, appDataDir, isTopApp, pkgDataInfoList);
 
-    jint res = ((nativeForkAndSpecialize_q_beta4_t *) _nativeForkAndSpecialize)(
+    jint res = ((nativeForkAndSpecialize_r_t *) _nativeForkAndSpecialize)(
             env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external, se_info, se_name,
-            fdsToClose, fdsToIgnore, is_child_zygote, instructionSet, appDataDir, packageName,
-            packagesForUID, sandboxId);
+            fdsToClose, fdsToIgnore, is_child_zygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList);
 
     nativeForkAndSpecialize_post(env, clazz, uid, res);
     return res;
@@ -299,14 +307,12 @@ jint nativeForkAndSpecialize_samsung_p(
         jstring se_name, jintArray fdsToClose, jintArray fdsToIgnore, jboolean is_child_zygote,
         jstring instructionSet, jstring appDataDir) {
 
-    jstring packageName = nullptr;
-    jobjectArray packagesForUID = nullptr;
-    jstring sandboxId = nullptr;
+    jboolean isTopApp = JNI_FALSE;
+    jobjectArray pkgDataInfoList = nullptr;
 
     nativeForkAndSpecialize_pre(env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external,
                                 se_info, se_name, fdsToClose, fdsToIgnore, is_child_zygote,
-                                instructionSet, appDataDir, packageName, packagesForUID,
-                                sandboxId);
+                                instructionSet, appDataDir, isTopApp, pkgDataInfoList);
 
     jint res = ((nativeForkAndSpecialize_samsung_p_t *) _nativeForkAndSpecialize)(
             env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external, se_info, category,
@@ -324,14 +330,12 @@ jint nativeForkAndSpecialize_samsung_o(
         jstring appDataDir) {
 
     jboolean is_child_zygote = JNI_FALSE;
-    jstring packageName = nullptr;
-    jobjectArray packagesForUID = nullptr;
-    jstring sandboxId = nullptr;
+    jboolean isTopApp = JNI_FALSE;
+    jobjectArray pkgDataInfoList = nullptr;
 
     nativeForkAndSpecialize_pre(env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external,
                                 se_info, se_name, fdsToClose, fdsToIgnore, is_child_zygote,
-                                instructionSet, appDataDir, packageName, packagesForUID,
-                                sandboxId);
+                                instructionSet, appDataDir, isTopApp, pkgDataInfoList);
 
     jint res = ((nativeForkAndSpecialize_samsung_o_t *) _nativeForkAndSpecialize)(
             env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external, se_info, category,
@@ -349,14 +353,12 @@ jint nativeForkAndSpecialize_samsung_n(
 
     jintArray fdsToIgnore = nullptr;
     jboolean is_child_zygote = JNI_FALSE;
-    jstring packageName = nullptr;
-    jobjectArray packagesForUID = nullptr;
-    jstring sandboxId = nullptr;
+    jboolean isTopApp = JNI_FALSE;
+    jobjectArray pkgDataInfoList = nullptr;
 
     nativeForkAndSpecialize_pre(env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external,
                                 se_info, se_name, fdsToClose, fdsToIgnore, is_child_zygote,
-                                instructionSet, appDataDir, packageName, packagesForUID,
-                                sandboxId);
+                                instructionSet, appDataDir, isTopApp, pkgDataInfoList);
 
     jint res = ((nativeForkAndSpecialize_samsung_n_t *) _nativeForkAndSpecialize)(
             env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external, se_info, category,
@@ -373,14 +375,12 @@ jint nativeForkAndSpecialize_samsung_m(
 
     jintArray fdsToIgnore = nullptr;
     jboolean is_child_zygote = JNI_FALSE;
-    jstring packageName = nullptr;
-    jobjectArray packagesForUID = nullptr;
-    jstring sandboxId = nullptr;
+    jboolean isTopApp = JNI_FALSE;
+    jobjectArray pkgDataInfoList = nullptr;
 
     nativeForkAndSpecialize_pre(env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external,
                                 se_info, se_name, fdsToClose, fdsToIgnore, is_child_zygote,
-                                instructionSet, appDataDir, packageName, packagesForUID,
-                                sandboxId);
+                                instructionSet, appDataDir, isTopApp, pkgDataInfoList);
 
     jint res = ((nativeForkAndSpecialize_samsung_m_t *) _nativeForkAndSpecialize)(
             env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external, se_info, category,
@@ -392,37 +392,17 @@ jint nativeForkAndSpecialize_samsung_m(
 
 // -----------------------------------------------------------------
 
-void nativeSpecializeAppProcess_q_beta4(
-        JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
-        jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
-        jboolean startChildZygote, jstring instructionSet, jstring appDataDir, jstring packageName,
-        jobjectArray packagesForUID, jstring sandboxId) {
-
-    nativeSpecializeAppProcess_pre(
-            env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
-            startChildZygote, instructionSet, appDataDir, packageName, packagesForUID,
-            sandboxId);
-
-    ((nativeSpecializeAppProcess_q_beta4_t *) _nativeSpecializeAppProcess)(
-            env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
-            startChildZygote, instructionSet, appDataDir, packageName, packagesForUID,
-            sandboxId);
-
-    nativeSpecializeAppProcess_post(env, clazz);
-}
-
 void nativeSpecializeAppProcess(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
         jboolean startChildZygote, jstring instructionSet, jstring appDataDir) {
 
-    jstring packageName = nullptr;
-    jobjectArray packagesForUID = nullptr;
-    jstring sandboxId = nullptr;
+    jboolean isTopApp = JNI_FALSE;
+    jobjectArray pkgDataInfoList = nullptr;
 
     nativeSpecializeAppProcess_pre(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
-            startChildZygote, instructionSet, appDataDir, packageName, packagesForUID, sandboxId);
+            startChildZygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList);
 
     ((nativeSpecializeAppProcess_t *) _nativeSpecializeAppProcess)(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
@@ -431,18 +411,35 @@ void nativeSpecializeAppProcess(
     nativeSpecializeAppProcess_post(env, clazz);
 }
 
+void nativeSpecializeAppProcess_r(
+        JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
+        jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
+        jboolean startChildZygote, jstring instructionSet, jstring appDataDir,
+        jboolean isTopApp, jobjectArray pkgDataInfoList) {
+
+    nativeSpecializeAppProcess_pre(
+            env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
+            startChildZygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList);
+
+    ((nativeSpecializeAppProcess_r_t *) _nativeSpecializeAppProcess)(
+            env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
+            startChildZygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList);
+
+    nativeSpecializeAppProcess_post(env, clazz);
+}
+
+
 void nativeSpecializeAppProcess_samsung(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jint space, jint accessInfo,
         jstring niceName, jboolean startChildZygote, jstring instructionSet, jstring appDataDir) {
 
-    jstring packageName = nullptr;
-    jobjectArray packagesForUID = nullptr;
-    jstring sandboxId = nullptr;
+    jboolean isTopApp = JNI_FALSE;
+    jobjectArray pkgDataInfoList = nullptr;
 
     nativeSpecializeAppProcess_pre(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
-            startChildZygote, instructionSet, appDataDir, packageName, packagesForUID, sandboxId);
+            startChildZygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList);
 
     ((nativeSpecializeAppProcess_samsung_t *) _nativeSpecializeAppProcess)(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, space,
