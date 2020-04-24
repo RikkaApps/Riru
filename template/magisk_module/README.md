@@ -8,9 +8,13 @@ See [https://github.com/RikkaApps/Riru](https://github.com/RikkaApps/Riru) for m
 
 ## Changelog
 
+### v21.0 (33) (2020-04-24)
+
+- Works on Android R DP3
+
 ### v20.1 (32) (2020-04-21)
 
-- Works Android R DP2
+- Works on Android R DP2
 
 ### v19.8 (30)
 

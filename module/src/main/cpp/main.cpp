@@ -170,6 +170,9 @@ static JNINativeMethod *onRegisterZygote(JNIEnv *env, const char *className,
             else if (strcmp(nativeForkAndSpecialize_marshmallow_sig, method.signature) == 0)
                 newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_marshmallow;
 
+            else if (strcmp(nativeForkAndSpecialize_r_dp2_sig, method.signature) == 0)
+                newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_r_dp2;
+
             else if (strcmp(nativeForkAndSpecialize_samsung_p_sig, method.signature) == 0)
                 newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_samsung_p;
             else if (strcmp(nativeForkAndSpecialize_samsung_o_sig, method.signature) == 0)
@@ -193,10 +196,13 @@ static JNINativeMethod *onRegisterZygote(JNIEnv *env, const char *className,
 
             if (strcmp(nativeSpecializeAppProcess_r_sig, method.signature) == 0)
                 newMethods[i].fnPtr = (void *) nativeSpecializeAppProcess_r;
-            else if (strcmp(nativeSpecializeAppProcess_sig, method.signature) == 0)
-                newMethods[i].fnPtr = (void *) nativeSpecializeAppProcess;
-            else if (strcmp(nativeSpecializeAppProcess_sig_samsung, method.signature) == 0)
-                newMethods[i].fnPtr = (void *) nativeSpecializeAppProcess_samsung;
+            else if (strcmp(nativeSpecializeAppProcess_q_sig, method.signature) == 0)
+                newMethods[i].fnPtr = (void *) nativeSpecializeAppProcess_q;
+            else if (strcmp(nativeSpecializeAppProcess_sig_samsung_q, method.signature) == 0)
+                newMethods[i].fnPtr = (void *) nativeSpecializeAppProcess_samsung_q;
+
+            else if (strcmp(nativeSpecializeAppProcess_r_dp2_sig, method.signature) == 0)
+                newMethods[i].fnPtr = (void *) nativeSpecializeAppProcess_r_dp2;
             else
                 LOGW("found nativeSpecializeAppProcess but signature %s mismatch",
                      method.signature);

@@ -45,13 +45,26 @@ jint nativeForkAndSpecialize_p(
         jintArray fdsToClose, jintArray fdsToIgnore, jboolean is_child_zygote,
         jstring instructionSet, jstring appDataDir);
 
-const static char *nativeForkAndSpecialize_r_sig ="(II[II[[IILjava/lang/String;Ljava/lang/String;[I[IZLjava/lang/String;Ljava/lang/String;Z[Ljava/lang/String;)I";
+const static char *nativeForkAndSpecialize_r_sig ="(II[II[[IILjava/lang/String;Ljava/lang/String;[I[IZLjava/lang/String;Ljava/lang/String;Z[Ljava/lang/String;Z)I";
 
 using nativeForkAndSpecialize_r_t = jint(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
-        jintArray, jintArray, jboolean, jstring, jstring, jboolean, jobjectArray);
+        jintArray, jintArray, jboolean, jstring, jstring, jboolean, jobjectArray, jboolean);
 
 jint nativeForkAndSpecialize_r(
+        JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtime_flags,
+        jobjectArray rlimits, jint mount_external, jstring se_info, jstring se_name,
+        jintArray fdsToClose, jintArray fdsToIgnore, jboolean is_child_zygote,
+        jstring instructionSet, jstring appDataDir, jboolean isTopApp, jobjectArray pkgDataInfoList,
+        jboolean bindMountAppStorageDirs);
+
+const static char *nativeForkAndSpecialize_r_dp2_sig ="(II[II[[IILjava/lang/String;Ljava/lang/String;[I[IZLjava/lang/String;Ljava/lang/String;Z[Ljava/lang/String;)I";
+
+using nativeForkAndSpecialize_r_dp2_t = jint(
+        JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
+        jintArray, jintArray, jboolean, jstring, jstring, jboolean, jobjectArray);
+
+jint nativeForkAndSpecialize_r_dp2(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtime_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jstring se_name,
         jintArray fdsToClose, jintArray fdsToIgnore, jboolean is_child_zygote,
@@ -105,36 +118,48 @@ jint nativeForkAndSpecialize_samsung_m(
 
 // -----------------------------------------------------------------
 
-const static char *nativeSpecializeAppProcess_sig = "(II[II[[IILjava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;)V";
+const static char *nativeSpecializeAppProcess_q_sig = "(II[II[[IILjava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;)V";
 
-using nativeSpecializeAppProcess_t = void(
+using nativeSpecializeAppProcess_q_t = void(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jboolean, jstring, jstring);
 
-void nativeSpecializeAppProcess(
+void nativeSpecializeAppProcess_q(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
         jboolean startChildZygote, jstring instructionSet, jstring appDataDir);
 
-const static char *nativeSpecializeAppProcess_r_sig = "(II[II[[IILjava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Z[Ljava/lang/String;)V";
+const static char *nativeSpecializeAppProcess_r_sig = "(II[II[[IILjava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Z[Ljava/lang/String;Z)V";
 
 using nativeSpecializeAppProcess_r_t = void(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
-        jboolean, jstring, jstring, jboolean, jobjectArray);
+        jboolean, jstring, jstring, jboolean, jobjectArray,  jboolean);
 
 void nativeSpecializeAppProcess_r(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
         jboolean startChildZygote, jstring instructionSet, jstring appDataDir,
+        jboolean isTopApp, jobjectArray pkgDataInfoList,  jboolean bindMountAppStorageDirs);
+
+const static char *nativeSpecializeAppProcess_r_dp2_sig = "(II[II[[IILjava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Z[Ljava/lang/String;)V";
+
+using nativeSpecializeAppProcess_r_dp2_t = void(
+        JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
+        jboolean, jstring, jstring, jboolean, jobjectArray);
+
+void nativeSpecializeAppProcess_r_dp2(
+        JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
+        jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
+        jboolean startChildZygote, jstring instructionSet, jstring appDataDir,
         jboolean isTopApp, jobjectArray pkgDataInfoList);
 
-const static char *nativeSpecializeAppProcess_sig_samsung ="(II[II[[IILjava/lang/String;IILjava/lang/String;ZLjava/lang/String;Ljava/lang/String;)V";
+const static char *nativeSpecializeAppProcess_sig_samsung_q ="(II[II[[IILjava/lang/String;IILjava/lang/String;ZLjava/lang/String;Ljava/lang/String;)V";
 
 using nativeSpecializeAppProcess_samsung_t = void(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jint,
         jint, jstring, jboolean, jstring, jstring);
 
-void nativeSpecializeAppProcess_samsung(
+void nativeSpecializeAppProcess_samsung_q(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jint space, jint accessInfo,
         jstring niceName, jboolean startChildZygote, jstring instructionSet, jstring appDataDir);
