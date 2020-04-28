@@ -9,11 +9,11 @@
 #include "pmparser.h"
 
 #ifdef __LP64__
-#define CHECK_LIB_NAME      "/system/lib64/libmemtrack_real.so"
+#define LIB_PATH            "/system/lib64"
 #define ZYGOTE_NAME         "zygote64"
 #define RESTART_NAME        "zygote_secondary"
 #else
-#define CHECK_LIB_NAME      "/system/lib/libmemtrack_real.so"
+#define LIB_PATH            "/system/lib"
 #define ZYGOTE_NAME         "zygote"
 #define RESTART_NAME        "zygote"
 #endif
@@ -117,7 +117,7 @@ static int is_path_in_maps(int pid, const char *path) {
     return false;
 }
 
-static bool should_restart() {
+static bool should_restart(const char* name) {
     // It is said that some wired devices (Samsung? or other) have multiply zygote, get all processes called zygote
     std::vector<pid_t> pids;
     while ((pids = grep_pid(ZYGOTE_NAME, 0)).empty()) {
@@ -132,7 +132,7 @@ static bool should_restart() {
 
     int riru_count = 0;
     for (auto pid : pids) {
-        if (!is_path_in_maps(pid, CHECK_LIB_NAME)) {
+        if (!is_path_in_maps(pid, name)) {
             LOGW("no Riru found in %s (pid=%d), restart required", ZYGOTE_NAME, pid);
         } else {
             LOGI("found Riru in %s (pid=%d)", ZYGOTE_NAME, pid);
@@ -143,9 +143,9 @@ static bool should_restart() {
     return riru_count != count;
 }
 
-static bool should_restart(int retries) {
+static bool should_restart(const char* name, int retries) {
     for (int i = 0; i < retries; ++i) {
-        if (should_restart())
+        if (should_restart(name))
             return true;
 
         if (i != retries - 1)
@@ -160,17 +160,27 @@ int main(int argc, char **argv) {
     if (fork() != 0)
         return 1;
 
-    if (!should_restart(3))
-        return 0;
+    // read random name
+    char name[PATH_MAX] = {0}, buf[64] = {0};
+    int fd = open("/data/adb/riru/random_name", O_RDONLY);
+    if (fd > 0 && read(fd, buf, 64)) {
+        read(fd, buf, 64);
+        snprintf(name, PATH_MAX, "%s/lib%s.so", LIB_PATH, buf);
+        close(fd);
+        LOGI("libmemtrack: %s", name);
+    }
 
     // wait for magisk mount
-    while (access(CHECK_LIB_NAME, F_OK) != 0) {
+    if (!should_restart(name, 3))
+        return 0;
+
+    while (access(name, F_OK) != 0) {
         LOGV("not mounted, wait 1s");
         sleep(1);
     }
 
     // check again
-    if (!should_restart(3)) {
+    if (!should_restart(name, 3)) {
         LOGI("found Riru, abort restart");
         return 0;
     }

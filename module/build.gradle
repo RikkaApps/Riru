@@ -9,8 +9,8 @@ def apiVersion = 6
 def moduleProp = [
         id         : "riru-core",
         name       : "Riru (Riru - Core)",
-        version    : "v21.0",
-        versionCode: "33",
+        version    : "v21.1",
+        versionCode: "34",
         author     : "Rikka",
         description: "Inject zygote process by replace libmemtrack.so, provide interface to other Riru modules."
 ]
