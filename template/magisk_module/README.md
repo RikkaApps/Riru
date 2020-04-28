@@ -8,6 +8,10 @@ See [https://github.com/RikkaApps/Riru](https://github.com/RikkaApps/Riru) for m
 
 ## Changelog
 
+### v21.1 (34) (2020-04-28)
+
+- Generate a random name for libmemtrack_real to temporarily make SafetyNet happy (this can't work for long)
+
 ### v21.0 (33) (2020-04-24)
 
 - Works on Android R DP3
