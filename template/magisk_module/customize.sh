@@ -73,5 +73,20 @@ set_perm "$RIRU_PATH/api_version.new" 0 0 0600
 set_perm "$RIRU_PATH/version_name.new" 0 0 0600
 set_perm "$RIRU_PATH/version_code.new" 0 0 0600
 
+# generate a random name
+RANDOM_NAME_FILE="/data/adb/riru/random_name"
+RANDOM_NAME=""
+if [ -f "$RANDOM_NAME_FILE" ]; then
+  RANDOM_NAME=$(cat "$RANDOM_NAME_FILE")
+else
+  while true; do
+    RANDOM_NAME=$(mktemp -u XXXXXXXX)
+    [ -f "/system/lib/lib$RANDOM_NAME.so" ] || break
+  done
+  mkdir "/data/adb/riru"
+  printf "%s" "$RANDOM_NAME" > "$RANDOM_NAME_FILE"
+fi
+ui_print "- Random name is $RANDOM_NAME"
+
 ui_print "- Setting permissions"
 set_perm_recursive "$MODPATH" 0 0 0755 0644
