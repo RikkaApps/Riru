@@ -5,12 +5,12 @@ import java.security.MessageDigest
 
 apply plugin: 'com.android.library'
 
-def apiVersion = 6
+def apiVersion = 7
 def moduleProp = [
         id         : "riru-core",
         name       : "Riru (Riru - Core)",
-        version    : "v21.1",
-        versionCode: "34",
+        version    : "v21.2",
+        versionCode: "35",
         author     : "Rikka",
         description: "Inject zygote process by replace libmemtrack.so, provide interface to other Riru modules."
 ]
