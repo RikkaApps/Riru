@@ -175,6 +175,9 @@ static JNINativeMethod *onRegisterZygote(JNIEnv *env, const char *className,
             else if (strcmp(nativeForkAndSpecialize_r_dp2_sig, method.signature) == 0)
                 newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_r_dp2;
 
+            else if (strcmp(nativeForkAndSpecialize_q_alternative_sig, method.signature) == 0)
+                newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_q_alternative;
+
             else if (strcmp(nativeForkAndSpecialize_samsung_p_sig, method.signature) == 0)
                 newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_samsung_p;
             else if (strcmp(nativeForkAndSpecialize_samsung_o_sig, method.signature) == 0)
@@ -201,6 +204,8 @@ static JNINativeMethod *onRegisterZygote(JNIEnv *env, const char *className,
                 newMethods[i].fnPtr = (void *) nativeSpecializeAppProcess_r;
             else if (strcmp(nativeSpecializeAppProcess_q_sig, method.signature) == 0)
                 newMethods[i].fnPtr = (void *) nativeSpecializeAppProcess_q;
+            else if (strcmp(nativeSpecializeAppProcess_q_alternative_sig, method.signature) == 0)
+                newMethods[i].fnPtr = (void *) nativeSpecializeAppProcess_q_alternative;
             else if (strcmp(nativeSpecializeAppProcess_sig_samsung_q, method.signature) == 0)
                 newMethods[i].fnPtr = (void *) nativeSpecializeAppProcess_samsung_q;
 
