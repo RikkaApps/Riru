@@ -334,7 +334,7 @@ jint nativeForkAndSpecialize_q_alternative(
                                 instructionSet, appDataDir, isTopApp, pkgDataInfoList, whitelistedDataInfoList,
                                 bindMountAppDataDirs, bindMountAppStorageDirs);
 
-    jint res = ((nativeForkAndSpecialize_p_t *) _nativeForkAndSpecialize)(
+    jint res = ((nativeForkAndSpecialize_q_alternative_t *) _nativeForkAndSpecialize)(
             env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external, se_info, se_name,
             fdsToClose, fdsToIgnore, is_child_zygote, instructionSet, appDataDir, isTopApp);
 
@@ -556,7 +556,7 @@ void nativeSpecializeAppProcess_q_alternative(
             startChildZygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList,
             whitelistedDataInfoList, bindMountAppDataDirs, bindMountAppStorageDirs);
 
-    ((nativeSpecializeAppProcess_q_t *) _nativeSpecializeAppProcess)(
+    ((nativeSpecializeAppProcess_q_alternative_t *) _nativeSpecializeAppProcess)(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
             startChildZygote, instructionSet, appDataDir, isTopApp);
 

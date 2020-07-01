@@ -8,6 +8,10 @@ See [https://github.com/RikkaApps/Riru](https://github.com/RikkaApps/Riru) for m
 
 ## Changelog
 
+### v21.3 (36) (2020-07-01)
+
+- Support custom ROMs with isTopApp changes backported (#106)
+
 ### v21.2 (35) (2020-05-08)
 
 - Works on Android R DP4
