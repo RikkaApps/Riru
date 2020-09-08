@@ -9,10 +9,10 @@ def apiVersion = 7
 def moduleProp = [
         id         : "riru-core",
         name       : "Riru (Riru - Core)",
-        version    : "v21.3",
-        versionCode: "36",
+        version    : "v22.0",
+        versionCode: "37",
         author     : "Rikka",
-        description: "Inject zygote process by replace libmemtrack.so, provide interface to other Riru modules."
+        description: "Inject zygote process, provide interface to other Riru modules."
 ]
 
 android {
@@ -95,16 +95,21 @@ android.libraryVariants.all { variant ->
         renameOrFail(file("$nativeOutDir/x86_64"), file("$magiskDir/system_x86/lib64"))
         renameOrFail(file("$nativeOutDir/x86"), file("$magiskDir/system_x86/lib"))
 
-        renameOrFail(file("$magiskDir/system/lib/libriru.so"), file("$magiskDir/system/lib/libmemtrack.so"))
-        renameOrFail(file("$magiskDir/system/lib64/libriru.so"), file("$magiskDir/system/lib64/libmemtrack.so"))
-        renameOrFail(file("$magiskDir/system_x86/lib/libriru.so"), file("$magiskDir/system_x86/lib/libmemtrack.so"))
-        renameOrFail(file("$magiskDir/system_x86/lib64/libriru.so"), file("$magiskDir/system_x86/lib64/libmemtrack.so"))
+        renameOrFail(file("$magiskDir/system/lib/libriru.so"), file("$magiskDir/system/lib/libriru.so"))
+        renameOrFail(file("$magiskDir/system/lib64/libriru.so"), file("$magiskDir/system/lib64/libriru.so"))
+        renameOrFail(file("$magiskDir/system_x86/lib/libriru.so"), file("$magiskDir/system_x86/lib/libriru.so"))
+        renameOrFail(file("$magiskDir/system_x86/lib64/libriru.so"), file("$magiskDir/system_x86/lib64/libriru.so"))
 
-        file("$magiskDir/zygote_restart").mkdir()
-        renameOrFail(file("$magiskDir/system/lib/zygote_restart"), file("$magiskDir/zygote_restart/zygote_restart_arm"))
-        renameOrFail(file("$magiskDir/system/lib64/zygote_restart"), file("$magiskDir/zygote_restart/zygote_restart_arm64"))
-        renameOrFail(file("$magiskDir/system_x86/lib/zygote_restart"), file("$magiskDir/zygote_restart/zygote_restart_x86"))
-        renameOrFail(file("$magiskDir/system_x86/lib64/zygote_restart"), file("$magiskDir/zygote_restart/zygote_restart_x64"))
+        renameOrFail(file("$magiskDir/system/lib/libriruhide.so"), file("$magiskDir/system/lib/libriruhide.so"))
+        renameOrFail(file("$magiskDir/system/lib64/libriruhide.so"), file("$magiskDir/system/lib64/libriruhide.so"))
+        renameOrFail(file("$magiskDir/system_x86/lib/libriruhide.so"), file("$magiskDir/system_x86/lib/libriruhide.so"))
+        renameOrFail(file("$magiskDir/system_x86/lib64/libriruhide.so"), file("$magiskDir/system_x86/lib64/libriruhide.so"))
+
+        //file("$magiskDir/zygote_restart").mkdir()
+        //renameOrFail(file("$magiskDir/system/lib/zygote_restart"), file("$magiskDir/zygote_restart/zygote_restart_arm"))
+        //renameOrFail(file("$magiskDir/system/lib64/zygote_restart"), file("$magiskDir/zygote_restart/zygote_restart_arm64"))
+        //renameOrFail(file("$magiskDir/system_x86/lib/zygote_restart"), file("$magiskDir/zygote_restart/zygote_restart_x86"))
+        //renameOrFail(file("$magiskDir/system_x86/lib64/zygote_restart"), file("$magiskDir/zygote_restart/zygote_restart_x64"))
 
         // generate sha1sum
         fileTree("$magiskDir").matching {

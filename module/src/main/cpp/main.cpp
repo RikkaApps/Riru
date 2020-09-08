@@ -13,7 +13,11 @@
 #include <dirent.h>
 #include <xhook/xhook.h>
 #include <iterator>
+#include <fcntl.h>
 #include <sys/system_properties.h>
+#include <sys/mman.h>
+#include <sys/syscall.h>
+#include <sys/sendfile.h>
 
 #include "misc.h"
 #include "jni_native_method.h"
@@ -23,17 +27,17 @@
 #include "JNIHelper.h"
 #include "api.h"
 #include "native_method.h"
+#include "hide_utils.h"
 
 #define CONFIG_DIR "/data/misc/riru"
 #define CONFIG_DIR_MAGISK "/sbin/riru"
 
 #ifdef __LP64__
-#define ZYGOTE_NAME "zygote64"
-#define MODULE_PATH_FMT "/system/lib64/libriru_%s.so"
+#define LIB_PATH "/system/lib64/"
 #else
-#define ZYGOTE_NAME "zygote"
-#define MODULE_PATH_FMT "/system/lib/libriru_%s.so"
+#define LIB_PATH "/system/lib/"
 #endif
+#define MODULE_PATH_FMT LIB_PATH "libriru_%s.so"
 
 static int methods_replaced = 0;
 static int sdkLevel;
@@ -44,8 +48,8 @@ int riru_is_zygote_methods_replaced() {
     return methods_replaced;
 }
 
-static int isQ() {
-    return (sdkLevel == 28 && previewSdkLevel > 0) || sdkLevel >= 29;
+static int at_least_api(int api) {
+    return (sdkLevel == (api - 1) && previewSdkLevel > 0) || sdkLevel >= api;
 }
 
 static const char *config_dir = nullptr;
@@ -65,7 +69,7 @@ static void load_modules() {
     DIR *dir;
     struct dirent *entry;
     char path[PATH_MAX], modules_path[PATH_MAX], module_prop[PATH_MAX], api[PATH_MAX];
-    int moduleApiVersion;
+    int module_api_version;
     void *handle;
 
     snprintf(modules_path, PATH_MAX, "%s/modules", get_config_dir());
@@ -75,39 +79,40 @@ static void load_modules() {
 
     while ((entry = _readdir(dir))) {
         if (entry->d_type == DT_DIR) {
-            if (entry->d_name[0] == '.')
+            auto name = entry->d_name;
+            if (name[0] == '.')
                 continue;
 
-            snprintf(path, PATH_MAX, MODULE_PATH_FMT, entry->d_name);
+            snprintf(path, PATH_MAX, MODULE_PATH_FMT, name);
 
             if (access(path, F_OK) != 0) {
                 PLOGE("access %s", path);
                 continue;
             }
 
-            snprintf(module_prop, PATH_MAX, "%s/%s/module.prop", modules_path, entry->d_name);
+            snprintf(module_prop, PATH_MAX, "%s/%s/module.prop", modules_path, name);
             if (access(module_prop, F_OK) != 0) {
                 PLOGE("access %s", module_prop);
                 continue;
             }
 
-            moduleApiVersion = -1;
+            module_api_version = -1;
             if (get_prop(module_prop, "api", api) > 0) {
-                moduleApiVersion = atoi(api);
+                module_api_version = atoi(api);
             }
 
-            if (isQ() && moduleApiVersion < 3) {
-                LOGW("module %s does not support Android Q", entry->d_name);
+            if (at_least_api(29) && module_api_version < 3) {
+                LOGW("module %s does not support Android 10+", name);
                 continue;
             }
 
             handle = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
             if (!handle) {
-                PLOGE("dlopen %s", path);
+                LOGE("dlopen %s failed: %s", path, dlerror());
                 continue;
             }
 
-            auto *module = new struct module(strdup(entry->d_name));
+            auto *module = new struct module(strdup(name));
             module->handle = handle;
             module->onModuleLoaded = dlsym(handle, "onModuleLoaded");
             module->forkAndSpecializePre = dlsym(handle, "nativeForkAndSpecializePre");
@@ -119,15 +124,14 @@ static void load_modules() {
             module->shouldSkipUid = dlsym(handle, "shouldSkipUid");
             get_modules()->push_back(module);
 
-            if (moduleApiVersion == -1) {
-                // only for api v2
-                module->getApiVersion = dlsym(handle, "getApiVersion");
+            if (module_api_version == -1) {
+                module->getApiVersion = dlsym(handle, "getApiVersion"); // only for api v2
 
                 if (module->getApiVersion) {
                     module->apiVersion = ((getApiVersion_t *) module->getApiVersion)();
                 }
             } else {
-                module->apiVersion = moduleApiVersion;
+                module->apiVersion = module_api_version;
             }
 
             void *sym = dlsym(handle, "riru_set_module_name");
@@ -145,6 +149,17 @@ static void load_modules() {
     }
 
     closedir(dir);
+
+    auto modules = get_modules();
+    auto names = (const char **) malloc(sizeof(char *) * modules->size());
+    int names_count = 0;
+    for (auto module : *get_modules()) {
+        if (strcmp(module->name, MODULE_NAME_CORE) == 0) continue;
+
+        names[names_count] = module->name;
+        names_count += 1;
+    }
+    hide::hide_modules(names, names_count);
 }
 
 static JNINativeMethod *onRegisterZygote(JNIEnv *env, const char *className,
@@ -290,7 +305,7 @@ NEW_FUNC_DEF(int, jniRegisterNativeMethods, JNIEnv *env, const char *className,
              const JNINativeMethod *methods, int numMethods) {
     put_native_method(className, methods, numMethods);
 
-    LOGV("jniRegisterNativeMethods %s", className);
+    LOGD("jniRegisterNativeMethods %s", className);
 
     JNINativeMethod *newMethods = nullptr;
     if (strcmp("com/android/internal/os/Zygote", className) == 0) {
@@ -316,7 +331,7 @@ void unhook_jniRegisterNativeMethods() {
                    nullptr);
     if (xhook_refresh(0) == 0) {
         xhook_clear();
-        LOGV("hook removed");
+        LOGD("hook removed");
     }
 }
 
@@ -347,12 +362,18 @@ void constructor() {
         return;
 
     char cmdline[ARG_MAX + 1];
-    get_self_cmdline(cmdline);
+    get_self_cmdline(cmdline, 0);
 
-    if (!strstr(cmdline, "--zygote"))
+    if (strcmp(cmdline, "zygote") != 0
+        && strcmp(cmdline, "zygote32") != 0
+        && strcmp(cmdline, "zygote64") != 0
+        && strcmp(cmdline, "usap32") != 0
+        && strcmp(cmdline, "usap64") != 0) {
+        LOGW("not zygote (cmdline=%s)", cmdline);
         return;
+    }
 
-    LOGI("Riru %s (%d) in %s", RIRU_VERSION_NAME, RIRU_VERSION_CODE, ZYGOTE_NAME);
+    LOGI("Riru %s (%d) in %s", RIRU_VERSION_NAME, RIRU_VERSION_CODE, cmdline);
 
     LOGI("config dir is %s", get_config_dir());
 

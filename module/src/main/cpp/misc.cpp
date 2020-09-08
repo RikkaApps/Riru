@@ -28,7 +28,7 @@ ssize_t fdgets(char *buf, size_t size, int fd) {
     return len;
 }
 
-ssize_t get_self_cmdline(char *cmdline) {
+ssize_t get_self_cmdline(char *cmdline, char zero_replacement) {
     int fd;
     ssize_t size;
 
@@ -40,7 +40,7 @@ ssize_t get_self_cmdline(char *cmdline) {
     if ((size = read(fd, cmdline, ARG_MAX)) > 0) {
         for (ssize_t i = 0; i < size - 1; ++i) {
             if (cmdline[i] == 0)
-                cmdline[i] = ' ';
+                cmdline[i] = zero_replacement;
         }
     } else {
         cmdline[0] = 0;
