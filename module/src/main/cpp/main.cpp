@@ -352,11 +352,9 @@ static void read_prop() {
 extern "C" void constructor() __attribute__((constructor));
 
 void constructor() {
-    static int loaded = 0;
-    if (loaded)
-        return;
-
-    loaded = 1;
+#ifdef DEBUG_APP
+    hide::hide_modules(nullptr, 0);
+#endif
 
     if (getuid() != 0)
         return;

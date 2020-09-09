@@ -4,17 +4,21 @@
 #include "wrap.h"
 #include "logging.h"
 
+#ifndef DEBUG_APP
 #ifdef __LP64__
 #define LIB_PATH "/system/lib64/"
 #else
 #define LIB_PATH "/system/lib/"
+#endif
+#else
+#define LIB_PATH "/data/data/moe.riru.manager/lib/"
 #endif
 
 namespace hide {
 
     void hide_modules(const char **names, int names_count) {
         // load riruhide.so and run the hide
-        LOGV("dlopen libriruhide");
+        LOGD("dlopen libriruhide");
         auto handle = dlopen(LIB_PATH "libriruhide.so", 0);
         if (!handle) {
             LOGE("dlopen %s failed: %s", LIB_PATH "libriruhide.so", dlerror());
@@ -27,10 +31,11 @@ namespace hide {
             return;
         }
 
-        LOGV("do hide");
+        LOGD("do hide");
         riru_hide(names, names_count);
 
         // cleanup riruhide.so
+        LOGD("dlclose");
         dlclose(handle);
 
         procmaps_iterator *maps = pmparser_parse(-1);

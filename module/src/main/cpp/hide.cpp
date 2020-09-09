@@ -14,6 +14,12 @@ extern "C" {
 int riru_hide(const char **names, int names_count) EXPORT;
 }
 
+#ifdef __LP64__
+#define LIB_PATH "/system/lib64/"
+#else
+#define LIB_PATH "/system/lib/"
+#endif
+
 struct hide_struct {
     procmaps_struct *original;
     uintptr_t backup_address;
@@ -49,30 +55,28 @@ static int do_hide(hide_struct *data) {
          data->backup_address);
 
     if (!procstruct->is_r) {
+        LOGD("mprotect +r");
         _mprotect((void *) start, length, prot | PROT_READ);
     }
+    LOGD("memcpy -> backup");
     memcpy((void *) data->backup_address, (void *) start, length);
 
     // munmap original
+    LOGD("munmap original");
     munmap((void *) start, length);
 
     // restore
+    LOGD("mmap original");
     _mmap((void *) start, length, prot, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    LOGD("mprotect +w");
     _mprotect((void *) start, length, prot | PROT_WRITE);
+    LOGD("memcpy -> original");
     memcpy((void *) start, (void *) data->backup_address, length);
     if (!procstruct->is_w) {
+        LOGD("mprotect -w");
         _mprotect((void *) start, length, prot);
     }
     return 0;
-}
-
-static bool strend(char const *str, char const *suffix) {
-    if (!str && !suffix) return true;
-    if (!str || !suffix) return false;
-    auto str_len = strlen(str);
-    auto suffix_len = strlen(suffix);
-    if (suffix_len > str_len) return false;
-    return strcmp(str + str_len - suffix_len, suffix) == 0;
 }
 
 int riru_hide(const char **names, int names_count) {
@@ -87,12 +91,17 @@ int riru_hide(const char **names, int names_count) {
     size_t data_count = 0;
     procmaps_struct *maps_tmp;
     while ((maps_tmp = pmparser_next(maps)) != nullptr) {
-        bool matched = false;
-        for (int i = 0; i < names_count; ++i) {
-            if (strend(maps_tmp->pathname, "/libriru.so") ||
-                    (snprintf(buf, PATH_MAX, "/libriru_%s.so", names[i]) > 0 && strend(maps_tmp->pathname, buf))) {
-                matched = true;
-                break;
+        bool matched = strcmp(maps_tmp->pathname, LIB_PATH "libriru.so") == 0;
+#ifdef DEBUG_APP
+        matched = strstr(maps_tmp->pathname, "libriru.so");
+#endif
+        if (!matched) {
+            for (int i = 0; i < names_count; ++i) {
+                snprintf(buf, PATH_MAX, LIB_PATH "libriru_%s.so", names[i]);
+                if (strcmp(maps_tmp->pathname, buf) == 0) {
+                    matched = true;
+                    break;
+                }
             }
         }
         if (!matched) continue;
