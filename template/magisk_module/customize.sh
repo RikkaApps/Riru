@@ -93,5 +93,7 @@ set_perm "$RIRU_PATH/version_code.new" 0 0 0600
 #fi
 #ui_print "- Random name is $RANDOM_NAME"
 
+mkdir "/data/adb/riru"
+
 ui_print "- Setting permissions"
 set_perm_recursive "$MODPATH" 0 0 0755 0644

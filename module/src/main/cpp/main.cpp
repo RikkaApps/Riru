@@ -29,8 +29,7 @@
 #include "native_method.h"
 #include "hide_utils.h"
 
-#define CONFIG_DIR "/data/misc/riru"
-#define CONFIG_DIR_MAGISK "/sbin/riru"
+#define CONFIG_DIR "/data/adb/riru"
 
 #ifdef __LP64__
 #define LIB_PATH "/system/lib64/"
@@ -52,19 +51,6 @@ static int at_least_api(int api) {
     return (sdkLevel == (api - 1) && previewSdkLevel > 0) || sdkLevel >= api;
 }
 
-static const char *config_dir = nullptr;
-
-static const char *get_config_dir() {
-    if (config_dir) return config_dir;
-
-    if (access(CONFIG_DIR_MAGISK, R_OK) == 0) {
-        config_dir = CONFIG_DIR_MAGISK;
-    } else {
-        config_dir = CONFIG_DIR;
-    }
-    return config_dir;
-}
-
 static void load_modules() {
     DIR *dir;
     struct dirent *entry;
@@ -72,7 +58,7 @@ static void load_modules() {
     int module_api_version;
     void *handle;
 
-    snprintf(modules_path, PATH_MAX, "%s/modules", get_config_dir());
+    snprintf(modules_path, PATH_MAX, "%s/modules", "/data/misc/riru");
 
     if (!(dir = _opendir(modules_path)))
         return;
@@ -139,27 +125,35 @@ static void load_modules() {
                 ((void (*)(const char *)) sym)(module->name);
 
             LOGI("module loaded: %s (api %d)", module->name, module->apiVersion);
-
-            if (module->onModuleLoaded) {
-                LOGV("%s: onModuleLoaded", module->name);
-
-                ((loaded_t *) module->onModuleLoaded)();
-            }
         }
     }
 
     closedir(dir);
 
-    auto modules = get_modules();
-    auto names = (const char **) malloc(sizeof(char *) * modules->size());
-    int names_count = 0;
-    for (auto module : *get_modules()) {
-        if (strcmp(module->name, MODULE_NAME_CORE) == 0) continue;
+    if (access(CONFIG_DIR "/enable_hide", F_OK) == 0) {
+        LOGI("hide is enabled");
+        auto modules = get_modules();
+        auto names = (const char **) malloc(sizeof(char *) * modules->size());
+        int names_count = 0;
+        for (auto module : *get_modules()) {
+            if (strcmp(module->name, MODULE_NAME_CORE) == 0) continue;
 
-        names[names_count] = module->name;
-        names_count += 1;
+            names[names_count] = module->name;
+            names_count += 1;
+        }
+        hide::hide_modules(names, names_count);
+    } else {
+        PLOGE("access " CONFIG_DIR "/enable_hide");
+        LOGI("hide is not enabled");
     }
-    hide::hide_modules(names, names_count);
+
+    for (auto module : *get_modules()) {
+        if (module->onModuleLoaded) {
+            LOGV("%s: onModuleLoaded", module->name);
+
+            ((loaded_t *) module->onModuleLoaded)();
+        }
+    }
 }
 
 static JNINativeMethod *onRegisterZygote(JNIEnv *env, const char *className,
@@ -373,13 +367,10 @@ void constructor() {
 
     LOGI("Riru %s (%d) in %s", RIRU_VERSION_NAME, RIRU_VERSION_CODE, cmdline);
 
-    LOGI("config dir is %s", get_config_dir());
+    LOGI("config dir is %s", CONFIG_DIR);
 
-    char path[PATH_MAX];
-    snprintf(path, PATH_MAX, "%s/.disable", get_config_dir());
-
-    if (access(path, F_OK) == 0) {
-        LOGI("%s exists, do nothing.", path);
+    if (access(CONFIG_DIR "/disable", F_OK) == 0) {
+        LOGI("%s exists, do nothing", CONFIG_DIR "/disable");
         return;
     }
 
