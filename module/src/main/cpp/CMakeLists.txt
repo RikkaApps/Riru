@@ -32,12 +32,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${C_FLAGS}")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LINKER_FLAGS}")
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LINKER_FLAGS}")
 
-add_subdirectory(xhook)
+find_package(xhook REQUIRED CONFIG)
 
 add_library(riru SHARED main.cpp jni_native_method.cpp misc.cpp wrap.cpp version.cpp api.cpp native_method.cpp hide_utils.cpp pmparser.c)
 
 target_include_directories(riru PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(riru log xhook)
+target_link_libraries(riru log xhook::xhook)
 
 add_library(riruhide SHARED hide.cpp wrap.cpp pmparser.c)
 target_include_directories(riruhide PRIVATE ${CMAKE_SOURCE_DIR})

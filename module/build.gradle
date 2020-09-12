@@ -26,12 +26,23 @@ android {
             }
         }
     }
+    buildFeatures {
+        prefab true
+    }
     externalNativeBuild {
         cmake {
             path "src/main/cpp/CMakeLists.txt"
             version "3.10.2"
         }
     }
+}
+
+repositories {
+    maven { url 'https://dl.bintray.com/rikkaw/Libraries' }
+}
+
+dependencies {
+    implementation 'rikka.ndk.thirdparty:xhook:1.2.0'
 }
 
 def outDir = file("$rootDir/out")
