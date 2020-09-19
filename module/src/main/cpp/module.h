@@ -90,6 +90,7 @@ struct module {
     void *shouldSkipUid{};
     void *getApiVersion{};
     int apiVersion = 0;
+    bool supportHide = false;
     std::map<std::string, void *> *funcs;
 
     explicit module(char *name) : name(name) {

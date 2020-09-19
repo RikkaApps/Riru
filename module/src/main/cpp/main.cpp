@@ -54,8 +54,9 @@ static int at_least_api(int api) {
 static void load_modules() {
     DIR *dir;
     struct dirent *entry;
-    char path[PATH_MAX], modules_path[PATH_MAX], module_prop[PATH_MAX], api[PATH_MAX];
+    char path[PATH_MAX], modules_path[PATH_MAX], module_prop[PATH_MAX], prop_value[PATH_MAX];
     int module_api_version;
+    bool support_hide;
     void *handle;
 
     snprintf(modules_path, PATH_MAX, "%s/modules", "/data/misc/riru");
@@ -83,8 +84,14 @@ static void load_modules() {
             }
 
             module_api_version = -1;
-            if (get_prop(module_prop, "api", api) > 0) {
-                module_api_version = atoi(api);
+            if (get_prop(module_prop, "api", prop_value) > 0) {
+                module_api_version = atoi(prop_value);
+            }
+
+            support_hide = false;
+            if (get_prop(module_prop, "supportHide", prop_value) > 0
+                && strstr("true", prop_value)) {
+                support_hide = true;
             }
 
             if (at_least_api(29) && module_api_version < 3) {
@@ -108,6 +115,7 @@ static void load_modules() {
             module->specializeAppProcessPre = dlsym(handle, "specializeAppProcessPre");
             module->specializeAppProcessPost = dlsym(handle, "specializeAppProcessPost");
             module->shouldSkipUid = dlsym(handle, "shouldSkipUid");
+            module->supportHide = support_hide;
             get_modules()->push_back(module);
 
             if (module_api_version == -1) {
@@ -137,7 +145,10 @@ static void load_modules() {
         int names_count = 0;
         for (auto module : *get_modules()) {
             if (strcmp(module->name, MODULE_NAME_CORE) == 0) continue;
-
+            if (!module->supportHide) {
+                LOGI("module %s does not support hide", module->name);
+                continue;
+            }
             names[names_count] = module->name;
             names_count += 1;
         }
