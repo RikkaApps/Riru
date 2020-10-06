@@ -8,7 +8,7 @@ Riru only does one thing, inject into zygote in order to allow modules run their
 
 Android 7.0+ devices rooted with [Magisk](https://github.com/topjohnwu/Magisk)
 
-## How it works?
+## How Riru works?
 
 * How to inject into zygote process?
 
@@ -21,6 +21,10 @@ Android 7.0+ devices rooted with [Magisk](https://github.com/topjohnwu/Magisk)
   Some JNI functions (`com.android.internal.os.Zygote#nativeForkAndSpecialize` & `com.android.internal.os.Zygote#nativeForkSystemServer`) is to fork the app process or the system server process.
   So we need to replace these functions to ours. This part is simple, hook `jniRegisterNativeMethods` since all Java native methods in `libandroid_runtime.so` is registered through this function.
   Then we can call the original `jniRegisterNativeMethods` again to replace them.
+  
+## How hide Hide works?
+
+From v22.0, Riru provide a hide mechanism (idea from [Haruue Icymoon](https://github.com/haruue)), make the memory of Riru and module to anonymous memory to hide from "`/proc/maps` string scanning".
 
 ## Build
 
