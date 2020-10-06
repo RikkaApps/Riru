@@ -1,33 +1,30 @@
 # Riru
 
-Riru is a very simple but useful thing. Only requires to replace one system file, it will provide the ability to Riru modules to run their code in apps' or system server's process.
+Riru only does one thing, inject into zygote in order to allow modules run their codes in apps or the system server.
 
-The name Riru comes from a character. (https://www.pixiv.net/member_illust.php?mode=medium&illust_id=74128856)
+> The name, Riru, comes from a character. (https://www.pixiv.net/member_illust.php?mode=medium&illust_id=74128856)
 
 ## Requirements
 
-* Rooted Android 6.0+ devices 
-* Magisk (use to replace system files, temporarily only provide Magisk zip)
+Android 7.0+ devices rooted with [Magisk](https://github.com/topjohnwu/Magisk)
 
 ## How it works?
 
-In short, replace a shared library which will be loaded by the zygote process.
+* How to inject into zygote process?
 
-First, we need to find that library. The library needs to be as simple as possible, so we found libmemtrack, with only 10 exported functions.
-Then we can provide a library named libmemtrack with all its functions, so the functionality will not be affected and we will able to in the zygote process. (However, it seems that choose libmemtrack is not so appropriate now)
+  Before v22.0, we use the method of replacing a system library (libmemtrack) that will be loaded by zygote. However, it seems to cause some weird problems. Maybe because libmemtrack is used by something else.
 
-Now the next question, how to know if we are in an app process or a system server process.
-We found some JNI functions (`com.android.internal.os.Zygote#nativeForkAndSpecialize` & `com.android.internal.os.Zygote#nativeForkSystemServer`) will be called when a app or system server is forked.
-So we just need to replace these functions to ours. This part is simple, just hook `jniRegisterNativeMethods` since all Java native method in libandroid_runtime is registered with this function.
-Then we can call `RegisterNatives` again to replace them.
+  Then we found a super easy way, add our so file into `/system/etc/public.libraries.txt`. All so files in `public.libraries.txt` will be automatically "dlopen-ed" by the system. This way is from [here](https://blog.canyie.top/2020/02/03/a-new-xposed-style-framework/).
 
-## Why Riru is made?
+* How to know if we are in an app process or a system server process?
 
-There is only one `libmemtrack.so`, if someone wants to do something by replacing it, others can't. So I made Riru occupy libmemtrack but provide the ability to make modules.
+  Some JNI functions (`com.android.internal.os.Zygote#nativeForkAndSpecialize` & `com.android.internal.os.Zygote#nativeForkSystemServer`) is to fork the app process or the system server process.
+  So we need to replace these functions to ours. This part is simple, hook `jniRegisterNativeMethods` since all Java native methods in `libandroid_runtime.so` is registered through this function.
+  Then we can call the original `jniRegisterNativeMethods` again to replace them.
 
 ## Build
 
-Run gradle task `:module:assembleRelease` task from Android Studio or command line, zip will be saved to `out`.
+Run gradle task `:module:assembleRelease` task from Android Studio or the terminal, zip will be saved to `out`.
 
 ## Install
 
@@ -35,4 +32,4 @@ Install zip in Magisk Manager.
 
 ## Create your own module
 
-[View template](https://github.com/RikkaApps/Riru-ModuleTemplate)
+[Template](https://github.com/RikkaApps/Riru-ModuleTemplate)
