@@ -75,12 +75,17 @@ namespace status {
         }
         LOGD("random name is %s", random_name);
 
-        const char *filename = name, *next;
+        const char *filename, *next;
         char dir[PATH_MAX];
 
         strcpy(dir, TMP_DIR);
-        strcat(dir, "/");
+#ifdef __LP64__
+        strcat(dir, "/riru64_");
+#else
+        strcat(dir, "/riru_");
+#endif
         strcat(dir, random_name);
+
 
         va_list va;
         va_start(va, name);
