@@ -24,12 +24,11 @@
 #include "logging.h"
 #include "wrap.h"
 #include "module.h"
-#include "JNIHelper.h"
 #include "api.h"
 #include "native_method.h"
 #include "hide_utils.h"
-
-#define CONFIG_DIR "/data/adb/riru"
+#include "status.h"
+#include "config.h"
 
 #ifdef __LP64__
 #define LIB_PATH "/system/lib64/"
@@ -38,13 +37,13 @@
 #endif
 #define MODULE_PATH_FMT LIB_PATH "libriru_%s.so"
 
-static int methods_replaced = 0;
 static int sdkLevel;
 static int previewSdkLevel;
 static char androidVersionName[PROP_VALUE_MAX + 1];
 
 int riru_is_zygote_methods_replaced() {
-    return methods_replaced;
+    return status::getStatus()->methodReplaced[status::method::forkAndSpecialize] &&
+           status::getStatus()->methodReplaced[status::method::forkSystemServer];
 }
 
 static int at_least_api(int api) {
@@ -138,7 +137,8 @@ static void load_modules() {
 
     closedir(dir);
 
-    if (access(CONFIG_DIR "/enable_hide", F_OK) == 0) {
+    status::getStatus()->hideEnabled = access(CONFIG_DIR "/enable_hide", F_OK) == 0;
+    if (status::getStatus()->hideEnabled) {
         LOGI("hide is enabled");
         auto modules = get_modules();
         auto names = (const char **) malloc(sizeof(char *) * modules->size());
@@ -169,8 +169,6 @@ static void load_modules() {
 
 static JNINativeMethod *onRegisterZygote(JNIEnv *env, const char *className,
                                          const JNINativeMethod *methods, int numMethods) {
-    int replaced = 0;
-
     auto *newMethods = new JNINativeMethod[numMethods];
     memcpy(newMethods, methods, sizeof(JNINativeMethod) * numMethods);
 
@@ -210,13 +208,13 @@ static JNINativeMethod *onRegisterZygote(JNIEnv *env, const char *className,
             else
                 LOGW("found nativeForkAndSpecialize but signature %s mismatch", method.signature);
 
-            if (newMethods[i].fnPtr != methods[i].fnPtr) {
+            auto replaced = newMethods[i].fnPtr != methods[i].fnPtr;
+            if (replaced) {
                 LOGI("replaced com.android.internal.os.Zygote#nativeForkAndSpecialize");
                 riru_set_native_method_func(MODULE_NAME_CORE, className, newMethods[i].name,
                                             newMethods[i].signature, newMethods[i].fnPtr);
-
-                replaced += 1;
             }
+            status::writeMethodToFile(status::method::forkAndSpecialize, replaced, method.signature);
         } else if (strcmp(method.name, "nativeSpecializeAppProcess") == 0) {
             set_nativeSpecializeAppProcess(method.fnPtr);
 
@@ -238,13 +236,13 @@ static JNINativeMethod *onRegisterZygote(JNIEnv *env, const char *className,
                 LOGW("found nativeSpecializeAppProcess but signature %s mismatch",
                      method.signature);
 
-            if (newMethods[i].fnPtr != methods[i].fnPtr) {
+            auto replaced = newMethods[i].fnPtr != methods[i].fnPtr;
+            if (replaced) {
                 LOGI("replaced com.android.internal.os.Zygote#nativeSpecializeAppProcess");
                 riru_set_native_method_func(MODULE_NAME_CORE, className, newMethods[i].name,
                                             newMethods[i].signature, newMethods[i].fnPtr);
-
-                //replaced += 1;
             }
+            status::writeMethodToFile(status::method::specializeAppProcess, replaced, method.signature);
         } else if (strcmp(method.name, "nativeForkSystemServer") == 0) {
             set_nativeForkSystemServer(method.fnPtr);
 
@@ -255,17 +253,15 @@ static JNINativeMethod *onRegisterZygote(JNIEnv *env, const char *className,
             else
                 LOGW("found nativeForkSystemServer but signature %s mismatch", method.signature);
 
-            if (newMethods[i].fnPtr != methods[i].fnPtr) {
+            auto replaced = newMethods[i].fnPtr != methods[i].fnPtr;
+            if (replaced) {
                 LOGI("replaced com.android.internal.os.Zygote#nativeForkSystemServer");
                 riru_set_native_method_func(MODULE_NAME_CORE, className, newMethods[i].name,
                                             newMethods[i].signature, newMethods[i].fnPtr);
-
-                replaced += 1;
             }
+            status::writeMethodToFile(status::method::forkSystemServer, replaced, method.signature);
         }
     }
-
-    methods_replaced = replaced == 2/*(isQ() ? 3 : 2)*/;
 
     return newMethods;
 }
@@ -350,8 +346,7 @@ static void read_prop() {
 
     __system_property_get("ro.build.version.release", androidVersionName);
 
-    LOGI("system version %s (api %d, preview_sdk %d)", androidVersionName, sdkLevel,
-         previewSdkLevel);
+    LOGI("system version %s (api %d, preview_sdk %d)", androidVersionName, sdkLevel, previewSdkLevel);
 }
 
 extern "C" void constructor() __attribute__((constructor));
@@ -397,4 +392,6 @@ void constructor() {
     }
 
     load_modules();
+
+    status::writeToFile();
 }
