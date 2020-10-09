@@ -17,7 +17,17 @@ struct RiruModuleExt : RiruModule {
 
     explicit RiruModuleExt(const char *name) : name(name) {
         funcs = new std::map<std::string, void *>();
-        token = (uintptr_t) name + (uintptr_t) funcs;
+        token = (uintptr_t) name;
+        apiVersion = 0;
+        supportHide = 0;
+        onModuleLoaded = nullptr;
+        shouldSkipUid = nullptr;
+        forkAndSpecializePre = nullptr;
+        forkAndSpecializePost = nullptr;
+        forkSystemServerPre = nullptr;
+        forkSystemServerPost = nullptr;
+        specializeAppProcessPre = nullptr;
+        specializeAppProcessPost = nullptr;
     }
 };
 

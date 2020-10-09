@@ -28,7 +28,7 @@ void load_modules() {
     riru_funcs.setJNINativeMethodFunc = riru_set_native_method_func;
     riru_funcs.getOriginalJNINativeMethodFunc = riru_get_original_native_methods;
 
-    RiruInit riru_init_data;
+    Riru riru_init_data;
     riru_init_data.version = RIRU_VERSION_CODE;
     riru_init_data.funcs = &riru_funcs;
 
@@ -84,7 +84,6 @@ void load_modules() {
         init(&riru_init_data);
 
         module->handle = handle;
-        module->apiVersion = module_api_version;
 
         get_modules()->push_back(module);
 
