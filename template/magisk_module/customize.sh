@@ -71,5 +71,10 @@ mkdir "$RIRU_PATH"
 #mv "$RIRU_PATH/bin/zygote_restart_$ARCH" "$RIRU_PATH/bin/zygote_restart"
 #set_perm "$RIRU_PATH/bin/zygote_restart" 0 0 0700
 
+# write api version to a persist file, only for the check process of the module installation
+ui_print "- Writing Riru files"
+echo -n "$RIRU_API" > "$RIRU_PATH/api_version.new"
+set_perm "$RIRU_PATH/api_version.new" 0 0 0600
+
 ui_print "- Setting permissions"
 set_perm_recursive "$MODPATH" 0 0 0755 0644

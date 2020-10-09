@@ -5,7 +5,7 @@ import java.security.MessageDigest
 
 apply plugin: 'com.android.library'
 
-def apiVersion = 7
+def apiVersion = 8
 def moduleProp = [
         id         : "riru-core",
         name       : "Riru (Riru - Core)",
@@ -22,7 +22,9 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         externalNativeBuild {
             cmake {
-                arguments "-DRIRU_VERSION_NAME:STRING=${moduleProp['version']}", "-DRIRU_VERSION_CODE:STRING=${moduleProp['versionCode']}"
+                arguments "-DRIRU_VERSION_NAME:STRING=${moduleProp['version']}",
+                        "-DRIRU_VERSION_CODE:STRING=${moduleProp['versionCode']}",
+                        "-DRIRU_API_VERSION=$apiVersion"
             }
         }
     }

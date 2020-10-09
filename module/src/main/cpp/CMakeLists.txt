@@ -12,8 +12,13 @@ if (NOT DEFINED RIRU_VERSION_CODE)
     message(FATAL_ERROR "RIRU_VERSION_CODE is not set")
 endif ()
 
+if (NOT DEFINED RIRU_API_VERSION)
+    message(FATAL_ERROR "RIRU_API_VERSION is not set")
+endif ()
+
 add_definitions(-DRIRU_VERSION_NAME="${RIRU_VERSION_NAME}")
 add_definitions(-DRIRU_VERSION_CODE=${RIRU_VERSION_CODE})
+add_definitions(-DRIRU_API_VERSION=${RIRU_API_VERSION})
 
 set(LINKER_FLAGS "-ffixed-x18 -Wl,--hash-style=both")
 set(C_FLAGS "-Werror=format -fdata-sections -ffunction-sections")

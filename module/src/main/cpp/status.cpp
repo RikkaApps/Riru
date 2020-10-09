@@ -127,6 +127,11 @@ namespace status {
         char buf[1024];
         int fd;
 
+        if ((fd = openFile("api")) != -1) {
+            write_full(fd, buf, sprintf(buf, "%d", RIRU_API_VERSION));
+            close(fd);
+        }
+
         if ((fd = openFile("version")) != -1) {
             write_full(fd, buf, sprintf(buf, "%d", RIRU_VERSION_CODE));
             close(fd);
