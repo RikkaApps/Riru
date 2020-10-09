@@ -150,7 +150,9 @@ namespace status {
         // write modules
         for (auto module : *get_modules()) {
             if (strcmp(module->name, MODULE_NAME_CORE) == 0) continue;
-            if ((fd = openFile("modules", module->name)) != -1) {
+
+            if ((fd = openFile("modules", module->name, "hide")) != -1) {
+                write_full(fd, buf, sprintf(buf, "%s", module->supportHide ? "true" : "false"));
                 close(fd);
             }
         }
