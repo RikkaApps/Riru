@@ -1,0 +1,28 @@
+plugins {
+    id 'com.android.library'
+}
+
+android {
+    compileSdkVersion 30
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 30
+        versionCode 8
+        versionName "8"
+    }
+    buildFeatures {
+        buildConfig false
+        prefabPublishing true
+    }
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+            version "3.10.2"
+        }
+    }
+    prefab {
+        riru {
+            headers "src/main/cpp/include"
+        }
+    }
+}
