@@ -44,6 +44,7 @@ repositories {
 }
 
 dependencies {
+    implementation 'rikka.ndk:riru:8'
     implementation 'rikka.ndk.thirdparty:xhook:1.2.0'
 }
 

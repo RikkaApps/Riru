@@ -1,7 +1,7 @@
 #pragma once
 
 #include <jni.h>
-#include "riru.h"
+#include <riru.h>
 
 void put_native_method(const char *className, const JNINativeMethod *methods, int numMethods);
 
