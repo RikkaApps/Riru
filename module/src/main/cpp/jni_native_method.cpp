@@ -40,24 +40,6 @@ static int shouldSkipUid(int uid) {
     return 1;
 }
 
-int nativeForkAndSpecialize_calls_count = 0;
-
-int riru_get_nativeForkAndSpecialize_calls_count() {
-    return nativeForkAndSpecialize_calls_count;
-}
-
-int nativeForkSystemServer_calls_count = 0;
-
-int riru_get_nativeForkSystemServer_calls_count() {
-    return nativeForkSystemServer_calls_count;
-}
-
-int nativeSpecializeAppProcess_calls_count = 0;
-
-int riru_get_nativeSpecializeAppProcess_calls_count() {
-    return nativeSpecializeAppProcess_calls_count;
-}
-
 // -----------------------------------------------------------------
 
 static void nativeForkAndSpecialize_pre(
@@ -67,13 +49,11 @@ static void nativeForkAndSpecialize_pre(
         jstring &instructionSet, jstring &appDataDir, jboolean &isTopApp, jobjectArray &pkgDataInfoList,
         jobjectArray &whitelistedDataInfoList, jboolean &bindMountAppDataDirs, jboolean &bindMountAppStorageDirs) {
 
-    nativeForkAndSpecialize_calls_count++;
-
     for (auto module : *get_modules()) {
         if (!module->forkAndSpecializePre)
             continue;
 
-        if (module->shouldSkipUid && ((shouldSkipUid_t *) module->shouldSkipUid)(uid))
+        if (module->shouldSkipUid && module->shouldSkipUid(uid))
             continue;
 
         if (!module->shouldSkipUid && shouldSkipUid(uid))
@@ -125,7 +105,7 @@ static void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, ji
         if (!module->forkAndSpecializePost)
             continue;
 
-        if (module->shouldSkipUid && ((shouldSkipUid_t *) module->shouldSkipUid)(uid))
+        if (module->shouldSkipUid && module->shouldSkipUid(uid))
             continue;
 
         if (!module->shouldSkipUid && shouldSkipUid(uid))
@@ -156,8 +136,6 @@ static void nativeSpecializeAppProcess_pre(
         jboolean startChildZygote, jstring instructionSet, jstring appDataDir,
         jboolean &isTopApp, jobjectArray &pkgDataInfoList, jobjectArray &whitelistedDataInfoList,
         jboolean &bindMountAppDataDirs, jboolean &bindMountAppStorageDirs) {
-
-    nativeSpecializeAppProcess_calls_count++;
 
     for (auto module : *get_modules()) {
         if (!module->specializeAppProcessPre)
@@ -211,8 +189,6 @@ static void nativeSpecializeAppProcess_post(JNIEnv *env, jclass clazz) {
 static void nativeForkSystemServer_pre(
         JNIEnv *env, jclass clazz, uid_t &uid, gid_t &gid, jintArray &gids, jint &debug_flags,
         jobjectArray &rlimits, jlong &permittedCapabilities, jlong &effectiveCapabilities) {
-
-    nativeForkSystemServer_calls_count++;
 
     for (auto module : *get_modules()) {
         if (!module->forkSystemServerPre)

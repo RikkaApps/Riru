@@ -1,39 +1,21 @@
-#ifndef RIRU_API_H
-#define RIRU_API_H
+#pragma once
 
 #include <jni.h>
+#include "riru.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+void put_native_method(const char *className, const JNINativeMethod *methods, int numMethods);
 
-#define EXPORT __attribute__((visibility("default"))) __attribute__((used))
+#define KEEP __attribute__((visibility("hidden"))) __attribute__((used))
 
-int riru_get_version(void) EXPORT;
+void *riru_get_func(uint32_t token, const char *name) KEEP;
 
-void *riru_get_func(const char *module_name, const char *name) EXPORT;
+void *riru_get_native_method_func(
+        uint32_t token, const char *className, const char *name, const char *signature) KEEP;
 
-void *riru_get_native_method_func(const char *module_name, const char *className, const char *name,
-                                  const char *signature) EXPORT;
+void riru_set_func(uint32_t token, const char *name, void *func) KEEP;
 
-void riru_set_func(const char *module_name, const char *name, void *func) EXPORT;
+void riru_set_native_method_func(
+        uint32_t token, const char *className, const char *name, const char *signature, void *func) KEEP;
 
-void riru_set_native_method_func(const char *module_name, const char *className, const char *name,
-                                 const char *signature, void *func) EXPORT;
-
-const JNINativeMethod *riru_get_original_native_methods(const char *className, const char *name,
-                                                        const char *signature) EXPORT;
-
-int riru_is_zygote_methods_replaced() EXPORT;
-
-int riru_get_nativeForkAndSpecialize_calls_count() EXPORT;
-
-int riru_get_nativeForkSystemServer_calls_count() EXPORT;
-
-int riru_get_nativeSpecializeAppProcess_calls_count() EXPORT;
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif // RIRU_API_H
+const JNINativeMethod *riru_get_original_native_methods(
+        const char *className, const char *name, const char *signature) KEEP;

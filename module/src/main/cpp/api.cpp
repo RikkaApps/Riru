@@ -16,31 +16,23 @@ struct JNINativeMethodHolder {
             methods(methods), count(count) {}
 };
 
-static auto *native_methods = new std::map<std::string, JNINativeMethodHolder*>();
-
-std::vector<module *> *get_modules() {
-    static auto *modules = new std::vector<module *>({new module(strdup(MODULE_NAME_CORE))});
-    return modules;
-}
+static auto *native_methods = new std::map<std::string, JNINativeMethodHolder *>();
 
 void put_native_method(const char *className, const JNINativeMethod *methods, int numMethods) {
     (*native_methods)[className] = new JNINativeMethodHolder(methods, numMethods);
 }
 
-static unsigned long get_module_index(const char *name) {
-    if (!name)
-        return 0;
-
+static unsigned long get_module_index(uint32_t token) {
     for (unsigned long i = 0; i < get_modules()->size(); ++i) {
-        if (strcmp(get_modules()->at(i)->name, name) == 0)
+        if (get_modules()->at(i)->token == token)
             return i + 1;
     }
     return 0;
 }
 
-extern "C" {
-const JNINativeMethod *riru_get_original_native_methods(const char *className, const char *name,
-                                                        const char *signature) {
+const JNINativeMethod *riru_get_original_native_methods(
+        const char *className, const char *name, const char *signature) {
+
     auto it = native_methods->find(className);
     if (it != native_methods->end()) {
         if (!name && !signature)
@@ -57,8 +49,8 @@ const JNINativeMethod *riru_get_original_native_methods(const char *className, c
     return nullptr;
 }
 
-void *riru_get_func(const char *module_name, const char *name) {
-    unsigned long index = get_module_index(module_name);
+void *riru_get_func(uint32_t token, const char *name) {
+    unsigned long index = get_module_index(token);
     if (index == 0)
         return nullptr;
 
@@ -81,15 +73,13 @@ void *riru_get_func(const char *module_name, const char *name) {
     return nullptr;
 }
 
-void *riru_get_native_method_func(const char *module_name, const char *className, const char *name,
-                                  const char *signature) {
-    unsigned long index = get_module_index(module_name);
+void *riru_get_native_method_func(
+        uint32_t token, const char *className, const char *name, const char *signature) {
+    unsigned long index = get_module_index(token);
     if (index == 0)
         return nullptr;
 
     index -= 1;
-
-    //LOGV("get_func %s %s %s %s", module_name, className, name, signature);
 
     // find if it is set by previous modules
     if (index != 0) {
@@ -108,8 +98,8 @@ void *riru_get_native_method_func(const char *module_name, const char *className
     return jniNativeMethod ? jniNativeMethod->fnPtr : nullptr;
 }
 
-void riru_set_func(const char *module_name, const char *name, void *func) {
-    unsigned long index = get_module_index(module_name);
+void riru_set_func(uint32_t token, const char *name, void *func) {
+    unsigned long index = get_module_index(token);
     if (index == 0)
         return;
 
@@ -119,8 +109,7 @@ void riru_set_func(const char *module_name, const char *name, void *func) {
     (*module->funcs)[name] = func;
 }
 
-void riru_set_native_method_func(const char *module_name, const char *className, const char *name,
-                                 const char *signature, void *func) {
-    riru_set_func(module_name, (std::string(className) + name + signature).c_str(), func);
-}
+void riru_set_native_method_func(
+        uint32_t token, const char *className, const char *name, const char *signature, void *func) {
+    riru_set_func(token, (std::string(className) + name + signature).c_str(), func);
 }

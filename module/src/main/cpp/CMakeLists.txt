@@ -34,7 +34,7 @@ set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LINKER_FLAGS}")
 
 find_package(xhook REQUIRED CONFIG)
 
-add_library(riru SHARED main.cpp jni_native_method.cpp misc.cpp wrap.cpp version.cpp api.cpp native_method.cpp hide_utils.cpp pmparser.c status.cpp)
+add_library(riru SHARED main.cpp jni_native_method.cpp misc.cpp wrap.cpp api.cpp native_method.cpp hide_utils.cpp pmparser.c status.cpp module.cpp)
 
 target_include_directories(riru PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(riru log xhook::xhook)
