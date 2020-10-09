@@ -2,6 +2,15 @@
 #define _JNI_NATIVE_METHOD_H
 
 #include <jni.h>
+#include "riru.h"
+
+using nativeForkAndSpecializePre_latest = nativeForkAndSpecializePre_t;
+using nativeForkSystemServerPre_latest = nativeForkSystemServerPre_t;
+
+using nativeForkAndSpecializePre_v8 = nativeForkAndSpecializePre_latest;
+using nativeForkSystemServerPre_v8 = nativeForkSystemServerPre_latest;
+
+// -----------------------------------------------------------------
 
 void set_nativeForkAndSpecialize(void *addr);
 

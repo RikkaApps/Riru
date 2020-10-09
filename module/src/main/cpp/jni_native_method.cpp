@@ -59,40 +59,12 @@ static void nativeForkAndSpecialize_pre(
         if (!module->shouldSkipUid && shouldSkipUid(uid))
             continue;
 
-        if (module->apiVersion >= 7) {
-            ((nativeForkAndSpecialize_pre_v7_t *) module->forkAndSpecializePre)(
+        if (module->apiVersion == 8) {
+            module->forkAndSpecializePre(
                     env, clazz, &uid, &gid, &gids, &runtime_flags, &rlimits, &mount_external,
                     &se_info, &se_name, &fdsToClose, &fdsToIgnore, &is_child_zygote,
                     &instructionSet, &appDataDir, &isTopApp, &pkgDataInfoList, &whitelistedDataInfoList,
                     &bindMountAppDataDirs, &bindMountAppStorageDirs);
-        } else if (module->apiVersion == 6) {
-            ((nativeForkAndSpecialize_pre_v6_t *) module->forkAndSpecializePre)(
-                    env, clazz, &uid, &gid, &gids, &runtime_flags, &rlimits, &mount_external,
-                    &se_info, &se_name, &fdsToClose, &fdsToIgnore, &is_child_zygote,
-                    &instructionSet, &appDataDir, &isTopApp, &pkgDataInfoList, &bindMountAppStorageDirs);
-        } else if (module->apiVersion == 5) {
-            ((nativeForkAndSpecialize_pre_v5_t *) module->forkAndSpecializePre)(
-                    env, clazz, &uid, &gid, &gids, &runtime_flags, &rlimits, &mount_external,
-                    &se_info, &se_name, &fdsToClose, &fdsToIgnore, &is_child_zygote,
-                    &instructionSet, &appDataDir, &isTopApp, &pkgDataInfoList);
-        } else if (module->apiVersion >= 3) {
-            jstring packageName = nullptr;
-            jobjectArray packagesForUID = nullptr;
-            jstring sandboxId = nullptr;
-
-            ((nativeForkAndSpecialize_pre_v3_t *) module->forkAndSpecializePre)(
-                    env, clazz, &uid, &gid, &gids, &runtime_flags, &rlimits, &mount_external,
-                    &se_info, &se_name, &fdsToClose, &fdsToIgnore, &is_child_zygote,
-                    &instructionSet, &appDataDir, &packageName, &packagesForUID, &sandboxId);
-        } else if (module->apiVersion == 2) {
-            ((nativeForkAndSpecialize_pre_v2_t *) module->forkAndSpecializePre)(
-                    env, clazz, &uid, &gid, &gids, &runtime_flags, &rlimits, &mount_external,
-                    &se_info, &se_name, &fdsToClose, &fdsToIgnore, &is_child_zygote,
-                    &instructionSet, &appDataDir);
-        } else {
-            ((nativeForkAndSpecialize_pre_t *) module->forkAndSpecializePre)(
-                    env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external, se_info,
-                    se_name, fdsToClose, fdsToIgnore, is_child_zygote, instructionSet, appDataDir);
         }
     }
 }
@@ -124,7 +96,10 @@ static void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, ji
          * Don't known why, so we just don't print log in zygote and see what will happen
          */
         if (res == 0) LOGD("%s: forkAndSpecializePost", module->name);
-        ((nativeForkAndSpecialize_post_t *) module->forkAndSpecializePost)(env, clazz, res);
+
+        if (module->apiVersion >= 8) {
+            module->forkAndSpecializePost(env, clazz, res);
+        }
     }
 }
 
@@ -141,30 +116,11 @@ static void nativeSpecializeAppProcess_pre(
         if (!module->specializeAppProcessPre)
             continue;
 
-        if (module->apiVersion >= 7) {
-            ((nativeSpecializeAppProcess_pre_v7_t *) module->specializeAppProcessPre)(
+        if (module->apiVersion == 8) {
+            module->specializeAppProcessPre(
                     env, clazz, &uid, &gid, &gids, &runtimeFlags, &rlimits, &mountExternal, &seInfo,
                     &niceName, &startChildZygote, &instructionSet, &appDataDir, &isTopApp,
                     &pkgDataInfoList, &whitelistedDataInfoList, &bindMountAppDataDirs, &bindMountAppStorageDirs);
-        } else if (module->apiVersion >= 6) {
-            ((nativeSpecializeAppProcess_pre_v6_t *) module->specializeAppProcessPre)(
-                    env, clazz, &uid, &gid, &gids, &runtimeFlags, &rlimits, &mountExternal, &seInfo,
-                    &niceName, &startChildZygote, &instructionSet, &appDataDir, &isTopApp,
-                    &pkgDataInfoList, &bindMountAppStorageDirs);
-        } else if (module->apiVersion == 5) {
-            ((nativeSpecializeAppProcess_pre_v5_t *) module->specializeAppProcessPre)(
-                    env, clazz, &uid, &gid, &gids, &runtimeFlags, &rlimits, &mountExternal, &seInfo,
-                    &niceName, &startChildZygote, &instructionSet, &appDataDir, &isTopApp,
-                    &pkgDataInfoList);
-        } else if (module->apiVersion >= 4) {
-            jstring packageName = nullptr;
-            jobjectArray packagesForUID = nullptr;
-            jstring sandboxId = nullptr;
-
-            ((nativeSpecializeAppProcess_pre_v4_t *) module->specializeAppProcessPre)(
-                    env, clazz, &uid, &gid, &gids, &runtimeFlags, &rlimits, &mountExternal, &seInfo,
-                    &niceName, &startChildZygote, &instructionSet, &appDataDir, &packageName,
-                    &packagesForUID, &sandboxId);
         }
     }
 }
@@ -178,8 +134,8 @@ static void nativeSpecializeAppProcess_post(JNIEnv *env, jclass clazz) {
             continue;
 
         LOGD("%s: specializeAppProcessPost", module->name);
-        if (module->apiVersion >= 4) {
-            ((nativeSpecializeAppProcess_post_t *) module->specializeAppProcessPost)(env, clazz);
+        if (module->apiVersion == 8) {
+            module->specializeAppProcessPost(env, clazz);
         }
     }
 }
@@ -194,14 +150,10 @@ static void nativeForkSystemServer_pre(
         if (!module->forkSystemServerPre)
             continue;
 
-        if (module->apiVersion >= 2) {
-            ((nativeForkSystemServer_pre_v2_t *) module->forkSystemServerPre)(
+        if (module->apiVersion >= 8) {
+            module->forkSystemServerPre(
                     env, clazz, &uid, &gid, &gids, &debug_flags, &rlimits, &permittedCapabilities,
                     &effectiveCapabilities);
-        } else {
-            ((nativeForkSystemServer_pre_t *) module->forkSystemServerPre)(
-                    env, clazz, uid, gid, gids, debug_flags, rlimits, permittedCapabilities,
-                    effectiveCapabilities);
         }
     }
 }
@@ -212,7 +164,9 @@ static void nativeForkSystemServer_post(JNIEnv *env, jclass clazz, jint res) {
             continue;
 
         if (res == 0) LOGD("%s: forkSystemServerPost", module->name);
-        ((nativeForkSystemServer_post_t *) module->forkSystemServerPost)(env, clazz, res);
+        if (module->apiVersion >= 8) {
+            module->forkSystemServerPost(env, clazz, res);
+        }
     }
 }
 
