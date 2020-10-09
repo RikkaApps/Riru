@@ -32,7 +32,7 @@ void load_modules() {
     riru_init_data.version = RIRU_VERSION_CODE;
     riru_init_data.funcs = &riru_funcs;
 
-    snprintf(modules_path, PATH_MAX, "%s/modules", "/data/misc/riru");
+    snprintf(modules_path, PATH_MAX, "%s/modules", CONFIG_DIR);
 
     if (!(dir = _opendir(modules_path))) return;
 
