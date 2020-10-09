@@ -8,11 +8,11 @@ apply plugin: 'com.android.library'
 def apiVersion = 8
 def moduleProp = [
         id         : "riru-core",
-        name       : "Riru (Riru - Core)",
+        name       : "Riru",
         version    : "v22.0",
         versionCode: "37",
         author     : "Rikka",
-        description: "Inject zygote process, provide interface to other Riru modules."
+        description: "Inject into zygote process. Required by all \"Riru\" modules."
 ]
 
 android {

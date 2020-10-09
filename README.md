@@ -8,6 +8,25 @@ Riru only does one thing, inject into zygote in order to allow modules run their
 
 Android 7.0+ devices rooted with [Magisk](https://github.com/topjohnwu/Magisk)
 
+## Guide
+
+### Install
+
+* Automatically
+
+  1. Search "Riru" in Magisk Manager
+  2. Install the module named "Riru"
+
+* Manually
+
+  1. Download the zip from [GitHub release](https://github.com/RikkaApps/Riru/releases)
+  2. Install in Magisk Manager (Modules - Install from storage - Select downloaded zip)
+
+### Config
+
+* When the file `/data/adb/riru/disable` exists, Riru will do nothing
+* When the file `/data/adb/riru/enable_hide` exists, the hide mechanism will be enabled (also requires the support of the modules)
+
 ## How Riru works?
 
 * How to inject into zygote process?
@@ -29,10 +48,6 @@ From v22.0, Riru provide a hide mechanism (idea from [Haruue Icymoon](https://gi
 ## Build
 
 Run gradle task `:module:assembleRelease` task from Android Studio or the terminal, zip will be saved to `out`.
-
-## Install
-
-Install zip in Magisk Manager.
 
 ## Create your own module
 
