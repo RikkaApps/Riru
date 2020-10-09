@@ -1,5 +1,3 @@
 <resources>
     <string name="app_name" translatable="false">Riru</string>
-    <string name="riru_not_found">Not installed / not loaded</string>
-    <string name="riru_unknown_version">Unknown (version code %d)</string>
 </resources>

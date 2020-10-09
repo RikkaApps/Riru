@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="riru_not_found">未安装/未被载入</string>
-    <string name="riru_unknown_version">未知（版本号 %d）</string>
-</resources>

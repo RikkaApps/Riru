@@ -1,9 +1,8 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
 
 def gitCommitCount = Integer.parseInt('git rev-list --count HEAD'.execute([], project.rootDir).text.trim())
-def baseVersionName = '19.4'
+def baseVersionName = '22.0'
 
 android {
     compileSdkVersion rootProject.ext.targetSdkVersion
@@ -14,17 +13,13 @@ android {
         versionCode gitCommitCount
         versionName baseVersionName
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-        externalNativeBuild {
-            cmake {
-                abiFilters "armeabi-v7a", 'arm64-v8a', 'x86', 'x86_64'
-                cppFlags "-std=c++11"
-                arguments '-DANDROID_TOOLCHAIN=clang', '-DANDROID_STL=c++_static'
-            }
-        }
+    }
+    buildFeatures {
+        viewBinding true
     }
     compileOptions {
-        sourceCompatibility 1.8
-        targetCompatibility 1.8
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
     signingConfigs {
         sign
@@ -40,32 +35,33 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-    externalNativeBuild {
+    /*externalNativeBuild {
         cmake {
             path "src/main/cpp/CMakeLists.txt"
         }
-    }
-    splits {
-        abi {
-            enable false
-        }
-    }
+    }*/
+}
+
+repositories {
+    maven { url 'https://jitpack.io' }
+    mavenCentral()
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    testImplementation 'junit:junit:4.12'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlin_coroutines_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlin_coroutines_version"
+
+    testImplementation 'junit:junit:4.13'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation "androidx.annotation:annotation:1.0.2"
-    implementation "moe.shizuku.support:recyclerview-utils:3.0.4"
-    implementation "moe.shizuku.support:design:3.1.2"
-    implementation "moe.shizuku.support:support-utils:3.0.5"
-    implementation "moe.shizuku.support:htmlcompat:2.0.0"
-}
-repositories {
-    mavenCentral()
+    implementation "androidx.annotation:annotation:1.1.0"
+    //implementation project(':core')
+
+    def libsuVersion = '3.0.2'
+    implementation "com.github.topjohnwu.libsu:core:${libsuVersion}"
+    implementation "com.github.topjohnwu.libsu:io:${libsuVersion}"
 }
 
 apply from: project.file('signing.gradle')
