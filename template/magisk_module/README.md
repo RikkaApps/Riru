@@ -8,6 +8,10 @@ See [https://github.com/RikkaApps/Riru](https://github.com/RikkaApps/Riru) for m
 
 ## Changelog
 
+### v22.0 (37) (2020-10-09)
+
+- Hide mechanism
+
 ### v21.3 (36) (2020-07-01)
 
 - Support custom ROMs with isTopApp changes backported (#106)
