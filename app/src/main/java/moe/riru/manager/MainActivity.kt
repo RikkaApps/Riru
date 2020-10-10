@@ -24,6 +24,18 @@ class MainActivity : AppActivity() {
             message.append("The device is not rooted, or permission denied.")
             return
         }
+
+        // --------------------------------------------
+
+        val publicLibsFile = SuFile.open("/system/etc/public.libraries.txt")
+        val publicLibs = publicLibsFile.readTextOrNull()?.split('\n')?.toList()
+        if (publicLibs?.contains("libriru.so") != true) {
+            message.append("No libriru.so found in $publicLibsFile.\nCheck if there is other Magisk modules that modify $publicLibsFile.")
+            return
+        }
+
+        // --------------------------------------------
+
         val devRandomFile = SuFile.open("/data/adb/riru/dev_random")
         val devRandom = devRandomFile.readTextOrNull()
         if (devRandom == null) {
