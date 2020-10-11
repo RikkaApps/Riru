@@ -14,17 +14,14 @@ std::vector<RiruModule *> *get_modules() {
     return modules;
 }
 
-static RiruModuleInfoV9 *load_module_info_v9(uint32_t token, RiruInit_t *init) {
-    auto riru = new RiruV9();
+static RiruModuleInfoV9 *init_module_v9(uint32_t token, RiruInit_t *init) {
+    auto riru = new RiruApiV9();
     riru->token = token;
-
-    auto funcs = new RiruFuncsV9();
-    funcs->getFunc = riru_get_func;
-    funcs->setFunc = riru_set_func;
-    funcs->getJNINativeMethodFunc = riru_get_native_method_func;
-    funcs->setJNINativeMethodFunc = riru_set_native_method_func;
-    funcs->getOriginalJNINativeMethodFunc = riru_get_original_native_methods;
-    riru->funcs = funcs;
+    riru->getFunc = riru_get_func;
+    riru->setFunc = riru_set_func;
+    riru->getJNINativeMethodFunc = riru_get_native_method_func;
+    riru->setJNINativeMethodFunc = riru_set_native_method_func;
+    riru->getOriginalJNINativeMethodFunc = riru_get_original_native_methods;
 
     return (RiruModuleInfoV9 *) init(riru);
 }
@@ -79,9 +76,12 @@ void load_modules() {
         module->apiVersion = apiVersion;
 
         if (apiVersion == 9) {
-            auto info = load_module_info_v9(module->token, init);
+            auto info = init_module_v9(module->token, init);
             module->info(info);
         }
+
+        // 3. let the module to do some cleanup jobs
+        init(nullptr);
 
         get_modules()->push_back(module);
 

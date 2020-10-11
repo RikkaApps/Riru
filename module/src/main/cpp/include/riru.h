@@ -66,39 +66,40 @@ typedef void (RiruSetJNINativeMethodFunc_v9)(uint32_t token, const char *classNa
 typedef const JNINativeMethod *(RiruGetOriginalJNINativeMethodFunc_v9)(const char *className, const char *name, const char *signature);
 
 typedef struct {
+
+    uint32_t token;
     RiruGetFunc_v9 *getFunc;
     RiruGetJNINativeMethodFunc_v9 *getJNINativeMethodFunc;
     RiruSetFunc_v9 *setFunc;
     RiruSetJNINativeMethodFunc_v9 *setJNINativeMethodFunc;
     RiruGetOriginalJNINativeMethodFunc_v9 *getOriginalJNINativeMethodFunc;
-} RiruFuncsV9;
-
-// ---------------------------------------------------------
-
-typedef struct {
-
-    uint32_t token;
-    RiruFuncsV9 *funcs;
-} RiruV9;
+} RiruApiV9;
 
 typedef void *(RiruInit_t)(void *);
 
 #ifdef RIRU_MODULE
 #define RIRU_EXPORT __attribute__((visibility("default"))) __attribute__((used))
 
-/**
- * Init will be called twice.
+/*
+ * Init will be called three times.
  *
  * The first time:
+ *   Returns the highest version number supported by both Riru and the module.
  *
  *   arg: (int *) Riru's API version
- *   returns: (int *) the maximum API version the module supports
+ *   returns: (int *) the highest possible API version
  *
  * The second time:
- *   (X is the return of the first call)
+ *   Returns the RiruModuleX struct created by the module (X is the return of the first call).
  *
- *   arg: (RiruVX *) Riru strcut
+ *   arg: (RiruApiVX *) RiruApi strcut, this pointer can be saved for further use
  *   returns: (RiruModuleX *) RiruModule strcut
+ *
+ * The second time:
+ *   Let the module to cleanup (such as RiruModuleX struct created before).
+ *
+ *   arg: null
+ *   returns: (ignored)
  *
  */
 void* init(void *arg) RIRU_EXPORT;
