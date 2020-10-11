@@ -49,7 +49,7 @@ From v22.0, Riru provide a hide mechanism (idea from [Haruue Icymoon](https://gi
 
 > Android Studio (at least 4.2 Canary 13) can't correctly handle local module using prefab, you may have to manually run ":riru:assembleDebug" to make Android Studio happy
 
-Run gradle task `:core:assembleRelease` task from Android Studio or the terminal, zip will be saved to `out`.
+Run gradle task `:riru:assembleRelease` `:core:assembleRelease` task from Android Studio or the terminal, zip will be saved to `out`.
 
 ## Create your own module
 

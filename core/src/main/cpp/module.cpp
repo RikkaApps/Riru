@@ -15,10 +15,10 @@ std::vector<RiruModule *> *get_modules() {
 }
 
 static void *load_module_info_v9(uint32_t token, RiruInit_t *init) {
-    auto riru = new Riru();
+    auto riru = new RiruV9();
     riru->token = token;
 
-    auto funcs = new RiruFuncs();
+    auto funcs = new RiruFuncsV9();
     funcs->getFunc = riru_get_func;
     funcs->setFunc = riru_set_func;
     funcs->getJNINativeMethodFunc = riru_get_native_method_func;

@@ -140,10 +140,3 @@ task zipMagiskMoudle(type: Zip) {
     archiveName zipName
     destinationDir outDir
 }
-
-evaluationDependsOn(':riru')
-
-afterEvaluate {
-    assembleRelease.dependsOn(tasks.getByPath(':riru:assembleRelease'))
-    assembleDebug.dependsOn(tasks.getByPath(':riru:assembleDebug'))
-}
