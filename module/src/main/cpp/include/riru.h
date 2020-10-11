@@ -79,7 +79,6 @@ typedef struct {
 
     uint32_t token;
     RiruFuncsV9 *funcs;
-    RiruModuleInfoV9 *module;
 } RiruV9;
 
 typedef void *(RiruInit_t)(void *);
@@ -88,15 +87,21 @@ typedef void *(RiruInit_t)(void *);
 #define RIRU_EXPORT __attribute__((visibility("default"))) __attribute__((used))
 
 /**
- * Under API 9, init will be called twice.
+ * Init will be called twice.
  *
- * First, arg is a int pointer to Riru's API version, the return value should be a int pointer to the module's API version.
+ * The first time:
  *
+ *   arg: (int *) Riru's API version
+ *   returns: (int *) the maximum API version the module supports
+ *
+ * The second time:
+ *   (X is the return of the first call)
+ *
+ *   arg: (RiruVX *) Riru strcut
+ *   returns: (RiruModuleX *) RiruModule strcut
  *
  */
 void* init(void *arg) RIRU_EXPORT;
-
-extern RiruV9 *riru_v9;
 #endif
 
 #ifdef __cplusplus

@@ -6,6 +6,7 @@ import java.security.MessageDigest
 apply plugin: 'com.android.library'
 
 def apiVersion = rootProject.ext.riruApiVersion
+def minApiVersion = rootProject.ext.riruMinApiVersion
 def moduleProp = [
         id         : "riru-core",
         name       : "Riru",
@@ -24,7 +25,8 @@ android {
             cmake {
                 arguments "-DRIRU_VERSION_NAME:STRING=${moduleProp['version']}",
                         "-DRIRU_VERSION_CODE:STRING=${moduleProp['versionCode']}",
-                        "-DRIRU_API_VERSION=$apiVersion"
+                        "-DRIRU_API_VERSION=$apiVersion",
+                        "-DRIRU_MIN_API_VERSION=$minApiVersion"
             }
         }
     }

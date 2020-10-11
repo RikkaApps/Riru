@@ -14,7 +14,7 @@ std::vector<RiruModule *> *get_modules() {
     return modules;
 }
 
-static void *load_module_info_v9(uint32_t token, RiruInit_t *init) {
+static RiruModuleInfoV9 *load_module_info_v9(uint32_t token, RiruInit_t *init) {
     auto riru = new RiruV9();
     riru->token = token;
 
@@ -26,9 +26,7 @@ static void *load_module_info_v9(uint32_t token, RiruInit_t *init) {
     funcs->getOriginalJNINativeMethodFunc = riru_get_original_native_methods;
     riru->funcs = funcs;
 
-    init(riru);
-
-    return riru->module;
+    return (RiruModuleInfoV9 *) init(riru);
 }
 
 void load_modules() {
@@ -69,6 +67,12 @@ void load_modules() {
         // 1. pass riru api version, return module's api version
         auto apiVersion = *(int *) init((void *) &riruApiVersion);
 
+        if (apiVersion < RIRU_MIN_API_VERSION || apiVersion > RIRU_API_VERSION) {
+            LOGW("unsupported API %s: %d", name, apiVersion);
+            dlclose(handle);
+            continue;
+        }
+
         // 2. create and pass Riru struct by module's api version
         auto module = new RiruModule(strdup(name));
         module->handle = handle;
@@ -76,12 +80,7 @@ void load_modules() {
 
         if (apiVersion == 9) {
             auto info = load_module_info_v9(module->token, init);
-            module->info((RiruModuleInfoV9 *) info);
-        } else {
-            LOGW("unsupported API %s: %d", name, apiVersion);
-            delete module;
-            dlclose(handle);
-            continue;
+            module->info(info);
         }
 
         get_modules()->push_back(module);
