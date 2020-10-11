@@ -103,6 +103,15 @@ typedef void *(RiruInit_t)(void *);
  *
  */
 void* init(void *arg) RIRU_EXPORT;
+
+extern int riru_api_version;
+extern RiruApiV9 *riru_api_v9;
+
+void *riru_get_func(const char *name);
+void *riru_get_native_method_func(const char *className, const char *name, const char *signature);
+const JNINativeMethod *riru_get_original_native_methods(const char *className, const char *name, const char *signature);
+void riru_set_func(const char *name, void *func);
+void riru_set_native_method_func(const char *className, const char *name, const char *signature, void *func);
 #endif
 
 #ifdef __cplusplus
