@@ -40,7 +40,7 @@ public:
     void info(RiruModuleInfoV9 *info) {
         supportHide = info->supportHide;
         version = info->version;
-        versionName = strdup(info->versionName);
+        versionName = strdup(info->versionName ? info->versionName : "(null)");
         _onModuleLoaded = (void *) info->onModuleLoaded;
         _shouldSkipUid = (void *) info->shouldSkipUid;
         _forkAndSpecializePre = (void *) info->forkAndSpecializePre;
