@@ -5,12 +5,12 @@ import java.security.MessageDigest
 
 apply plugin: 'com.android.library'
 
-def apiVersion = 8
+def apiVersion = rootProject.ext.riruApiVersion
 def moduleProp = [
         id         : "riru-core",
         name       : "Riru",
-        version    : "v22.0",
-        versionCode: "37",
+        version    : "v22.0-alpha02",
+        versionCode: "38",
         author     : "Rikka",
         description: "Inject into zygote process. Required by all \"Riru\" modules."
 ]
@@ -44,7 +44,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'rikka.ndk:riru:8'
+    implementation project(':riru')
     implementation 'rikka.ndk.thirdparty:xhook:1.2.0'
 }
 
@@ -118,7 +118,6 @@ android.libraryVariants.all { variant ->
         renameOrFail(file("$magiskDir/system/lib64/libriruhide.so"), file("$magiskDir/system/lib64/libriruhide.so"))
         renameOrFail(file("$magiskDir/system_x86/lib/libriruhide.so"), file("$magiskDir/system_x86/lib/libriruhide.so"))
         renameOrFail(file("$magiskDir/system_x86/lib64/libriruhide.so"), file("$magiskDir/system_x86/lib64/libriruhide.so"))
-
         //file("$magiskDir/zygote_restart").mkdir()
         //renameOrFail(file("$magiskDir/system/lib/zygote_restart"), file("$magiskDir/zygote_restart/zygote_restart_arm"))
         //renameOrFail(file("$magiskDir/system/lib64/zygote_restart"), file("$magiskDir/zygote_restart/zygote_restart_arm64"))
@@ -140,4 +139,11 @@ task zipMagiskMoudle(type: Zip) {
     from magiskDir
     archiveName zipName
     destinationDir outDir
+}
+
+evaluationDependsOn(':riru')
+
+afterEvaluate {
+    assembleRelease.dependsOn(tasks.getByPath(':riru:assembleRelease'))
+    assembleDebug.dependsOn(tasks.getByPath(':riru:assembleDebug'))
 }

@@ -2,6 +2,8 @@ plugins {
     id 'com.android.library'
 }
 
+def apiVersion = rootProject.ext.riruApiVersion
+
 android {
     compileSdkVersion 30
     defaultConfig {
@@ -9,6 +11,11 @@ android {
         targetSdkVersion 30
         versionCode 8
         versionName "8"
+        externalNativeBuild {
+            cmake {
+                arguments "-DRIRU_API_VERSION=$apiVersion"
+            }
+        }
     }
     buildFeatures {
         buildConfig false

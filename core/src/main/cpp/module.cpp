@@ -9,32 +9,36 @@
 #include "status.h"
 #include "hide_utils.h"
 
-std::vector<RiruModuleExt *> *get_modules() {
-    static auto *modules = new std::vector<RiruModuleExt *>({new RiruModuleExt(strdup(MODULE_NAME_CORE))});
+std::vector<RiruModule *> *get_modules() {
+    static auto *modules = new std::vector<RiruModule *>({new RiruModule(strdup(MODULE_NAME_CORE))});
     return modules;
+}
+
+static void *load_module_info_v9(uint32_t token, RiruInit_t *init) {
+    auto riru = new Riru();
+    riru->token = token;
+
+    auto funcs = new RiruFuncs();
+    funcs->getFunc = riru_get_func;
+    funcs->setFunc = riru_set_func;
+    funcs->getJNINativeMethodFunc = riru_get_native_method_func;
+    funcs->setJNINativeMethodFunc = riru_set_native_method_func;
+    funcs->getOriginalJNINativeMethodFunc = riru_get_original_native_methods;
+    riru->funcs = funcs;
+
+    init(riru);
+
+    return riru->module;
 }
 
 void load_modules() {
     DIR *dir;
     struct dirent *entry;
-    char path[PATH_MAX], modules_path[PATH_MAX], module_prop[PATH_MAX], prop_value[PATH_MAX];
-    int module_api_version;
+    char path[PATH_MAX];
     void *handle;
+    const int riruApiVersion = RIRU_API_VERSION;
 
-    RiruFuncs riru_funcs;
-    riru_funcs.getFunc = riru_get_func;
-    riru_funcs.setFunc = riru_set_func;
-    riru_funcs.getJNINativeMethodFunc = riru_get_native_method_func;
-    riru_funcs.setJNINativeMethodFunc = riru_set_native_method_func;
-    riru_funcs.getOriginalJNINativeMethodFunc = riru_get_original_native_methods;
-
-    Riru riru_init_data;
-    riru_init_data.version = RIRU_VERSION_CODE;
-    riru_init_data.funcs = &riru_funcs;
-
-    snprintf(modules_path, PATH_MAX, "%s/modules", CONFIG_DIR);
-
-    if (!(dir = _opendir(modules_path))) return;
+    if (!(dir = _opendir(MODULES_DIR))) return;
 
     while ((entry = _readdir(dir))) {
         if (entry->d_type != DT_DIR) continue;
@@ -49,21 +53,6 @@ void load_modules() {
             continue;
         }
 
-        snprintf(module_prop, PATH_MAX, "%s/%s/module.prop", modules_path, name);
-        if (access(module_prop, F_OK) != 0) {
-            PLOGE("access %s", module_prop);
-            continue;
-        }
-
-        module_api_version = -1;
-        if (get_prop(module_prop, "api", prop_value) > 0) {
-            module_api_version = atoi(prop_value);
-        }
-        if (module_api_version < 8) {
-            LOGW("module %s does not support Riru v21+", name);
-            continue;
-        }
-
         handle = dlopen(path, 0);
         if (!handle) {
             LOGE("dlopen %s failed: %s", path, dlerror());
@@ -72,18 +61,28 @@ void load_modules() {
 
         auto init = (RiruInit_t *) dlsym(handle, "init");
         if (!init) {
-            LOGW("module %s does not export init", name);
+            LOGW("%s does not export init", path);
             dlclose(handle);
             continue;
         }
 
-        auto *module = new RiruModuleExt(strdup(name));
+        // 1. pass riru api version, return module's api version
+        auto apiVersion = *(int *) init((void *) &riruApiVersion);
 
-        riru_init_data.module = module;
-        riru_init_data.token = module->token;
-        init(&riru_init_data);
-
+        // 2. create and pass Riru struct by module's api version
+        auto module = new RiruModule(strdup(name));
         module->handle = handle;
+        module->apiVersion = apiVersion;
+
+        if (apiVersion == 9) {
+            auto info = load_module_info_v9(module->token, init);
+            module->info((RiruModuleInfoV9 *) info);
+        } else {
+            LOGW("unsupported API %s: %d", name, apiVersion);
+            delete module;
+            dlclose(handle);
+            continue;
+        }
 
         get_modules()->push_back(module);
 
@@ -114,7 +113,7 @@ void load_modules() {
     }
 
     for (auto module : *get_modules()) {
-        if (module->onModuleLoaded) {
+        if (module->hasOnModuleLoaded()) {
             LOGV("%s: onModuleLoaded", module->name);
 
             module->onModuleLoaded();

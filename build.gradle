@@ -35,4 +35,6 @@ task clean(type: Delete) {
 ext {
     minSdkVersion = 23
     targetSdkVersion = 30
+
+    riruApiVersion = 9
 }

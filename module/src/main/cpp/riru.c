@@ -1,3 +1,4 @@
 #include "riru.h"
 
-Riru *riru = NULL;
+RiruV9 *riru_v9 = NULL;
+

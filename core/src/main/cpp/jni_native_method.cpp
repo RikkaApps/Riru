@@ -50,22 +50,20 @@ static void nativeForkAndSpecialize_pre(
         jobjectArray &whitelistedDataInfoList, jboolean &bindMountAppDataDirs, jboolean &bindMountAppStorageDirs) {
 
     for (auto module : *get_modules()) {
-        if (!module->forkAndSpecializePre)
+        if (!module->hasForkAndSpecializePre())
             continue;
 
-        if (module->shouldSkipUid && module->shouldSkipUid(uid))
+        if (module->hasShouldSkipUid() && module->shouldSkipUid(uid))
             continue;
 
-        if (!module->shouldSkipUid && shouldSkipUid(uid))
+        if (!module->hasShouldSkipUid() && shouldSkipUid(uid))
             continue;
 
-        if (module->apiVersion == 8) {
-            module->forkAndSpecializePre(
-                    env, clazz, &uid, &gid, &gids, &runtime_flags, &rlimits, &mount_external,
-                    &se_info, &se_name, &fdsToClose, &fdsToIgnore, &is_child_zygote,
-                    &instructionSet, &appDataDir, &isTopApp, &pkgDataInfoList, &whitelistedDataInfoList,
-                    &bindMountAppDataDirs, &bindMountAppStorageDirs);
-        }
+        module->forkAndSpecializePre(
+                env, clazz, &uid, &gid, &gids, &runtime_flags, &rlimits, &mount_external,
+                &se_info, &se_name, &fdsToClose, &fdsToIgnore, &is_child_zygote,
+                &instructionSet, &appDataDir, &isTopApp, &pkgDataInfoList, &whitelistedDataInfoList,
+                &bindMountAppDataDirs, &bindMountAppStorageDirs);
     }
 }
 
@@ -74,13 +72,13 @@ static void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, ji
     if (res == 0) unhook_jniRegisterNativeMethods();
 
     for (auto module : *get_modules()) {
-        if (!module->forkAndSpecializePost)
+        if (!module->hasForkAndSpecializePost())
             continue;
 
-        if (module->shouldSkipUid && module->shouldSkipUid(uid))
+        if (module->hasShouldSkipUid() && module->shouldSkipUid(uid))
             continue;
 
-        if (!module->shouldSkipUid && shouldSkipUid(uid))
+        if (!module->hasShouldSkipUid() && shouldSkipUid(uid))
             continue;
 
         /*
@@ -97,9 +95,7 @@ static void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, ji
          */
         if (res == 0) LOGD("%s: forkAndSpecializePost", module->name);
 
-        if (module->apiVersion >= 8) {
-            module->forkAndSpecializePost(env, clazz, res);
-        }
+        module->forkAndSpecializePost(env, clazz, res);
     }
 }
 
@@ -113,15 +109,13 @@ static void nativeSpecializeAppProcess_pre(
         jboolean &bindMountAppDataDirs, jboolean &bindMountAppStorageDirs) {
 
     for (auto module : *get_modules()) {
-        if (!module->specializeAppProcessPre)
+        if (!module->hasSpecializeAppProcessPre())
             continue;
 
-        if (module->apiVersion == 8) {
-            module->specializeAppProcessPre(
-                    env, clazz, &uid, &gid, &gids, &runtimeFlags, &rlimits, &mountExternal, &seInfo,
-                    &niceName, &startChildZygote, &instructionSet, &appDataDir, &isTopApp,
-                    &pkgDataInfoList, &whitelistedDataInfoList, &bindMountAppDataDirs, &bindMountAppStorageDirs);
-        }
+        module->specializeAppProcessPre(
+                env, clazz, &uid, &gid, &gids, &runtimeFlags, &rlimits, &mountExternal, &seInfo,
+                &niceName, &startChildZygote, &instructionSet, &appDataDir, &isTopApp,
+                &pkgDataInfoList, &whitelistedDataInfoList, &bindMountAppDataDirs, &bindMountAppStorageDirs);
     }
 }
 
@@ -130,13 +124,11 @@ static void nativeSpecializeAppProcess_post(JNIEnv *env, jclass clazz) {
     unhook_jniRegisterNativeMethods();
 
     for (auto module : *get_modules()) {
-        if (!module->specializeAppProcessPost)
+        if (module->hasSpecializeAppProcessPost())
             continue;
 
         LOGD("%s: specializeAppProcessPost", module->name);
-        if (module->apiVersion == 8) {
-            module->specializeAppProcessPost(env, clazz);
-        }
+        module->specializeAppProcessPost(env, clazz);
     }
 }
 
@@ -147,26 +139,22 @@ static void nativeForkSystemServer_pre(
         jobjectArray &rlimits, jlong &permittedCapabilities, jlong &effectiveCapabilities) {
 
     for (auto module : *get_modules()) {
-        if (!module->forkSystemServerPre)
+        if (!module->hasForkSystemServerPre())
             continue;
 
-        if (module->apiVersion >= 8) {
-            module->forkSystemServerPre(
-                    env, clazz, &uid, &gid, &gids, &debug_flags, &rlimits, &permittedCapabilities,
-                    &effectiveCapabilities);
-        }
+        module->forkSystemServerPre(
+                env, clazz, &uid, &gid, &gids, &debug_flags, &rlimits, &permittedCapabilities,
+                &effectiveCapabilities);
     }
 }
 
 static void nativeForkSystemServer_post(JNIEnv *env, jclass clazz, jint res) {
     for (auto module : *get_modules()) {
-        if (!module->forkSystemServerPost)
+        if (!module->hasForkSystemServerPost())
             continue;
 
         if (res == 0) LOGD("%s: forkSystemServerPost", module->name);
-        if (module->apiVersion >= 8) {
-            module->forkSystemServerPost(env, clazz, res);
-        }
+        module->forkSystemServerPost(env, clazz, res);
     }
 }
 
