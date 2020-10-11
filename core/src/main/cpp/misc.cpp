@@ -144,3 +144,24 @@ int write_full(int fd, const void *buf, size_t count) {
     }
     return 0;
 }
+
+int mkdirs(const char *pathname, mode_t mode) {
+    char *path = strdup(pathname), *p;
+    errno = 0;
+    for (p = path + 1; *p; ++p) {
+        if (*p == '/') {
+            *p = '\0';
+            if (mkdir(path, mode) == -1) {
+                if (errno != EEXIST)
+                    return -1;
+            }
+            *p = '/';
+        }
+    }
+    if (mkdir(path, mode) == -1) {
+        if (errno != EEXIST)
+            return -1;
+    }
+    free(path);
+    return 0;
+}

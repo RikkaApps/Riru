@@ -104,7 +104,7 @@ namespace status {
         LOGD("open %s/%s", dir, filename);
 
         int dir_fd = open(dir, O_DIRECTORY);
-        if (dir_fd == -1 && mkdir(dir, 0700) == 0) {
+        if (dir_fd == -1 && mkdirs(dir, 0700) == 0) {
             dir_fd = open(dir, O_DIRECTORY);
         }
         if (dir_fd == -1) {
@@ -153,6 +153,21 @@ namespace status {
 
             if ((fd = openFile("modules", module->name, "hide")) != -1) {
                 write_full(fd, buf, sprintf(buf, "%s", module->supportHide ? "true" : "false"));
+                close(fd);
+            }
+
+            if ((fd = openFile("modules", module->name, "api")) != -1) {
+                write_full(fd, buf, sprintf(buf, "%d", module->apiVersion));
+                close(fd);
+            }
+
+            if ((fd = openFile("modules", module->name, "version")) != -1) {
+                write_full(fd, buf, sprintf(buf, "%d", module->version));
+                close(fd);
+            }
+
+            if ((fd = openFile("modules", module->name, "version_name")) != -1) {
+                write_full(fd, buf, sprintf(buf, "%s", module->versionName));
                 close(fd);
             }
         }
