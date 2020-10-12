@@ -26,6 +26,11 @@ static RiruModuleInfoV9 *init_module_v9(uint32_t token, RiruInit_t *init) {
     return (RiruModuleInfoV9 *) init(riru);
 }
 
+static void cleanup_module(void *handle) {
+    dlclose(handle);
+    // maybe manually munmap?
+}
+
 void load_modules() {
     DIR *dir;
     struct dirent *entry;
@@ -57,26 +62,36 @@ void load_modules() {
         auto init = (RiruInit_t *) dlsym(handle, "init");
         if (!init) {
             LOGW("%s does not export init", path);
-            dlclose(handle);
+            cleanup_module(handle);
             continue;
         }
 
         // 1. pass riru api version, return module's api version
-        auto apiVersion = *(int *) init((void *) &riruApiVersion);
+        auto apiVersion = (int *) init((void *) &riruApiVersion);
+        if (apiVersion == nullptr) {
+            LOGE("%s returns null on step 1", path);
+            cleanup_module(handle);
+            continue;
+        }
 
-        if (apiVersion < RIRU_MIN_API_VERSION || apiVersion > RIRU_API_VERSION) {
-            LOGW("unsupported API %s: %d", name, apiVersion);
-            dlclose(handle);
+        if (*apiVersion < RIRU_MIN_API_VERSION || *apiVersion > RIRU_API_VERSION) {
+            LOGW("unsupported API %s: %d", name, *apiVersion);
+            cleanup_module(handle);
             continue;
         }
 
         // 2. create and pass Riru struct by module's api version
         auto module = new RiruModule(strdup(name));
         module->handle = handle;
-        module->apiVersion = apiVersion;
+        module->apiVersion = *apiVersion;
 
-        if (apiVersion == 9) {
+        if (*apiVersion == 9) {
             auto info = init_module_v9(module->token, init);
+            if (info == nullptr) {
+                LOGE("%s returns null on step 2", path);
+                cleanup_module(handle);
+                continue;
+            }
             module->info(info);
         }
 
