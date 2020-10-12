@@ -96,17 +96,42 @@ class MainActivity : AppActivity() {
 
         val moduleFiles = SuFile.open("/dev/riru_$devRandom/modules").listFiles()
         if (moduleFiles?.isNotEmpty() == true) {
-            moduleFiles.forEach {
-                message.append(it.name).append(": ")
+            moduleFiles.forEach { module ->
+                message.append(module.name).append(": ")
 
-                val moduleHideFile = SuFile.open(it, "hide")
-                val moduleHide = moduleHideFile.readTextOrNull()
-                if (moduleHide != null) {
-                    message.appendLine(if (moduleHide == "true") "support hide" else "no hide support")
-                } else {
-                    message.appendLine("(unknown)")
+                SuFile.open(module, "version_name").let {
+                    val text = it.readTextOrNull()
+                    if (text != null) {
+                        message.append(text)
+                    }
+                    detail.appendLine("$it: $text")
                 }
-                detail.appendLine("$moduleHideFile: $moduleHide")
+
+                SuFile.open(module, "version").let {
+                    val text = it.readTextOrNull()
+                    if (text != null) {
+                        message.append(" (").append(text).append(")")
+                    }
+                    detail.appendLine("$it: $text")
+                }
+
+                SuFile.open(module, "api").let {
+                    val text = it.readTextOrNull()
+                    if (text != null) {
+                        message.append(", api v").append(text)
+                    }
+                    detail.appendLine("$it: $text")
+                }
+
+                SuFile.open(module, "hide").let {
+                    val text = it.readTextOrNull()
+                    if (text != null) {
+                        message.appendLine(if (text == "true") ", support hide" else ", no hide support")
+                    } else {
+                        message.appendLine()
+                    }
+                    detail.appendLine("$it: $text")
+                }
             }
         } else {
             message.appendLine("(none)")
