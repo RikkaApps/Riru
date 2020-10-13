@@ -52,7 +52,7 @@ dependencies {
 
 def outDir = file("$rootDir/out")
 def magiskDir = file("$outDir/magisk_module")
-def zipName = "magisk-riru-${moduleProp['version']}.zip"
+def zipName = "riru-${moduleProp['version']}.zip"
 
 static def sha256sum(file) {
     def md = MessageDigest.getInstance("SHA-256")
