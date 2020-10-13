@@ -60,8 +60,8 @@ static JNINativeMethod *onRegisterZygote(
             auto replaced = newMethods[i].fnPtr != methods[i].fnPtr;
             if (replaced) {
                 LOGI("replaced com.android.internal.os.Zygote#nativeForkAndSpecialize");
-                riru_set_native_method_func(get_modules()->at(0)->token, className, newMethods[i].name,
-                                            newMethods[i].signature, newMethods[i].fnPtr);
+                api::setNativeMethodFunc(
+                        get_modules()->at(0)->token, className, newMethods[i].name, newMethods[i].signature, newMethods[i].fnPtr);
             }
             status::writeMethodToFile(status::method::forkAndSpecialize, replaced, method.signature);
         } else if (strcmp(method.name, "nativeSpecializeAppProcess") == 0) {
@@ -88,8 +88,8 @@ static JNINativeMethod *onRegisterZygote(
             auto replaced = newMethods[i].fnPtr != methods[i].fnPtr;
             if (replaced) {
                 LOGI("replaced com.android.internal.os.Zygote#nativeSpecializeAppProcess");
-                riru_set_native_method_func(get_modules()->at(0)->token, className, newMethods[i].name,
-                                            newMethods[i].signature, newMethods[i].fnPtr);
+                api::setNativeMethodFunc(
+                        get_modules()->at(0)->token, className, newMethods[i].name, newMethods[i].signature, newMethods[i].fnPtr);
             }
             status::writeMethodToFile(status::method::specializeAppProcess, replaced, method.signature);
         } else if (strcmp(method.name, "nativeForkSystemServer") == 0) {
@@ -105,8 +105,8 @@ static JNINativeMethod *onRegisterZygote(
             auto replaced = newMethods[i].fnPtr != methods[i].fnPtr;
             if (replaced) {
                 LOGI("replaced com.android.internal.os.Zygote#nativeForkSystemServer");
-                riru_set_native_method_func(get_modules()->at(0)->token, className, newMethods[i].name,
-                                            newMethods[i].signature, newMethods[i].fnPtr);
+                api::setNativeMethodFunc(
+                        get_modules()->at(0)->token, className, newMethods[i].name, newMethods[i].signature, newMethods[i].fnPtr);
             }
             status::writeMethodToFile(status::method::forkSystemServer, replaced, method.signature);
         }
@@ -136,8 +136,8 @@ static JNINativeMethod *onRegisterSystemProperties(
             if (newMethods[i].fnPtr != methods[i].fnPtr) {
                 LOGI("replaced android.os.SystemProperties#native_set");
 
-                riru_set_native_method_func(get_modules()->at(0)->token, className, newMethods[i].name,
-                                            newMethods[i].signature, newMethods[i].fnPtr);
+                api::setNativeMethodFunc(
+                        get_modules()->at(0)->token, className, newMethods[i].name, newMethods[i].signature, newMethods[i].fnPtr);
             }
         }
     }
@@ -154,7 +154,7 @@ static JNINativeMethod *onRegisterSystemProperties(
 
 NEW_FUNC_DEF(int, jniRegisterNativeMethods, JNIEnv *env, const char *className,
              const JNINativeMethod *methods, int numMethods) {
-    put_native_method(className, methods, numMethods);
+    api::putNativeMethod(className, methods, numMethods);
 
     LOGD("jniRegisterNativeMethods %s", className);
 

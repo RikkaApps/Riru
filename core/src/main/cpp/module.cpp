@@ -18,11 +18,13 @@ std::vector<RiruModule *> *get_modules() {
 static RiruModuleInfoV9 *init_module_v9(uint32_t token, RiruInit_t *init) {
     auto riru = new RiruApiV9();
     riru->token = token;
-    riru->getFunc = riru_get_func;
-    riru->setFunc = riru_set_func;
-    riru->getJNINativeMethodFunc = riru_get_native_method_func;
-    riru->setJNINativeMethodFunc = riru_set_native_method_func;
-    riru->getOriginalJNINativeMethodFunc = riru_get_original_native_methods;
+    riru->getFunc = api::getFunc;
+    riru->setFunc = api::setFunc;
+    riru->getJNINativeMethodFunc = api::getNativeMethodFunc;
+    riru->setJNINativeMethodFunc = api::setNativeMethodFunc;
+    riru->getOriginalJNINativeMethodFunc = api::getOriginalNativeMethod;
+    riru->getGlobalValue = api::getGlobalValue;
+    riru->putGlobalValue = api::putGlobalValue;
 
     return (RiruModuleInfoV9 *) init(riru);
 }

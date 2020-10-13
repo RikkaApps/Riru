@@ -65,6 +65,10 @@ typedef void (RiruSetJNINativeMethodFunc_v9)(uint32_t token, const char *classNa
 
 typedef const JNINativeMethod *(RiruGetOriginalJNINativeMethodFunc_v9)(const char *className, const char *name, const char *signature);
 
+typedef void *(RiruGetGlobalValue_v9)(const char *key);
+
+typedef void(RiruPutGlobalValue_v9)(const char *key, void *value);
+
 typedef struct {
 
     uint32_t token;
@@ -73,6 +77,8 @@ typedef struct {
     RiruSetFunc_v9 *setFunc;
     RiruSetJNINativeMethodFunc_v9 *setJNINativeMethodFunc;
     RiruGetOriginalJNINativeMethodFunc_v9 *getOriginalJNINativeMethodFunc;
+    RiruGetGlobalValue_v9 *getGlobalValue;
+    RiruPutGlobalValue_v9 *putGlobalValue;
 } RiruApiV9;
 
 typedef void *(RiruInit_t)(void *);
@@ -140,6 +146,20 @@ inline void riru_set_native_method_func(const char *className, const char *name,
         riru_api_v9->setJNINativeMethodFunc(riru_api_v9->token, className, name, signature, func);
     }
 }
+
+inline void *riru_get_global_value(const char *key) {
+    if (riru_api_version == 9) {
+        return riru_api_v9->getGlobalValue(key);
+    }
+    return NULL;
+}
+
+inline void riru_put_global_value(const char *key, void *value) {
+    if (riru_api_version == 9) {
+        riru_api_v9->putGlobalValue(key, value);
+    }
+}
+
 #endif
 
 #ifdef __cplusplus

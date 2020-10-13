@@ -10,7 +10,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 30
         versionCode 9
-        versionName "9"
+        versionName "9.1"
         externalNativeBuild {
             cmake {
                 arguments "-DRIRU_MAX_API_VERSION=$apiVersion"
