@@ -36,7 +36,10 @@ namespace hide {
 
         // cleanup riruhide.so
         LOGD("dlclose");
-        dlclose(handle);
+        if (dlclose(handle) != 0) {
+            LOGE("dlclose failed: %s", dlerror());
+            return;
+        }
 
         procmaps_iterator *maps = pmparser_parse(-1);
         if (maps == nullptr) {

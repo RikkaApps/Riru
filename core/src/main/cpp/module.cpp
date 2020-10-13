@@ -1,6 +1,7 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <dlfcn.h>
+#include <sys/mman.h>
 #include "module.h"
 #include "wrap.h"
 #include "logging.h"
@@ -26,9 +27,29 @@ static RiruModuleInfoV9 *init_module_v9(uint32_t token, RiruInit_t *init) {
     return (RiruModuleInfoV9 *) init(riru);
 }
 
-static void cleanup_module(void *handle) {
-    dlclose(handle);
-    // maybe manually munmap?
+static void cleanup(void *handle, const char *path) {
+    if (dlclose(handle) != 0) {
+        LOGE("dlclose failed: %s", dlerror());
+        return;
+    }
+
+    procmaps_iterator *maps = pmparser_parse(-1);
+    if (maps == nullptr) {
+        LOGE("cannot parse the memory map");
+        return;
+    }
+
+    procmaps_struct *maps_tmp;
+    while ((maps_tmp = pmparser_next(maps)) != nullptr) {
+        if (strcmp(maps_tmp->pathname, path) != 0) continue;
+
+        auto start = (uintptr_t) maps_tmp->addr_start;
+        auto end = (uintptr_t) maps_tmp->addr_end;
+        auto size = end - start;
+        LOGD("%" PRIxPTR"-%" PRIxPTR" %s %ld %s", start, end, maps_tmp->perm, maps_tmp->offset, maps_tmp->pathname);
+        munmap((void *) start, size);
+    }
+    pmparser_free(maps);
 }
 
 void load_modules() {
@@ -62,7 +83,7 @@ void load_modules() {
         auto init = (RiruInit_t *) dlsym(handle, "init");
         if (!init) {
             LOGW("%s does not export init", path);
-            cleanup_module(handle);
+            cleanup(handle, path);
             continue;
         }
 
@@ -70,13 +91,13 @@ void load_modules() {
         auto apiVersion = (int *) init((void *) &riruApiVersion);
         if (apiVersion == nullptr) {
             LOGE("%s returns null on step 1", path);
-            cleanup_module(handle);
+            cleanup(handle, path);
             continue;
         }
 
         if (*apiVersion < RIRU_MIN_API_VERSION || *apiVersion > RIRU_API_VERSION) {
             LOGW("unsupported API %s: %d", name, *apiVersion);
-            cleanup_module(handle);
+            cleanup(handle, path);
             continue;
         }
 
@@ -89,7 +110,7 @@ void load_modules() {
             auto info = init_module_v9(module->token, init);
             if (info == nullptr) {
                 LOGE("%s returns null on step 2", path);
-                cleanup_module(handle);
+                cleanup(handle, path);
                 continue;
             }
             module->info(info);
