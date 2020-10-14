@@ -4,13 +4,20 @@
 #include <jni.h>
 #include <riru.h>
 
-void set_nativeForkAndSpecialize(void *addr);
+namespace JNI {
 
-void set_nativeSpecializeAppProcess(void *addr);
+    namespace Zygote {
+        extern const char* classname;
+        extern JNINativeMethod *nativeForkAndSpecialize;
+        extern JNINativeMethod *nativeSpecializeAppProcess;
+        extern JNINativeMethod *nativeForkSystemServer;
+    }
 
-void set_nativeForkSystemServer(void *addr);
-
-void set_SystemProperties_set(void *addr);
+    namespace SystemProperties {
+        extern const char* classname;
+        extern JNINativeMethod *set;
+    }
+}
 
 const static char *nativeForkAndSpecialize_marshmallow_sig = "(II[II[[IILjava/lang/String;Ljava/lang/String;[ILjava/lang/String;Ljava/lang/String;)I";
 

@@ -4,6 +4,7 @@ idea.module {
     excludeDirs += file('out')
     resourceDirs += file('template')
     resourceDirs += file('scripts')
+    resourceDirs += file('docs')
 }
 
 buildscript {

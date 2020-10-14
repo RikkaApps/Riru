@@ -26,7 +26,7 @@ static JNINativeMethod *onRegisterZygote(
         method = methods[i];
 
         if (strcmp(method.name, "nativeForkAndSpecialize") == 0) {
-            set_nativeForkAndSpecialize(method.fnPtr);
+            JNI::Zygote::nativeForkAndSpecialize = new JNINativeMethod{method.name, method.signature, method.fnPtr};
 
             if (strcmp(nativeForkAndSpecialize_r_sig, method.signature) == 0)
                 newMethods[i].fnPtr = (void *) nativeForkAndSpecialize_r;
@@ -65,7 +65,7 @@ static JNINativeMethod *onRegisterZygote(
             }
             status::writeMethodToFile(status::method::forkAndSpecialize, replaced, method.signature);
         } else if (strcmp(method.name, "nativeSpecializeAppProcess") == 0) {
-            set_nativeSpecializeAppProcess(method.fnPtr);
+            JNI::Zygote::nativeSpecializeAppProcess = new JNINativeMethod{method.name, method.signature, method.fnPtr};
 
             if (strcmp(nativeSpecializeAppProcess_r_sig, method.signature) == 0)
                 newMethods[i].fnPtr = (void *) nativeSpecializeAppProcess_r;
@@ -93,7 +93,7 @@ static JNINativeMethod *onRegisterZygote(
             }
             status::writeMethodToFile(status::method::specializeAppProcess, replaced, method.signature);
         } else if (strcmp(method.name, "nativeForkSystemServer") == 0) {
-            set_nativeForkSystemServer(method.fnPtr);
+            JNI::Zygote::nativeForkSystemServer = new JNINativeMethod{method.name, method.signature, method.fnPtr};
 
             if (strcmp(nativeForkSystemServer_sig, method.signature) == 0)
                 newMethods[i].fnPtr = (void *) nativeForkSystemServer;
@@ -126,7 +126,7 @@ static JNINativeMethod *onRegisterSystemProperties(
         method = methods[i];
 
         if (strcmp(method.name, "native_set") == 0) {
-            set_SystemProperties_set(method.fnPtr);
+            JNI::SystemProperties::set = new JNINativeMethod{method.name, method.signature, method.fnPtr};
 
             if (strcmp("(Ljava/lang/String;Ljava/lang/String;)V", method.signature) == 0)
                 newMethods[i].fnPtr = (void *) SystemProperties_set;
@@ -176,7 +176,7 @@ NEW_FUNC_DEF(int, jniRegisterNativeMethods, JNIEnv *env, const char *className,
     return res;
 }
 
-void unhook_jniRegisterNativeMethods() {
+void restore_replaced_func(JNIEnv *env) {
     xhook_register(".*\\libandroid_runtime.so$", "jniRegisterNativeMethods",
                    (void *) old_jniRegisterNativeMethods,
                    nullptr);
@@ -184,6 +184,17 @@ void unhook_jniRegisterNativeMethods() {
         xhook_clear();
         LOGD("hook removed");
     }
+
+#define restoreMethod(cls, method) \
+    if (JNI::cls::method != nullptr) { \
+        old_jniRegisterNativeMethods(env, JNI::cls::classname, JNI::cls::method, 1); \
+        delete JNI::cls::method; \
+    }
+
+    restoreMethod(Zygote, nativeForkAndSpecialize)
+    restoreMethod(Zygote, nativeSpecializeAppProcess)
+    restoreMethod(Zygote, nativeForkSystemServer)
+    restoreMethod(SystemProperties, set)
 }
 
 static void read_prop() {

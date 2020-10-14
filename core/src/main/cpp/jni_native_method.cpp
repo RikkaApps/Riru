@@ -9,25 +9,19 @@
 #include "api.h"
 #include "main.h"
 
-static void *_nativeForkAndSpecialize = nullptr;
-static void *_nativeSpecializeAppProcess = nullptr;
-static void *_nativeForkSystemServer = nullptr;
-static void *_SystemProperties_set = nullptr;
+namespace JNI {
 
-void set_nativeForkAndSpecialize(void *addr) {
-    _nativeForkAndSpecialize = addr;
-}
+    namespace Zygote {
+        const char* classname = "com/android/internal/os/Zygote";
+        JNINativeMethod *nativeForkAndSpecialize = nullptr;
+        JNINativeMethod *nativeSpecializeAppProcess = nullptr;
+        JNINativeMethod *nativeForkSystemServer = nullptr;
+    }
 
-void set_nativeSpecializeAppProcess(void *addr) {
-    _nativeSpecializeAppProcess = addr;
-}
-
-void set_nativeForkSystemServer(void *addr) {
-    _nativeForkSystemServer = addr;
-}
-
-void set_SystemProperties_set(void *addr) {
-    _SystemProperties_set = addr;
+    namespace SystemProperties {
+        const char* classname = "android/os/SystemProperties";
+        JNINativeMethod *set = nullptr;
+    }
 }
 
 static int shouldSkipUid(int uid) {
@@ -68,7 +62,7 @@ static void nativeForkAndSpecialize_pre(
 
 static void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, jint res) {
 
-    if (res == 0) unhook_jniRegisterNativeMethods();
+    if (res == 0) restore_replaced_func(env);
 
     for (auto module : *get_modules()) {
         if (!module->hasForkAndSpecializePost())
@@ -120,7 +114,7 @@ static void nativeSpecializeAppProcess_pre(
 
 static void nativeSpecializeAppProcess_post(JNIEnv *env, jclass clazz) {
 
-    unhook_jniRegisterNativeMethods();
+    restore_replaced_func(env);
 
     for (auto module : *get_modules()) {
         if (module->hasSpecializeAppProcessPost())
@@ -177,7 +171,7 @@ jint nativeForkAndSpecialize_marshmallow(
                                 instructionSet, appDataDir, isTopApp, pkgDataInfoList, whitelistedDataInfoList,
                                 bindMountAppDataDirs, bindMountAppStorageDirs);
 
-    jint res = ((nativeForkAndSpecialize_marshmallow_t *) _nativeForkAndSpecialize)(
+    jint res = ((nativeForkAndSpecialize_marshmallow_t *) JNI::Zygote::nativeForkAndSpecialize->fnPtr)(
             env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external, se_info, se_name,
             fdsToClose, instructionSet, appDataDir);
 
@@ -202,7 +196,7 @@ jint nativeForkAndSpecialize_oreo(
                                 instructionSet, appDataDir, isTopApp, pkgDataInfoList, whitelistedDataInfoList,
                                 bindMountAppDataDirs, bindMountAppStorageDirs);
 
-    jint res = ((nativeForkAndSpecialize_oreo_t *) _nativeForkAndSpecialize)(
+    jint res = ((nativeForkAndSpecialize_oreo_t *) JNI::Zygote::nativeForkAndSpecialize->fnPtr)(
             env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external, se_info, se_name,
             fdsToClose, fdsToIgnore, instructionSet, appDataDir);
 
@@ -227,7 +221,7 @@ jint nativeForkAndSpecialize_p(
                                 instructionSet, appDataDir, isTopApp, pkgDataInfoList, whitelistedDataInfoList,
                                 bindMountAppDataDirs, bindMountAppStorageDirs);
 
-    jint res = ((nativeForkAndSpecialize_p_t *) _nativeForkAndSpecialize)(
+    jint res = ((nativeForkAndSpecialize_p_t *) JNI::Zygote::nativeForkAndSpecialize->fnPtr)(
             env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external, se_info, se_name,
             fdsToClose, fdsToIgnore, is_child_zygote, instructionSet, appDataDir);
 
@@ -251,7 +245,7 @@ jint nativeForkAndSpecialize_q_alternative(
                                 instructionSet, appDataDir, isTopApp, pkgDataInfoList, whitelistedDataInfoList,
                                 bindMountAppDataDirs, bindMountAppStorageDirs);
 
-    jint res = ((nativeForkAndSpecialize_q_alternative_t *) _nativeForkAndSpecialize)(
+    jint res = ((nativeForkAndSpecialize_q_alternative_t *) JNI::Zygote::nativeForkAndSpecialize->fnPtr)(
             env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external, se_info, se_name,
             fdsToClose, fdsToIgnore, is_child_zygote, instructionSet, appDataDir, isTopApp);
 
@@ -271,7 +265,7 @@ jint nativeForkAndSpecialize_r(
                                 instructionSet, appDataDir, isTopApp, pkgDataInfoList, whitelistedDataInfoList,
                                 bindMountAppDataDirs, bindMountAppStorageDirs);
 
-    jint res = ((nativeForkAndSpecialize_r_t *) _nativeForkAndSpecialize)(
+    jint res = ((nativeForkAndSpecialize_r_t *) JNI::Zygote::nativeForkAndSpecialize->fnPtr)(
             env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external, se_info, se_name,
             fdsToClose, fdsToIgnore, is_child_zygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList,
             whitelistedDataInfoList, bindMountAppDataDirs, bindMountAppStorageDirs);
@@ -295,7 +289,7 @@ jint nativeForkAndSpecialize_r_dp3(
                                 instructionSet, appDataDir, isTopApp, pkgDataInfoList, whitelistedDataInfoList,
                                 bindMountAppDataDirs, bindMountAppStorageDirs);
 
-    jint res = ((nativeForkAndSpecialize_r_dp3_t *) _nativeForkAndSpecialize)(
+    jint res = ((nativeForkAndSpecialize_r_dp3_t *) JNI::Zygote::nativeForkAndSpecialize->fnPtr)(
             env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external, se_info, se_name,
             fdsToClose, fdsToIgnore, is_child_zygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList,
             bindMountAppStorageDirs);
@@ -319,7 +313,7 @@ jint nativeForkAndSpecialize_r_dp2(
                                 instructionSet, appDataDir, isTopApp, pkgDataInfoList, whitelistedDataInfoList,
                                 bindMountAppDataDirs, bindMountAppStorageDirs);
 
-    jint res = ((nativeForkAndSpecialize_r_dp2_t *) _nativeForkAndSpecialize)(
+    jint res = ((nativeForkAndSpecialize_r_dp2_t *) JNI::Zygote::nativeForkAndSpecialize->fnPtr)(
             env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external, se_info, se_name,
             fdsToClose, fdsToIgnore, is_child_zygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList);
 
@@ -344,7 +338,7 @@ jint nativeForkAndSpecialize_samsung_p(
                                 instructionSet, appDataDir, isTopApp, pkgDataInfoList, whitelistedDataInfoList,
                                 bindMountAppDataDirs, bindMountAppStorageDirs);
 
-    jint res = ((nativeForkAndSpecialize_samsung_p_t *) _nativeForkAndSpecialize)(
+    jint res = ((nativeForkAndSpecialize_samsung_p_t *) JNI::Zygote::nativeForkAndSpecialize->fnPtr)(
             env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external, se_info, category,
             accessInfo, se_name, fdsToClose, fdsToIgnore, is_child_zygote, instructionSet,
             appDataDir);
@@ -371,7 +365,7 @@ jint nativeForkAndSpecialize_samsung_o(
                                 instructionSet, appDataDir, isTopApp, pkgDataInfoList, whitelistedDataInfoList,
                                 bindMountAppDataDirs, bindMountAppStorageDirs);
 
-    jint res = ((nativeForkAndSpecialize_samsung_o_t *) _nativeForkAndSpecialize)(
+    jint res = ((nativeForkAndSpecialize_samsung_o_t *) JNI::Zygote::nativeForkAndSpecialize->fnPtr)(
             env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external, se_info, category,
             accessInfo, se_name, fdsToClose, fdsToIgnore, instructionSet, appDataDir);
 
@@ -398,7 +392,7 @@ jint nativeForkAndSpecialize_samsung_n(
                                 instructionSet, appDataDir, isTopApp, pkgDataInfoList, whitelistedDataInfoList,
                                 bindMountAppDataDirs, bindMountAppStorageDirs);
 
-    jint res = ((nativeForkAndSpecialize_samsung_n_t *) _nativeForkAndSpecialize)(
+    jint res = ((nativeForkAndSpecialize_samsung_n_t *) JNI::Zygote::nativeForkAndSpecialize->fnPtr)(
             env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external, se_info, category,
             accessInfo, se_name, fdsToClose, instructionSet, appDataDir, a1);
 
@@ -424,7 +418,7 @@ jint nativeForkAndSpecialize_samsung_m(
                                 instructionSet, appDataDir, isTopApp, pkgDataInfoList, whitelistedDataInfoList,
                                 bindMountAppDataDirs, bindMountAppStorageDirs);
 
-    jint res = ((nativeForkAndSpecialize_samsung_m_t *) _nativeForkAndSpecialize)(
+    jint res = ((nativeForkAndSpecialize_samsung_m_t *) JNI::Zygote::nativeForkAndSpecialize->fnPtr)(
             env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external, se_info, category,
             accessInfo, se_name, fdsToClose, instructionSet, appDataDir);
 
@@ -450,7 +444,7 @@ void nativeSpecializeAppProcess_q(
             startChildZygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList,
             whitelistedDataInfoList, bindMountAppDataDirs, bindMountAppStorageDirs);
 
-    ((nativeSpecializeAppProcess_q_t *) _nativeSpecializeAppProcess)(
+    ((nativeSpecializeAppProcess_q_t *) JNI::Zygote::nativeSpecializeAppProcess->fnPtr)(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
             startChildZygote, instructionSet, appDataDir);
 
@@ -473,7 +467,7 @@ void nativeSpecializeAppProcess_q_alternative(
             startChildZygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList,
             whitelistedDataInfoList, bindMountAppDataDirs, bindMountAppStorageDirs);
 
-    ((nativeSpecializeAppProcess_q_alternative_t *) _nativeSpecializeAppProcess)(
+    ((nativeSpecializeAppProcess_q_alternative_t *) JNI::Zygote::nativeSpecializeAppProcess->fnPtr)(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
             startChildZygote, instructionSet, appDataDir, isTopApp);
 
@@ -492,7 +486,7 @@ void nativeSpecializeAppProcess_r(
             startChildZygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList,
             whitelistedDataInfoList, bindMountAppDataDirs, bindMountAppStorageDirs);
 
-    ((nativeSpecializeAppProcess_r_t *) _nativeSpecializeAppProcess)(
+    ((nativeSpecializeAppProcess_r_t *) JNI::Zygote::nativeSpecializeAppProcess->fnPtr)(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
             startChildZygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList,
             whitelistedDataInfoList, bindMountAppDataDirs, bindMountAppStorageDirs);
@@ -514,7 +508,7 @@ void nativeSpecializeAppProcess_r_dp3(
             startChildZygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList,
             whitelistedDataInfoList, bindMountAppDataDirs, bindMountAppStorageDirs);
 
-    ((nativeSpecializeAppProcess_r_dp3_t *) _nativeSpecializeAppProcess)(
+    ((nativeSpecializeAppProcess_r_dp3_t *) JNI::Zygote::nativeSpecializeAppProcess->fnPtr)(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
             startChildZygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList,
             bindMountAppStorageDirs);
@@ -537,7 +531,7 @@ void nativeSpecializeAppProcess_r_dp2(
             startChildZygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList,
             whitelistedDataInfoList, bindMountAppDataDirs, bindMountAppStorageDirs);
 
-    ((nativeSpecializeAppProcess_r_dp2_t *) _nativeSpecializeAppProcess)(
+    ((nativeSpecializeAppProcess_r_dp2_t *) JNI::Zygote::nativeSpecializeAppProcess->fnPtr)(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
             startChildZygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList);
 
@@ -561,7 +555,7 @@ void nativeSpecializeAppProcess_samsung_q(
             startChildZygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList,
             whitelistedDataInfoList, bindMountAppDataDirs, bindMountAppStorageDirs);
 
-    ((nativeSpecializeAppProcess_samsung_t *) _nativeSpecializeAppProcess)(
+    ((nativeSpecializeAppProcess_samsung_t *) JNI::Zygote::nativeSpecializeAppProcess->fnPtr)(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, space,
             accessInfo, niceName, startChildZygote, instructionSet, appDataDir);
 
@@ -578,7 +572,7 @@ jint nativeForkSystemServer(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, permittedCapabilities,
             effectiveCapabilities);
 
-    jint res = ((nativeForkSystemServer_t *) _nativeForkSystemServer)(
+    jint res = ((nativeForkSystemServer_t *) JNI::Zygote::nativeForkSystemServer->fnPtr)(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, permittedCapabilities,
             effectiveCapabilities);
 
@@ -595,7 +589,7 @@ jint nativeForkSystemServer_samsung_q(
             env, cls, uid, gid, gids, runtimeFlags, rlimits, permittedCapabilities,
             effectiveCapabilities);
 
-    jint res = ((nativeForkSystemServer_samsung_q_t *) _nativeForkSystemServer)(
+    jint res = ((nativeForkSystemServer_samsung_q_t *) JNI::Zygote::nativeForkSystemServer->fnPtr)(
             env, cls, uid, gid, gids, runtimeFlags, space, accessInfo, rlimits, permittedCapabilities,
             effectiveCapabilities);
 
@@ -624,7 +618,7 @@ void SystemProperties_set(JNIEnv *env, jobject clazz, jstring keyJ, jstring valJ
     int no_throw = sscanf(key, "sys.user.%[^.].ce_available", user) == 1;
     env->ReleaseStringUTFChars(keyJ, key);
 
-    ((SystemProperties_set_t *) _SystemProperties_set)(env, clazz, keyJ, valJ);
+    ((SystemProperties_set_t *) JNI::SystemProperties::set->fnPtr)(env, clazz, keyJ, valJ);
 
     jthrowable exception = env->ExceptionOccurred();
     if (exception && no_throw) {
