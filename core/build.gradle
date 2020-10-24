@@ -47,6 +47,8 @@ android {
             version "3.10.2"
         }
     }
+    lintOptions.checkReleaseBuilds false
+    dependenciesInfo.includeInApk false
 }
 
 repositories {
@@ -71,12 +73,6 @@ static def sha256sum(file) {
         md.update(bytes, 0, size);
     }
     return md.digest().encodeHex()
-}
-
-static def renameOrFail(from, to) {
-    if (!from.renameTo(to)) {
-        throw new IOException("Unable reanme file $from to $to")
-    }
 }
 
 android.applicationVariants.all { variant ->
@@ -113,21 +109,29 @@ android.applicationVariants.all { variant ->
             modulePropText = modulePropText.trim()
             file("$magiskDir/module.prop").text = modulePropText
 
-            // copy native files
-            def nativeOutDir = file("build/intermediates/cmake/$variant.name/obj")
+            // copy libs
+            copy {
+                from zipTree(file(outputFile)).matching { include 'lib/armeabi-v7a/*' }.files
+                into file("$magiskDir/system/lib")
+            }
+            copy {
+                from zipTree(file(outputFile)).matching { include 'lib/arm64-v8a/*' }.files
+                into file("$magiskDir/system/lib64")
+            }
+            copy {
+                from zipTree(file(outputFile)).matching { include 'lib/x86/*' }.files
+                into file("$magiskDir/system_x86/lib")
+            }
+            copy {
+                from zipTree(file(outputFile)).matching { include 'lib/x86_64/*' }.files
+                into file("$magiskDir/system_x86/lib64")
+            }
 
             // copy dex
             copy {
                 from zipTree(file(outputFile)).matching { include 'classes.dex' }.singleFile
-                into magiskDir.path
+                into magiskDir
             }
-
-            file("$magiskDir/system").mkdirs()
-            file("$magiskDir/system_x86").mkdirs()
-            renameOrFail(file("$nativeOutDir/arm64-v8a"), file("$magiskDir/system/lib64"))
-            renameOrFail(file("$nativeOutDir/armeabi-v7a"), file("$magiskDir/system/lib"))
-            renameOrFail(file("$nativeOutDir/x86_64"), file("$magiskDir/system_x86/lib64"))
-            renameOrFail(file("$nativeOutDir/x86"), file("$magiskDir/system_x86/lib"))
 
             // generate sha1sum
             fileTree("$magiskDir").matching {
