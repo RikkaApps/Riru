@@ -8,7 +8,3 @@ META-INF/** text eol=lf
 # Denote all files that are truly binary and should not be modified.
 system/** binary
 system_x86/** binary
-zygote_restart_arm binary
-zygote_restart_arm64 binary
-zygote_restart_x64 binary
-zygote_restart_x86 binary

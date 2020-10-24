@@ -6,7 +6,7 @@ Riru only does one thing, inject into zygote in order to allow modules run their
 
 ## Requirements
 
-Android 7.0+ devices rooted with [Magisk](https://github.com/topjohnwu/Magisk)
+Android 6.0+ devices rooted with [Magisk](https://github.com/topjohnwu/Magisk)
 
 ## Guide
 
@@ -33,7 +33,7 @@ Android 7.0+ devices rooted with [Magisk](https://github.com/topjohnwu/Magisk)
 
   Before v22.0, we use the method of replacing a system library (libmemtrack) that will be loaded by zygote. However, it seems to cause some weird problems. Maybe because libmemtrack is used by something else.
 
-  Then we found a super easy way, add our so file into `/system/etc/public.libraries.txt`. All so files in `public.libraries.txt` will be automatically "dlopen-ed" by the system. This way is from [here](https://blog.canyie.top/2020/02/03/a-new-xposed-style-framework/).
+  Then we found a super easy way, through "native bridge". The specific so will be automatically "dlopen-ed" and "dlclose-ed" by the system. This way is from [here](https://github.com/canyie/NbInjection).
 
 * How to know if we are in an app process or a system server process?
 

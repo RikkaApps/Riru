@@ -35,6 +35,16 @@ private:
 public:
     explicit RiruModule(const char *name, uint32_t token = 0) : name(name), token(token ? token : (uintptr_t) name) {
         funcs = new std::map<std::string, void *>();
+        apiVersion = 0;
+        handle = nullptr;
+        _onModuleLoaded = nullptr;
+        _shouldSkipUid = nullptr;
+        _forkAndSpecializePre = nullptr;
+        _forkAndSpecializePost = nullptr;
+        _forkSystemServerPre = nullptr;
+        _forkSystemServerPost = nullptr;
+        _specializeAppProcessPre = nullptr;
+        _specializeAppProcessPost = nullptr;
     }
 
     void info(RiruModuleInfoV9 *info) {

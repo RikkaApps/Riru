@@ -3,7 +3,9 @@ import org.apache.tools.ant.filters.FixCrLfFilter
 import java.nio.file.Files
 import java.security.MessageDigest
 
-apply plugin: 'com.android.library'
+plugins {
+    id 'com.android.application'
+}
 
 def apiVersion = rootProject.ext.riruApiVersion
 def minApiVersion = rootProject.ext.riruMinApiVersion
@@ -30,6 +32,12 @@ android {
             }
         }
     }
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+        }
+    }
     buildFeatures {
         prefab true
     }
@@ -48,6 +56,9 @@ repositories {
 dependencies {
     implementation project(':riru')
     implementation 'rikka.ndk.thirdparty:xhook:1.2.0'
+
+    implementation 'androidx.annotation:annotation:1.1.0'
+    compileOnly project(':stub')
 }
 
 def outDir = file("$rootDir/out")
@@ -68,73 +79,66 @@ static def renameOrFail(from, to) {
     }
 }
 
-android.libraryVariants.all { variant ->
-    def task = variant.assembleProvider.get()
-    task.doLast {
-        // clear
-        delete { delete magiskDir }
+android.applicationVariants.all { variant ->
+    variant.outputs.all {
+        def task = variant.assembleProvider.get()
+        task.doLast {
+            // clear
+            delete { delete magiskDir }
 
-        // copy from template
-        copy {
-            from "$rootDir/template/magisk_module"
-            into magiskDir.path
-            exclude 'customize.sh'
-        }
-        copy {
-            from file("$rootDir/template/magisk_module/customize.sh")
-            into magiskDir.path
-            filter { line ->
-                line.replaceAll('%%%RIRU_API%%%', apiVersion.toString())
-                        .replaceAll('%%%RIRU_VERSION_CODE%%%', moduleProp['versionCode'].toString())
-                        .replaceAll('%%%RIRU_VERSION_NAME%%%', moduleProp['version'].toString())
+            // copy from template
+            copy {
+                from "$rootDir/template/magisk_module"
+                into magiskDir.path
+                exclude 'customize.sh'
             }
-            filter(FixCrLfFilter.class,
-                    eol: FixCrLfFilter.CrLf.newInstance("lf"))
+            copy {
+                from file("$rootDir/template/magisk_module/customize.sh")
+                into magiskDir.path
+                filter { line ->
+                    line.replaceAll('%%%RIRU_API%%%', apiVersion.toString())
+                            .replaceAll('%%%RIRU_VERSION_CODE%%%', moduleProp['versionCode'].toString())
+                            .replaceAll('%%%RIRU_VERSION_NAME%%%', moduleProp['version'].toString())
+                }
+                filter(FixCrLfFilter.class,
+                        eol: FixCrLfFilter.CrLf.newInstance("lf"))
+            }
+
+            // copy .git files manually since gradle exclude it by default
+            Files.copy(file("$rootDir/template/magisk_module/.gitattributes").toPath(), file("${magiskDir.path}/.gitattributes").toPath())
+
+            // generate module.prop
+            def modulePropText = ""
+            moduleProp.each { k, v -> modulePropText += "$k=$v\n" }
+            modulePropText = modulePropText.trim()
+            file("$magiskDir/module.prop").text = modulePropText
+
+            // copy native files
+            def nativeOutDir = file("build/intermediates/cmake/$variant.name/obj")
+
+            // copy dex
+            copy {
+                from zipTree(file(outputFile)).matching { include 'classes.dex' }.singleFile
+                into magiskDir.path
+            }
+
+            file("$magiskDir/system").mkdirs()
+            file("$magiskDir/system_x86").mkdirs()
+            renameOrFail(file("$nativeOutDir/arm64-v8a"), file("$magiskDir/system/lib64"))
+            renameOrFail(file("$nativeOutDir/armeabi-v7a"), file("$magiskDir/system/lib"))
+            renameOrFail(file("$nativeOutDir/x86_64"), file("$magiskDir/system_x86/lib64"))
+            renameOrFail(file("$nativeOutDir/x86"), file("$magiskDir/system_x86/lib"))
+
+            // generate sha1sum
+            fileTree("$magiskDir").matching {
+                exclude "README.md", "META-INF"
+            }.visit { f ->
+                if (f.directory) return
+                file(f.file.path + ".sha256sum").text = sha256sum(f.file)
+            }
         }
-
-        // copy .git files manually since gradle exclude it by default
-        Files.copy(file("$rootDir/template/magisk_module/.gitattributes").toPath(), file("${magiskDir.path}/.gitattributes").toPath())
-
-        // generate module.prop
-        def modulePropText = ""
-        moduleProp.each { k, v -> modulePropText += "$k=$v\n" }
-        modulePropText = modulePropText.trim()
-        file("$magiskDir/module.prop").text = modulePropText
-
-        // copy native files
-        def nativeOutDir = file("build/intermediates/cmake/$variant.name/obj")
-
-        file("$magiskDir/system").mkdirs()
-        file("$magiskDir/system_x86").mkdirs()
-        renameOrFail(file("$nativeOutDir/arm64-v8a"), file("$magiskDir/system/lib64"))
-        renameOrFail(file("$nativeOutDir/armeabi-v7a"), file("$magiskDir/system/lib"))
-        renameOrFail(file("$nativeOutDir/x86_64"), file("$magiskDir/system_x86/lib64"))
-        renameOrFail(file("$nativeOutDir/x86"), file("$magiskDir/system_x86/lib"))
-
-        renameOrFail(file("$magiskDir/system/lib/libriru.so"), file("$magiskDir/system/lib/libriru.so"))
-        renameOrFail(file("$magiskDir/system/lib64/libriru.so"), file("$magiskDir/system/lib64/libriru.so"))
-        renameOrFail(file("$magiskDir/system_x86/lib/libriru.so"), file("$magiskDir/system_x86/lib/libriru.so"))
-        renameOrFail(file("$magiskDir/system_x86/lib64/libriru.so"), file("$magiskDir/system_x86/lib64/libriru.so"))
-
-        renameOrFail(file("$magiskDir/system/lib/libriruhide.so"), file("$magiskDir/system/lib/libriruhide.so"))
-        renameOrFail(file("$magiskDir/system/lib64/libriruhide.so"), file("$magiskDir/system/lib64/libriruhide.so"))
-        renameOrFail(file("$magiskDir/system_x86/lib/libriruhide.so"), file("$magiskDir/system_x86/lib/libriruhide.so"))
-        renameOrFail(file("$magiskDir/system_x86/lib64/libriruhide.so"), file("$magiskDir/system_x86/lib64/libriruhide.so"))
-        //file("$magiskDir/zygote_restart").mkdir()
-        //renameOrFail(file("$magiskDir/system/lib/zygote_restart"), file("$magiskDir/zygote_restart/zygote_restart_arm"))
-        //renameOrFail(file("$magiskDir/system/lib64/zygote_restart"), file("$magiskDir/zygote_restart/zygote_restart_arm64"))
-        //renameOrFail(file("$magiskDir/system_x86/lib/zygote_restart"), file("$magiskDir/zygote_restart/zygote_restart_x86"))
-        //renameOrFail(file("$magiskDir/system_x86/lib64/zygote_restart"), file("$magiskDir/zygote_restart/zygote_restart_x64"))
-
-        // generate sha1sum
-        fileTree("$magiskDir").matching {
-            exclude "README.md", "META-INF"
-        }.visit { f ->
-            if (f.directory) return
-            file(f.file.path + ".sha256sum").text = sha256sum(f.file)
-        }
+        task.finalizedBy zipMagiskMoudle
     }
-    task.finalizedBy zipMagiskMoudle
 }
 
 task zipMagiskMoudle(type: Zip) {

@@ -2,26 +2,18 @@
 MODDIR=${0%/*}
 RIRU_PATH="/data/adb/riru"
 
-# rename .new files
-move_new_file() {
-  if [ -f "$1.new" ]; then
-    rm "$1"
-    mv "$1.new" "$1"
-  fi
-}
+# Rename .new file
+if [ -f "$RIRU_PATH/api_version.new" ]; then
+  rm "$RIRU_PATH/api_version"
+  mv "$RIRU_PATH/api_version.new" "$RIRU_PATH/api_version"
+fi
 
-move_new_file "$RIRU_PATH/api_version"
+# Backup ro.dalvik.vm.native.bridge
+echo -n "$(getprop ro.dalvik.vm.native.bridge)" > $RIRU_PATH/native_bridge
 
-# Reset context
-chcon -R u:object_r:magisk_file:s0 "/data/adb/riru"
+# Set ro.dalvik.vm.native.bridge
+resetprop ro.dalvik.vm.native.bridge libriruloader.so
 
-# Restart zygote if needed
-#ZYGOTE_RESTART=$RIRU_PATH/bin/zygote_restart
-#[ ! -f "$RIRU_PATH/config/disable_auto_restart" ] && $ZYGOTE_RESTART
-
-# generate public.libraries.txt
-# idea from https://blog.canyie.top/2020/02/03/a-new-xposed-style-framework/
-LIBRARIES_FILE='/system/etc/public.libraries.txt'
-mkdir -p "$MODDIR/system/etc"
-cp -f $LIBRARIES_FILE "$MODDIR/$LIBRARIES_FILE"
-grep -qxF 'libriru.so' "$MODDIR/$LIBRARIES_FILE" || echo 'libriru.so' >> "$MODDIR/$LIBRARIES_FILE"
+# Set prop back & reboot if needed
+export CLASSPATH=/data/adb/riru/bin/rirud.dex
+(exec app_process -Djava.class.path=/data/adb/riru/bin/rirud.dex /system/bin --nice-name=rirud riru.Daemon)&

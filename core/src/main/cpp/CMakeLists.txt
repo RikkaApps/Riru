@@ -54,10 +54,14 @@ add_library(riruhide SHARED hide.cpp wrap.cpp pmparser.c)
 target_include_directories(riruhide PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(riruhide log)
 
-#add_executable(zygote_restart
-#        zygote_restart.cpp pmparser.c)
-#
-#target_link_libraries(zygote_restart log)
-#
 set_target_properties(riru riruhide
         PROPERTIES LINK_FLAGS_RELEASE -s)
+
+if ("${ANDROID_ABI}" STREQUAL "x86" OR "${ANDROID_ABI}" STREQUAL "x86_64")
+    add_definitions(-DHAS_NATIVE_BRIDGE)
+endif()
+
+add_library(riruloader SHARED loader.cpp misc.cpp)
+include_directories(include)
+target_link_libraries(riruloader log)
+set_target_properties(riruloader PROPERTIES LINK_FLAGS_RELEASE -s)
