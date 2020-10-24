@@ -51,6 +51,10 @@ From v22.0, Riru provide a hide mechanism (idea from [Haruue Icymoon](https://gi
 
 Run gradle task `:riru:assembleRelease` `:core:assembleRelease` task from Android Studio or the terminal, zip will be saved to `out`.
 
-## Create your own module
+## Module template
 
-[Template](https://github.com/RikkaApps/Riru-ModuleTemplate)
+(https://github.com/RikkaApps/Riru-ModuleTemplate
+
+## Module API changes
+
+https://github.com/RikkaApps/Riru-ModuleTemplate/blob/master/README.md#api-changes
