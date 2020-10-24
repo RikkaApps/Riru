@@ -14,7 +14,7 @@ import java.io.FileReader;
 import java.io.IOException;
 
 /**
- * A "daemon" that reboot on zygote dead.
+ * A "daemon" that resets native bridge prop and reboot on zygote dead.
  */
 public class Daemon {
 
@@ -53,8 +53,7 @@ public class Daemon {
         IBinder binder = waitForSystemService(name);
 
         Log.i(TAG, "Zygote already started, reset prop to " + originalNativeBridge + "...");
-
-        exec("resetprop", "ro.dalvik.vm.native.bridge", "0");
+        exec("resetprop", "ro.dalvik.vm.native.bridge", originalNativeBridge);
 
         try {
             binder.linkToDeath(new IBinder.DeathRecipient() {
@@ -62,6 +61,7 @@ public class Daemon {
                 public void binderDied() {
                     Log.i(TAG, "Zygote is possible dead, reboot to avoid problem.");
                     exec("/system/bin/reboot");
+                    System.exit(0);
                 }
             }, 0);
         } catch (RemoteException e) {
