@@ -45,6 +45,14 @@ Android 6.0+ devices rooted with [Magisk](https://github.com/topjohnwu/Magisk)
 
 From v22.0, Riru provide a hide mechanism (idea from [Haruue Icymoon](https://github.com/haruue)), make the memory of Riru and module to anonymous memory to hide from "`/proc/maps` string scanning".
 
+## Known issues
+
+* The device reboots after zygote is dead
+
+  For hide purpose, `ro.dalvik.vm.native.bridge` is reset after zygote starts. If zygote is dead, we can set `ro.dalvik.vm.native.bridge` back but can't guarantee it's before zygote starts. So reboot the device maybe the only solution.
+
+  If you relies on the original behavior, you can remove `/data/adb/riru/bin/rirud.dex`.
+
 ## Build
 
 > Android Studio (at least until 4.2 Canary 13) can't correctly handle local module using prefab, you may have to manually run ":riru:assembleDebug" to make Android Studio happy
