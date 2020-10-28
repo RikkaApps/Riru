@@ -79,6 +79,10 @@ __used __attribute__((constructor)) void constructor() {
     if (size > 1 && buf[size - 1] == '\n') buf[size - 1] = 0;
     LOGI("original native bridge: %s", buf);
 
+    if (buf[0] == '0' && buf[1] == 0) {
+        return;
+    }
+
     auto native_bridge = buf + size + 1;
     strcpy(native_bridge, LIB_PATH);
     strncat(native_bridge, buf, size);
