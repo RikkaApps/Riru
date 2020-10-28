@@ -13,6 +13,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
+import riru.core.BuildConfig;
+
 /**
  * A "daemon" that resets native bridge prop and reboot on zygote dead.
  */
@@ -85,6 +87,11 @@ public class Daemon {
 
     @Keep
     public static void main(String[] args) {
+        if (BuildConfig.DEBUG) {
+            System.exit(0);
+            return;
+        }
+
         String originalNativeBridge = readOriginalNativeBridge();
         Log.i(TAG, "readOriginalNativeBridge: " + originalNativeBridge);
 
