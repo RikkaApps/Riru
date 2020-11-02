@@ -2,4 +2,5 @@
 allow zygote adb_data_file dir search
 
 # create file in /dev
-allow zygote device { dir file }  *
+allow zygote device dir { add_name read write create open }
+allow zygote device file { write create open }
