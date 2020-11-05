@@ -117,7 +117,7 @@ static void nativeSpecializeAppProcess_post(JNIEnv *env, jclass clazz) {
     restore_replaced_func(env);
 
     for (auto module : *get_modules()) {
-        if (module->hasSpecializeAppProcessPost())
+        if (!module->hasSpecializeAppProcessPost())
             continue;
 
         LOGD("%s: specializeAppProcessPost", module->name);
