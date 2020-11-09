@@ -22,6 +22,8 @@ Android 6.0+ devices rooted with [Magisk](https://github.com/topjohnwu/Magisk)
   1. Download the zip from [GitHub release](https://github.com/RikkaApps/Riru/releases)
   2. Install in Magisk Manager (Modules - Install from storage - Select downloaded zip)
 
+**Before Magisk canary 21006, the first installation requires manual restart twice.**
+
 ### Config
 
 * When the file `/data/adb/riru/disable` exists, Riru will do nothing

@@ -30,7 +30,8 @@ class MainActivity : AppActivity() {
         val devRandomFile = SuFile.open("/data/adb/riru/dev_random")
         val devRandom = devRandomFile.readTextOrNull()
         if (devRandom == null) {
-            message.append("Riru not installed (or version < v22).")
+            message.append("Riru not installed (or version < v22).\n\n")
+            message.append("Before Magisk canary 21006, you will have to reboot twice to finish the first installation.")
             detail.append("$devRandomFile not exist")
             return
         }
