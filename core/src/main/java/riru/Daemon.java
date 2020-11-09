@@ -1,9 +1,12 @@
 package riru;
 
+import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.RemoteException;
 import android.os.ServiceManager;
+import android.os.SystemProperties;
 import android.util.Log;
 
 import androidx.annotation.Keep;
@@ -21,16 +24,101 @@ import riru.core.BuildConfig;
 public class Daemon {
 
     private static final String TAG = "rirud";
+
     private static final String SERVICE_FOR_TEST = "activity";
+    private static final String RIRU_LOADER = "libriruloader.so";
+
+    private final Handler handler;
+    private final String name;
+    private final String originalNativeBridge;
+
+    public Daemon(String name, String originalNativeBridge) {
+        this.handler = new Handler(Looper.myLooper());
+        this.name = name;
+        this.originalNativeBridge = originalNativeBridge;
+
+        handler.post(() -> startWait(false));
+    }
+
+    private void startWait(boolean allowRestart) {
+        IBinder binder = waitForSystemService(name);
+
+        if (!isRiruLoaded()) {
+            Log.w(TAG, "Riru is not loaded.");
+
+            if (allowRestart) {
+                handler.post(() -> {
+                    Log.w(TAG, "Restarting zygote...");
+                    if (Build.SUPPORTED_64_BIT_ABIS.length > 0) {
+                        SystemProperties.set("ctl.restart", "zygote_secondary");
+                    } else {
+                        SystemProperties.set("ctl.restart", "zygote");
+                    }
+                    startWait(false);
+                });
+            }
+            return;
+        }
+
+        Log.i(TAG, "Riru loaded, reset native bridge to " + originalNativeBridge + "...");
+        resetNativeBridgeProp(originalNativeBridge);
+
+        try {
+            binder.linkToDeath(() -> {
+                Log.i(TAG, "Zygote is probably dead, reset native bridge to " + RIRU_LOADER + "...");
+                resetNativeBridgeProp(RIRU_LOADER);
+                handler.post(() -> startWait(true));
+            }, 0);
+        } catch (RemoteException e) {
+            Log.w(TAG, "linkToDeath", e);
+        }
+    }
+
+    @Keep
+    public static void main(String[] args) {
+        if (BuildConfig.DEBUG) {
+            System.exit(0);
+            return;
+        }
+
+        String originalNativeBridge = readOriginalNativeBridge();
+        Log.i(TAG, "readOriginalNativeBridge: " + originalNativeBridge);
+
+        if (originalNativeBridge == null) {
+            originalNativeBridge = "0";
+        }
+
+        Looper.prepare();
+        new Daemon(SERVICE_FOR_TEST, originalNativeBridge);
+        Looper.loop();
+    }
+
+    private static String readOriginalNativeBridge() {
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(new File("/data/adb/riru/native_bridge")));
+            char[] buf = new char[4096];
+            int size;
+            if ((size = br.read(buf)) > 0) {
+                return new String(buf, 0, size);
+            }
+        } catch (IOException e) {
+            Log.w(TAG, "Can't read native_bridge.", e);
+        }
+        return null;
+    }
+
+    private static void resetNativeBridgeProp(String value) {
+        exec("resetprop", "ro.dalvik.vm.native.bridge", value);
+    }
 
     private static void exec(String... command) {
         ProcessBuilder pb = new ProcessBuilder(command);
         try {
             Process process = pb.start();
             int code = process.waitFor();
-            Log.i(TAG, command[0] + " exited with " + code);
+            Log.i(TAG, "Exec " + command[0] + " exited with " + code);
         } catch (Throwable e) {
-            Log.w("exec", e);
+            Log.w(TAG, "Exec " + command[0], e);
         }
     }
 
@@ -51,56 +139,23 @@ public class Daemon {
         } while (true);
     }
 
-    private static void startWait(final String name, String originalNativeBridge) {
-        IBinder binder = waitForSystemService(name);
-
-        Log.i(TAG, "Zygote already started, reset prop to " + originalNativeBridge + "...");
-        exec("resetprop", "ro.dalvik.vm.native.bridge", originalNativeBridge);
-
+    private static boolean isRiruLoaded() {
+        String devRandom = null;
         try {
-            binder.linkToDeath(new IBinder.DeathRecipient() {
-                @Override
-                public void binderDied() {
-                    Log.i(TAG, "Zygote is possible dead, reboot to avoid problem.");
-                    exec("/system/bin/reboot");
-                    System.exit(0);
-                }
-            }, 0);
-        } catch (RemoteException e) {
-            Log.w("linkToDeath", e);
-        }
-    }
-
-    private static String readOriginalNativeBridge() {
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(new File("/data/adb/riru/native_bridge")));
+            BufferedReader br = new BufferedReader(new FileReader(new File("/data/adb/riru/dev_random")));
             char[] buf = new char[4096];
             int size;
             if ((size = br.read(buf)) > 0) {
-                return new String(buf, 0, size);
+                devRandom = new String(buf, 0, size);
             }
         } catch (IOException e) {
-            Log.w("can't read ", e);
-        }
-        return null;
-    }
-
-    @Keep
-    public static void main(String[] args) {
-        if (BuildConfig.DEBUG) {
-            System.exit(0);
-            return;
+            Log.w(TAG, "Can't read dev_random.", e);
         }
 
-        String originalNativeBridge = readOriginalNativeBridge();
-        Log.i(TAG, "readOriginalNativeBridge: " + originalNativeBridge);
-
-        if (originalNativeBridge == null) {
-            originalNativeBridge = "0";
+        if (devRandom == null) {
+            return false;
         }
 
-        Looper.prepare();
-        startWait(SERVICE_FOR_TEST, originalNativeBridge);
-        Looper.loop();
+        return new File("/dev/riru_" + devRandom).exists();
     }
 }
