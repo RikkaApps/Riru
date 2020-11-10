@@ -81,6 +81,12 @@ public class Daemon {
             return;
         }
 
+        if (!new File("/data/adb/riru/enable_hide").exists()) {
+            Log.i(TAG, "Hide is not enabled.");
+            System.exit(0);
+            return;
+        }
+
         String originalNativeBridge = readOriginalNativeBridge();
         Log.i(TAG, "readOriginalNativeBridge: " + originalNativeBridge);
 
