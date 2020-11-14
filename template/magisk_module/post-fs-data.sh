@@ -12,5 +12,10 @@ if [ -f "$RIRU_PATH/api_version.new" ]; then
   mv "$RIRU_PATH/api_version.new" "$RIRU_PATH/api_version"
 fi
 
+# Remove old files to avoid downgrade problems
+rm /data/misc/riru/api_version
+rm /data/misc/riru/version_code
+rm /data/misc/riru/version_name
+
 # Backup ro.dalvik.vm.native.bridge
 echo -n "$(getprop ro.dalvik.vm.native.bridge)" > $RIRU_PATH/native_bridge
