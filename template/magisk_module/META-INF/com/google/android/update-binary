@@ -11,6 +11,7 @@ ui_print() { echo "$1"; }
 
 require_new_magisk() {
   ui_print "*******************************"
+  ui_print " Riru requires features provided by Magisk v20.2+"
   ui_print " Please install Magisk v20.2+! "
   ui_print "*******************************"
   exit 1
@@ -48,15 +49,12 @@ is_legacy_script() {
 }
 
 print_modname() {
-  local authlen len namelen pounds
-  namelen=`echo -n $MODNAME | wc -c`
-  authlen=$((`echo -n $MODAUTH | wc -c` + 3))
-  [ $namelen -gt $authlen ] && len=$namelen || len=$authlen
+  local len
+  len=`echo -n $MODNAME | wc -c`
   len=$((len + 2))
-  pounds=$(printf "%${len}s" | tr ' ' '*')
+  local pounds=`printf "%${len}s" | tr ' ' '*'`
   ui_print "$pounds"
   ui_print " $MODNAME "
-  ui_print " by $MODAUTH "
   ui_print "$pounds"
   ui_print "*******************"
   ui_print " Powered by Magisk "
@@ -98,9 +96,8 @@ unzip -o "$ZIPFILE" module.prop -d $TMPDIR >&2
 $BOOTMODE && MODDIRNAME=modules_update || MODDIRNAME=modules
 MODULEROOT=$NVBASE/$MODDIRNAME
 MODID=`grep_prop id $TMPDIR/module.prop`
-MODNAME=`grep_prop name $TMPDIR/module.prop`
-MODAUTH=`grep_prop author $TMPDIR/module.prop`
 MODPATH=$MODULEROOT/$MODID
+MODNAME=`grep_prop name $TMPDIR/module.prop`
 
 # Create mod paths
 rm -rf $MODPATH 2>/dev/null
@@ -172,11 +169,9 @@ fi
 # Copy over custom sepolicy rules
 if [ -f $MODPATH/sepolicy.rule -a -e $PERSISTDIR ]; then
   ui_print "- Installing custom sepolicy patch"
-  # Remove old recovery logs (which may be filling partition) to make room
-  rm -f $PERSISTDIR/cache/recovery/*
   PERSISTMOD=$PERSISTDIR/magisk/$MODID
   mkdir -p $PERSISTMOD
-  cp -af $MODPATH/sepolicy.rule $PERSISTMOD/sepolicy.rule || abort "! Insufficient partition size"
+  cp -af $MODPATH/sepolicy.rule $PERSISTMOD/sepolicy.rule
 fi
 
 # Remove stuffs that don't belong to modules
