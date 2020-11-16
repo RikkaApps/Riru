@@ -6,23 +6,27 @@ Riru only does one thing, inject into zygote in order to allow modules run their
 
 ## Requirements
 
-Android 6.0+ devices rooted with [Magisk](https://github.com/topjohnwu/Magisk)
+Android 6.0+ devices rooted with [Magisk](https://github.com/topjohnwu/Magisk) v20.2+
+
+> Magisk v20.2 is the first version support pre-init sepolicy patch from modules, which is necessary for Riru.
 
 ## Guide
 
 ### Install
 
-* Automatically
+**IMPORTANT: Before Magisk v21.1, you MUST manual restart twice for the first installation.**
+
+* From Magisk Manager
 
   1. Search "Riru" in Magisk Manager
   2. Install the module named "Riru"
+
+  > The Magisk version requirement is enforced by Magisk Manager. At the time of the release of Magisk v21.1, the requirement is v20.4.
 
 * Manually
 
   1. Download the zip from [GitHub release](https://github.com/RikkaApps/Riru/releases)
   2. Install in Magisk Manager (Modules - Install from storage - Select downloaded zip)
-
-**Before Magisk canary 21006, the first installation requires manual restart twice.**
 
 ### Config
 
