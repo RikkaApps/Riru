@@ -1,8 +1,8 @@
 # Riru
 
-Inject zygote process by replacing libmemtrack, provide the ability for Riru modules to run their code in apps' or system server's process.
+Riru only does one thing, inject into zygote in order to allow modules run their codes in apps or the system server.
 
-All other Riru modules requires Riru installed to work.
+All other Riru modules requires Riru.
 
 See [https://github.com/RikkaApps/Riru](https://github.com/RikkaApps/Riru) for more details.
 
@@ -10,7 +10,11 @@ See [https://github.com/RikkaApps/Riru](https://github.com/RikkaApps/Riru) for m
 
 ### v22.0 (37) (2020-10-09)
 
-- Hide mechanism
+Riru v22 has a new hide mechanism which makes detection "not that easy".
+
+Because of this, all modules must change. If your module hasn't updated, ask the module developer to make changes. **For 99% modules, this is super easy.**
+
+**Before Magisk v21.1, you have to manually reboot the device twice.**
 
 ### v21.3 (36) (2020-07-01)
 
