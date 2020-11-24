@@ -45,19 +45,32 @@ set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LINKER_FLAGS}")
 find_package(xhook REQUIRED CONFIG)
 find_package(riru-api REQUIRED CONFIG)
 
-add_library(riru SHARED main.cpp jni_native_method.cpp misc.cpp wrap.cpp api.cpp native_method.cpp hide_utils.cpp pmparser.c status.cpp module.cpp)
+include_directories(include)
+
+add_library(utils STATIC
+        util/misc.cpp
+        util/wrap.cpp
+        util/pmparser.c)
+
+add_library(riru SHARED
+        main.cpp
+        jni_native_method.cpp
+        api.cpp
+        native_method.cpp
+        hide/hide_utils.cpp
+        status.cpp
+        module.cpp)
 
 target_include_directories(riru PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(riru log xhook::xhook riru-api::riru-api)
+target_link_libraries(riru log utils xhook::xhook flatbuffers::flatbuffers riru-api::riru-api)
 
-add_library(riruhide SHARED hide.cpp wrap.cpp pmparser.c)
+add_library(riruhide SHARED hide/hide.cpp)
 target_include_directories(riruhide PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(riruhide log)
+target_link_libraries(riruhide log utils)
 
 if ("${ANDROID_ABI}" STREQUAL "x86" OR "${ANDROID_ABI}" STREQUAL "x86_64")
     add_definitions(-DHAS_NATIVE_BRIDGE)
 endif()
 
-add_library(riruloader SHARED loader.cpp misc.cpp)
-include_directories(include)
-target_link_libraries(riruloader log)
+add_library(riruloader SHARED loader/loader.cpp)
+target_link_libraries(riruloader log utils)

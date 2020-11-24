@@ -22,14 +22,14 @@
 
 #ifdef HAS_NATIVE_BRIDGE
 
-#include <native_bridge_23.h>
-#include <native_bridge_24.h>
-#include <native_bridge_25.h>
-#include <native_bridge_26.h>
-#include <native_bridge_27.h>
-#include <native_bridge_28.h>
-#include <native_bridge_29.h>
-#include <native_bridge_30.h>
+#include "native_bridge_23.h"
+#include "native_bridge_24.h"
+#include "native_bridge_25.h"
+#include "native_bridge_26.h"
+#include "native_bridge_27.h"
+#include "native_bridge_28.h"
+#include "native_bridge_29.h"
+#include "native_bridge_30.h"
 
 extern "C" __used __attribute__((visibility("default"))) uint8_t NativeBridgeItf[sizeof(android30::NativeBridgeCallbacks) * 2]{0};
 
