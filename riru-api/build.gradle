@@ -28,7 +28,7 @@ android {
         }
     }
     prefab {
-        riru {
+        "riru-api" {
             headers "src/main/cpp/include"
         }
     }

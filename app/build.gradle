@@ -73,7 +73,7 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation "androidx.annotation:annotation:1.1.0"
-    //implementation project(':core')
+    //implementation project(':riru')
 
     def libsuVersion = '3.0.2'
     implementation "com.github.topjohnwu.libsu:core:${libsuVersion}"
