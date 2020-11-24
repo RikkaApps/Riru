@@ -10,6 +10,12 @@
 #include "status.h"
 #include "hide_utils.h"
 
+static bool hide_enabled;
+
+bool is_hide_enabled() {
+    return hide_enabled;
+}
+
 std::vector<RiruModule *> *get_modules() {
     static auto *modules = new std::vector<RiruModule *>({new RiruModule(strdup(MODULE_NAME_CORE))});
     return modules;
@@ -128,8 +134,8 @@ void load_modules() {
 
     closedir(dir);
 
-    status::getStatus()->hideEnabled = access(ENABLE_HIDE_FILE, F_OK) == 0;
-    if (status::getStatus()->hideEnabled) {
+    hide_enabled = access(ENABLE_HIDE_FILE, F_OK) == 0;
+    if (hide_enabled) {
         LOGI("hide is enabled");
         auto modules = get_modules();
         auto names = (const char **) malloc(sizeof(char *) * modules->size());

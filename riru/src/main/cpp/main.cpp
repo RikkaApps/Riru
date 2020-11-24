@@ -63,7 +63,7 @@ static JNINativeMethod *onRegisterZygote(
                 api::setNativeMethodFunc(
                         get_modules()->at(0)->token, className, newMethods[i].name, newMethods[i].signature, newMethods[i].fnPtr);
             }
-            status::writeMethodToFile(status::method::forkAndSpecialize, replaced, method.signature);
+            Status::WriteMethod(Status::Method::forkAndSpecialize, replaced, method.signature);
         } else if (strcmp(method.name, "nativeSpecializeAppProcess") == 0) {
             JNI::Zygote::nativeSpecializeAppProcess = new JNINativeMethod{method.name, method.signature, method.fnPtr};
 
@@ -91,7 +91,7 @@ static JNINativeMethod *onRegisterZygote(
                 api::setNativeMethodFunc(
                         get_modules()->at(0)->token, className, newMethods[i].name, newMethods[i].signature, newMethods[i].fnPtr);
             }
-            status::writeMethodToFile(status::method::specializeAppProcess, replaced, method.signature);
+            Status::WriteMethod(Status::Method::specializeAppProcess, replaced, method.signature);
         } else if (strcmp(method.name, "nativeForkSystemServer") == 0) {
             JNI::Zygote::nativeForkSystemServer = new JNINativeMethod{method.name, method.signature, method.fnPtr};
 
@@ -108,7 +108,7 @@ static JNINativeMethod *onRegisterZygote(
                 api::setNativeMethodFunc(
                         get_modules()->at(0)->token, className, newMethods[i].name, newMethods[i].signature, newMethods[i].fnPtr);
             }
-            status::writeMethodToFile(status::method::forkSystemServer, replaced, method.signature);
+            Status::WriteMethod(Status::Method::forkSystemServer, replaced, method.signature);
         }
     }
 
@@ -254,5 +254,5 @@ void constructor() {
 
     load_modules();
 
-    status::writeToFile();
+    Status::Write();
 }

@@ -1,28 +1,18 @@
 #pragma once
 
-namespace status {
+#include <vector>
+#include "module.h"
 
-    enum method {
+namespace Status {
+
+    enum Method {
         forkAndSpecialize = 0,
         forkSystemServer,
         specializeAppProcess,
         COUNT
     };
 
-    struct status_t {
-        const char *methodName[method::COUNT] = {
-                "nativeForkAndSpecialize",
-                "nativeForkSystemServer",
-                "nativeSpecializeAppProcess"
-        };
-        bool methodReplaced[method::COUNT] = {false, false, false};
-        const char *methodSignature[method::COUNT]{"", "", ""};
-        bool hideEnabled = false;
-    };
+    void Write();
 
-    status_t *getStatus();
-
-    void writeToFile();
-
-    void writeMethodToFile(method method, bool replaced, const char *sig);
+    void WriteMethod(Method method, bool replaced, const char *sig);
 }

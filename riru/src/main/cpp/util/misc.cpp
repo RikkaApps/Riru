@@ -115,17 +115,22 @@ int get_prop(const char *file, const char *key, char *value) {
     return -1;
 }
 
-int read_full(int fd, void *buf, size_t count) {
-    while (count > 0) {
-        ssize_t size = read(fd, buf, count < SSIZE_MAX ? count : SSIZE_MAX);
-        if (size == -1) {
-            if (errno == EINTR)
-                continue;
-            else
-                return -1;
+static ssize_t read_eintr(int fd, void *out, size_t len) {
+    ssize_t ret;
+    do {
+        ret = read(fd, out, len);
+    } while (ret < 0 && errno == EINTR);
+    return ret;
+}
+
+int read_full(int fd, void *out, size_t len) {
+    while (len > 0) {
+        ssize_t ret = read_eintr(fd, out, len);
+        if (ret <= 0) {
+            return -1;
         }
-        buf = (void *) ((uintptr_t) buf + size);
-        count -= size;
+        out = (void *) ((uintptr_t) out + ret);
+        len -= ret;
     }
     return 0;
 }

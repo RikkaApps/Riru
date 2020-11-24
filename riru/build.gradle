@@ -12,8 +12,8 @@ def minApiVersion = rootProject.ext.riruMinApiVersion
 def moduleProp = [
         id         : "riru-core",
         name       : "Riru",
-        version    : "v22.0",
-        versionCode: "41",
+        version    : "v22.1",
+        versionCode: "42",
         author     : "Rikka",
         description: "Inject into zygote process. Required by all \"Riru\" modules."
 ]
@@ -63,6 +63,7 @@ repositories {
 dependencies {
     implementation project(':riru-api')
     implementation 'rikka.ndk.thirdparty:xhook:1.2.0'
+    implementation 'rikka.ndk.thirdparty:flatbuffers:1.12.0'
 
     implementation 'androidx.annotation:annotation:1.1.0'
     compileOnly project(':stub')
@@ -134,7 +135,7 @@ android.applicationVariants.all { variant ->
 
             // copy dex
             copy {
-                from zipTree(file(outputFile)).matching { include 'classes.dex' }.singleFile
+                from zipTree(file(outputFile)).matching { include 'classes*.dex' }.singleFile
                 into magiskDir
             }
 

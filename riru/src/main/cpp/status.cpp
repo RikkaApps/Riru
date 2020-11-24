@@ -10,179 +10,72 @@
 #include "misc.h"
 #include "module.h"
 #include "config.h"
+#include "daemon/status_writter.h"
 
 #define TMP_DIR "/dev"
 
-namespace status {
-
-    status_t *getStatus() {
-        static status_t status;
-        return &status;
-    }
-
-    static const char *getRandomName() {
+void Status::Write() {
 #ifdef __LP64__
-#define DEV_RANDOM CONFIG_DIR "/dev_random64"
+    bool is64bit = true;
 #else
-#define DEV_RANDOM CONFIG_DIR "/dev_random"
+    bool is64bit = false;
 #endif
 
-        static char *name = nullptr;
-        if (name != nullptr) return name;
+    flatbuffers::FlatBufferBuilder builder;
 
-        size_t size = 7;
-        auto tmp = static_cast<char *>(malloc(size + 1));
-        const char *file = DEV_RANDOM;
-        const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    auto core = CreateCoreDirect(
+            builder,
+            RIRU_API_VERSION,
+            RIRU_VERSION_CODE,
+            RIRU_VERSION_NAME,
+            is_hide_enabled());
 
-        int fd = open(file, O_RDONLY);
-        if (fd != -1) {
-            if (0 == read_full(fd, tmp, size)) {
-                tmp[size] = '\0';
-                close(fd);
-                name = tmp;
-                return name;
-            }
-            close(fd);
-
-            LOGE("bad %s", DEV_RANDOM);
-        }
-
-        srand(time(nullptr));
-        for (size_t n = 0; n < size; n++) {
-            auto key = rand() % (sizeof charset - 1);
-            tmp[n] = charset[key];
-        }
-        tmp[size] = '\0';
-
-        fd = open(file, O_CREAT | O_WRONLY | O_TRUNC, 0700);
-        if (fd == -1) {
-            PLOGE("open %s", file);
-            return nullptr;
-        }
-        write_full(fd, tmp, size);
-        close(fd);
-
-        name = tmp;
-        return name;
+    std::vector<flatbuffers::Offset<Module>> modules_vector;
+    for (auto module : *get_modules()) {
+        if (strcmp(module->name, MODULE_NAME_CORE) == 0) continue;
+        modules_vector.emplace_back(CreateModuleDirect(
+                builder,
+                module->name,
+                module->apiVersion,
+                module->version,
+                module->versionName,
+                module->supportHide));
     }
 
-    static int openFile(const char *name, ...) {
-        auto random_name = getRandomName();
-        if (random_name == nullptr) {
-            LOGE("unable to get random name");
-            return -1;
-        }
-        LOGD("random name is %s", random_name);
+    auto modules = builder.CreateVector(modules_vector);
 
-        const char *filename, *next;
-        char dir[PATH_MAX];
+    FbStatusBuilder status_builder(builder);
+    status_builder.add_is_64bit(is64bit);
+    status_builder.add_core(core);
+    status_builder.add_modules(modules);
+    FinishFbStatusBuffer(builder, status_builder.Finish());
 
-        strcpy(dir, TMP_DIR);
+    WriteToFile(GetFbStatus(builder.GetBufferPointer()));
+}
+
+void Status::WriteMethod(Method method, bool replaced, const char *sig) {
 #ifdef __LP64__
-        strcat(dir, "/riru64_");
+    bool is64bit = true;
 #else
-        strcat(dir, "/riru_");
+    bool is64bit = false;
 #endif
-        strcat(dir, random_name);
 
+    static const char *method_name[Method::COUNT] = {
+            "nativeForkAndSpecialize",
+            "nativeForkSystemServer",
+            "nativeSpecializeAppProcess"
+    };
 
-        va_list va;
-        va_start(va, name);
-        while (true) {
-            next = va_arg(va, const char *);
-            if (next == nullptr) {
-                filename = name;
-                break;
-            }
-            strcat(dir, "/");
-            strcat(dir, name);
-            name = next;
-        }
-        va_end(va);
+    flatbuffers::FlatBufferBuilder builder;
 
-        LOGD("open %s/%s", dir, filename);
+    flatbuffers::Offset<JNIMethod> method_data[] = {CreateJNIMethodDirect(builder, method_name[method], sig, replaced)};
+    auto methods = builder.CreateVector(method_data, 1);
 
-        int dir_fd = open(dir, O_DIRECTORY);
-        if (dir_fd == -1 && mkdirs(dir, 0700) == 0) {
-            dir_fd = open(dir, O_DIRECTORY);
-        }
-        if (dir_fd == -1) {
-            PLOGE("cannot open dir %s", dir);
-            return -1;
-        }
+    FbStatusBuilder status_builder(builder);
+    status_builder.add_is_64bit(is64bit);
+    status_builder.add_jni_methods(methods);
+    FinishFbStatusBuffer(builder, status_builder.Finish());
 
-        int fd = openat(dir_fd, filename, O_CREAT | O_WRONLY | O_TRUNC, 0700);
-        if (fd < 0) {
-            PLOGE("unable to create/open %s", name);
-        }
-
-        close(dir_fd);
-        return fd;
-    }
-
-#define openFile(...) openFile(__VA_ARGS__, nullptr)
-
-    void writeToFile() {
-        char buf[1024];
-        int fd;
-
-        if ((fd = openFile("api")) != -1) {
-            write_full(fd, buf, sprintf(buf, "%d", RIRU_API_VERSION));
-            close(fd);
-        }
-
-        if ((fd = openFile("version")) != -1) {
-            write_full(fd, buf, sprintf(buf, "%d", RIRU_VERSION_CODE));
-            close(fd);
-        }
-
-        if ((fd = openFile("version_name")) != -1) {
-            write_full(fd, buf, sprintf(buf, "%s", RIRU_VERSION_NAME));
-            close(fd);
-        }
-
-        if ((fd = openFile("hide")) != -1) {
-            write_full(fd, buf, sprintf(buf, "%s", getStatus()->hideEnabled ? "true" : "false"));
-            close(fd);
-        }
-
-        // write modules
-        for (auto module : *get_modules()) {
-            if (strcmp(module->name, MODULE_NAME_CORE) == 0) continue;
-
-            if ((fd = openFile("modules", module->name, "hide")) != -1) {
-                write_full(fd, buf, sprintf(buf, "%s", module->supportHide ? "true" : "false"));
-                close(fd);
-            }
-
-            if ((fd = openFile("modules", module->name, "api")) != -1) {
-                write_full(fd, buf, sprintf(buf, "%d", module->apiVersion));
-                close(fd);
-            }
-
-            if ((fd = openFile("modules", module->name, "version")) != -1) {
-                write_full(fd, buf, sprintf(buf, "%d", module->version));
-                close(fd);
-            }
-
-            if ((fd = openFile("modules", module->name, "version_name")) != -1) {
-                write_full(fd, buf, sprintf(buf, "%s", module->versionName));
-                close(fd);
-            }
-        }
-    }
-
-    void writeMethodToFile(method method, bool replaced, const char *sig) {
-        getStatus()->methodReplaced[method] = replaced;
-        getStatus()->methodSignature[method] = strdup(sig);
-
-        char buf[1024];
-        int fd;
-        if ((fd = openFile("methods", getStatus()->methodName[method])) != -1) {
-            write_full(fd, buf, sprintf(buf, "%s\n%s", replaced ? "true" : "false", sig));
-            close(fd);
-        }
-    }
+    WriteToFile(GetFbStatus(builder.GetBufferPointer()));
 }
 

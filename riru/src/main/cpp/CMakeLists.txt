@@ -44,8 +44,10 @@ set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LINKER_FLAGS}")
 
 find_package(xhook REQUIRED CONFIG)
 find_package(riru-api REQUIRED CONFIG)
+find_package(flatbuffers REQUIRED CONFIG)
 
 include_directories(include)
+include_directories(include_generated)
 
 add_library(utils STATIC
         util/misc.cpp
@@ -59,8 +61,8 @@ add_library(riru SHARED
         native_method.cpp
         hide/hide_utils.cpp
         status.cpp
-        module.cpp)
-
+        module.cpp
+        daemon/status_writter.cpp)
 target_include_directories(riru PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(riru log utils xhook::xhook flatbuffers::flatbuffers riru-api::riru-api)
 
@@ -70,7 +72,7 @@ target_link_libraries(riruhide log utils)
 
 if ("${ANDROID_ABI}" STREQUAL "x86" OR "${ANDROID_ABI}" STREQUAL "x86_64")
     add_definitions(-DHAS_NATIVE_BRIDGE)
-endif()
+endif ()
 
 add_library(riruloader SHARED loader/loader.cpp)
 target_link_libraries(riruloader log utils)

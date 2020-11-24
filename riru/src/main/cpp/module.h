@@ -173,3 +173,5 @@ public:
 std::vector<RiruModule *> *get_modules();
 
 void load_modules();
+
+bool is_hide_enabled();
