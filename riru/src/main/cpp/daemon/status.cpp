@@ -16,16 +16,15 @@
 #include "config.h"
 
 #define TMP_DIR "/dev"
-#define DEV_RANDOM64 CONFIG_DIR "/dev_random64"
 #define DEV_RANDOM CONFIG_DIR "/dev_random"
 
-static const char *getRandomName(bool is_64bit) {
+static const char *getRandomName() {
     static char *name = nullptr;
     if (name != nullptr) return name;
 
     size_t size = 7;
     auto tmp = static_cast<char *>(malloc(size + 1));
-    const char *file = is_64bit ? DEV_RANDOM64 : DEV_RANDOM;
+    const char *file = DEV_RANDOM;
     const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
     int fd = open(file, O_RDONLY);
@@ -61,7 +60,7 @@ static const char *getRandomName(bool is_64bit) {
 }
 
 static int OpenFile(bool is_64bit, const char *name, ...) {
-    auto random_name = getRandomName(is_64bit);
+    auto random_name = getRandomName();
     if (random_name == nullptr) {
         LOGE("unable to get random name");
         return -1;
