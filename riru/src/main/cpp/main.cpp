@@ -254,5 +254,5 @@ void constructor() {
 
     load_modules();
 
-    Status::Write();
+    Status::WriteSelfAndModules();
 }

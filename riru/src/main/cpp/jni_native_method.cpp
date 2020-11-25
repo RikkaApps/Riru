@@ -7,7 +7,7 @@
 #include "misc.h"
 #include "module.h"
 #include "api.h"
-#include "main.h"
+#include "daemon.h"
 
 namespace JNI {
 

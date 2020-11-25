@@ -9,6 +9,7 @@
 #include "config.h"
 #include "status.h"
 #include "hide_utils.h"
+#include "status_generated.h"
 
 static bool hide_enabled;
 
@@ -61,20 +62,29 @@ static void cleanup(void *handle, const char *path) {
 }
 
 void load_modules() {
-    DIR *dir;
-    struct dirent *entry;
+    uint8_t *buffer;
+    uint32_t buffer_size;
+
     char path[PATH_MAX];
     void *handle;
     const int riruApiVersion = RIRU_API_VERSION;
 
-    if (!(dir = _opendir(MODULES_DIR))) return;
+    Status::Read(buffer, buffer_size);
+    auto status = Status::GetFbStatus(buffer);
 
-    while ((entry = _readdir(dir))) {
-        if (entry->d_type != DT_DIR) continue;
+    if (!status->core()) {
+        LOGW("core is null");
+        goto clean;
+    }
+    if (!status->modules()) {
+        LOGW("modules is null");
+        goto clean;
+    }
 
-        auto name = entry->d_name;
-        if (name[0] == '.') continue;
+    hide_enabled = status->core()->hide();
 
+    for (auto it : *status->modules()) {
+        auto name = it->name()->c_str();
         snprintf(path, PATH_MAX, MODULE_PATH_FMT, name);
 
         if (access(path, F_OK) != 0) {
@@ -132,9 +142,6 @@ void load_modules() {
         LOGI("module loaded: %s (api %d)", module->name, module->apiVersion);
     }
 
-    closedir(dir);
-
-    hide_enabled = access(ENABLE_HIDE_FILE, F_OK) == 0;
     if (hide_enabled) {
         LOGI("hide is enabled");
         auto modules = get_modules();
@@ -151,7 +158,6 @@ void load_modules() {
         }
         hide::hide_modules(names, names_count);
     } else {
-        PLOGE("access " ENABLE_HIDE_FILE);
         LOGI("hide is not enabled");
     }
 
@@ -162,4 +168,7 @@ void load_modules() {
             module->onModuleLoaded();
         }
     }
+
+    clean:
+    free(buffer);
 }

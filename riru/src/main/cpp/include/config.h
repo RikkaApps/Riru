@@ -2,6 +2,7 @@
 
 #define CONFIG_DIR "/data/adb/riru"
 #define ENABLE_HIDE_FILE CONFIG_DIR "/enable_hide"
+#define SOCKET_ADDRESS "rirud"
 
 #ifdef __LP64__
 #define LIB_PATH "/system/lib64/"

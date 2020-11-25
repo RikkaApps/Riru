@@ -135,7 +135,7 @@ android.applicationVariants.all { variant ->
 
             // copy dex
             copy {
-                from zipTree(file(outputFile)).matching { include 'classes*.dex' }.singleFile
+                from zipTree(file(outputFile)).matching { include 'classes.dex' }.singleFile
                 into magiskDir
             }
 

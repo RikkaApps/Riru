@@ -19,3 +19,6 @@ rm /data/misc/riru/version_name
 
 # Backup ro.dalvik.vm.native.bridge
 echo -n "$(getprop ro.dalvik.vm.native.bridge)" > $RIRU_PATH/native_bridge
+
+# Start daemon which runs socket "rirud"
+exec $RIRU_PATH/bin/rirud

@@ -1,6 +1,9 @@
-# enter /data/adb
+# Starting from Riru v21.1, zygote will try "rirud" socket first
+# Keep these rules as a backup
+
+# Enter /data/adb
 allow zygote adb_data_file dir search
 
-# create file in /dev
+# Create file in /dev
 allow zygote device dir { add_name read write create open }
 allow zygote device file { write create open }

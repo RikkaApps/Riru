@@ -9,7 +9,8 @@
 #include <ctime>
 #include <cstdlib>
 #include <cstring>
-#include "status_writter.h"
+#include <dirent.h>
+#include "status.h"
 #include "logging.h"
 #include "misc.h"
 #include "config.h"
@@ -194,4 +195,33 @@ void Status::WriteToFile(const FbStatus *status) {
     WriteCore(status);
     WriteModules(status);
     WriteJNIMethods(status);
+}
+
+void Status::ReadFromFile(flatbuffers::FlatBufferBuilder &builder) {
+    DIR *dir;
+    struct dirent *entry;
+    auto hide_enabled = access(ENABLE_HIDE_FILE, F_OK) == 0;
+
+    std::vector<flatbuffers::Offset<Module>> modules_vector;
+
+    if (!(dir = opendir(MODULES_DIR))) goto create_buffer;
+    while ((entry = readdir(dir))) {
+        if (entry->d_type != DT_DIR) continue;
+
+        auto name = entry->d_name;
+        if (name[0] == '.') continue;
+
+        modules_vector.emplace_back(CreateModuleDirect(builder, name, 0, 0, "", false));
+    }
+    closedir(dir);
+
+    create_buffer:
+    auto core = CreateCoreDirect(builder, 0, 0, "", hide_enabled);
+
+    auto modules = builder.CreateVector(modules_vector);
+
+    FbStatusBuilder status_builder(builder);
+    status_builder.add_core(core);
+    status_builder.add_modules(modules);
+    FinishFbStatusBuffer(builder, status_builder.Finish());
 }

@@ -55,6 +55,7 @@ if [ "$ARCH" = "x86" ] || [ "$ARCH" = "x64" ]; then
   extract "$ZIPFILE" 'system_x86/lib/libriru.so' "$MODPATH"
   extract "$ZIPFILE" 'system_x86/lib/libriruhide.so' "$MODPATH"
   extract "$ZIPFILE" 'system_x86/lib/libriruloader.so' "$MODPATH"
+  extract "$ZIPFILE" 'system_x86/lib/librirud.so' "$RIRU_PATH/bin" true
   mv "$MODPATH/system_x86/" "$MODPATH/system/"
 
   if [ "$IS64BIT" = true ]; then
@@ -62,6 +63,7 @@ if [ "$ARCH" = "x86" ] || [ "$ARCH" = "x64" ]; then
     extract "$ZIPFILE" 'system_x86/lib64/libriru.so' "$MODPATH"
     extract "$ZIPFILE" 'system_x86/lib64/libriruhide.so' "$MODPATH"
     extract "$ZIPFILE" 'system_x86/lib64/libriruloader.so' "$MODPATH"
+    extract "$ZIPFILE" 'system_x86/lib64/librirud.so' "$RIRU_PATH/bin" true
     mv "$MODPATH/system_x86/lib64" "$MODPATH/system/lib64"
   fi
 else
@@ -69,14 +71,19 @@ else
   extract "$ZIPFILE" 'system/lib/libriru.so' "$MODPATH"
   extract "$ZIPFILE" 'system/lib/libriruhide.so' "$MODPATH"
   extract "$ZIPFILE" 'system/lib/libriruloader.so' "$MODPATH"
+  extract "$ZIPFILE" 'system/lib/librirud.so' "$RIRU_PATH/bin" true
 
   if [ "$IS64BIT" = true ]; then
     ui_print "- Extracting arm64 libraries"
     extract "$ZIPFILE" 'system/lib64/libriru.so' "$MODPATH"
     extract "$ZIPFILE" 'system/lib64/libriruhide.so' "$MODPATH"
     extract "$ZIPFILE" 'system/lib64/libriruloader.so' "$MODPATH"
+    extract "$ZIPFILE" 'system/lib64/librirud.so' "$RIRU_PATH/bin" true
   fi
 fi
+
+mv "$RIRU_PATH/bin/librirud.so" "$RIRU_PATH/bin/rirud"
+set_perm "$RIRU_PATH/bin/rirud" 0 0 0700 $SECONTEXT
 
 # Use magisk_file like other Magisk files
 SECONTEXT="u:object_r:magisk_file:s0"

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vector>
-#include "module.h"
 
 namespace Status {
 
@@ -12,7 +11,9 @@ namespace Status {
         COUNT
     };
 
-    void Write();
+    void Read(uint8_t *&buffer, uint32_t &buffer_size);
+
+    void WriteSelfAndModules();
 
     void WriteMethod(Method method, bool replaced, const char *sig);
 }

@@ -52,7 +52,9 @@ include_directories(include_generated)
 add_library(utils STATIC
         util/misc.cpp
         util/wrap.cpp
-        util/pmparser.c)
+        util/pmparser.c
+        util/selinux.cpp
+        util/socket.cpp)
 
 add_library(riru SHARED
         main.cpp
@@ -62,7 +64,7 @@ add_library(riru SHARED
         hide/hide_utils.cpp
         status.cpp
         module.cpp
-        daemon/status_writter.cpp)
+        daemon/status.cpp)
 target_include_directories(riru PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(riru log utils xhook::xhook flatbuffers::flatbuffers riru-api::riru-api)
 
@@ -76,3 +78,8 @@ endif ()
 
 add_library(riruloader SHARED loader/loader.cpp)
 target_link_libraries(riruloader log utils)
+
+add_executable(librirud.so
+        daemon/daemon.cpp
+        daemon/status.cpp)
+target_link_libraries(librirud.so log utils flatbuffers::flatbuffers)
