@@ -24,6 +24,12 @@
 #endif
 #endif
 
+static const uint32_t ACTION_PING = 0;
+static const uint32_t ACTION_READ_NATIVE_BRIDGE = 3;
+
+static const uint8_t CODE_OK = 0;
+static const uint8_t CODE_FAILED = 1;
+
 #ifdef HAS_NATIVE_BRIDGE
 
 #include "native_bridge_23.h"
@@ -42,12 +48,6 @@ static void *original_bridge = nullptr;
 __used __attribute__((destructor)) void destructor() {
     if (original_bridge) dlclose(original_bridge);
 }
-
-static const uint32_t ACTION_PING = 0;
-static const uint32_t ACTION_READ_NATIVE_BRIDGE = 3;
-
-static const uint8_t CODE_OK = 0;
-static const uint8_t CODE_FAILED = 1;
 
 static void ReadOriginalNativeBridgeFromSocket(char *buffer, int32_t &buffer_size) {
     struct sockaddr_un addr{};
