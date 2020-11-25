@@ -4,6 +4,10 @@
 #include <fcntl.h>
 #include <cstdio>
 #include <sys/system_properties.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <socket.h>
+#include <malloc.h>
 #include "config.h"
 #include "logging.h"
 #include "misc.h"
@@ -39,6 +43,8 @@ __used __attribute__((destructor)) void destructor() {
     if (original_bridge) dlclose(original_bridge);
 }
 
+static void ReadFromSocket(char *buffer, int32_t &buffer_size);
+
 #endif
 
 __used __attribute__((constructor)) void constructor() {
@@ -62,21 +68,33 @@ __used __attribute__((constructor)) void constructor() {
 #ifdef HAS_NATIVE_BRIDGE
 
     char buf[PATH_MAX]{0};
-    int fd = open(CONFIG_DIR "/native_bridge", O_RDONLY);
-    if (fd == -1) {
-        PLOGE("access " CONFIG_DIR "/native_bridge");
-        return;
+    int32_t buf_size;
+    ssize_t size;
+
+    ReadFromSocket(buf, buf_size);
+
+    if (buf_size <= 0) {
+        LOGW("socket failed, try file");
+
+        int fd = open(CONFIG_DIR "/native_bridge", O_RDONLY);
+        if (fd == -1) {
+            PLOGE("access " CONFIG_DIR "/native_bridge");
+            return;
+        }
+
+        size = read(fd, buf, PATH_MAX);
+        close(fd);
+
+        if (size <= 0) {
+            LOGE("can't read native_bridge");
+            return;
+        }
+        buf[size] = 0;
+        if (size > 1 && buf[size - 1] == '\n') buf[size - 1] = 0;
+    } else {
+        size = buf_size;
     }
 
-    auto size = read(fd, buf, PATH_MAX);
-    close(fd);
-
-    if (size <= 0) {
-        LOGE("can't read native_bridge");
-        return;
-    }
-    buf[size] = 0;
-    if (size > 1 && buf[size - 1] == '\n') buf[size - 1] = 0;
     LOGI("original native bridge: %s", buf);
 
     if (buf[0] == '0' && buf[1] == 0) {
@@ -131,3 +149,46 @@ __used __attribute__((constructor)) void constructor() {
     memcpy(NativeBridgeItf, original_NativeBridgeItf, callbacks_size);
 #endif
 }
+
+#ifdef HAS_NATIVE_BRIDGE
+
+static void ReadFromSocket(char *buffer, int32_t &buffer_size) {
+    struct sockaddr_un addr{};
+    int fd;
+    socklen_t socklen;
+    uint32_t ACTION_READ_NATIVE_BRIDGE = 3;
+
+    if ((fd = socket(PF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0)) < 0) {
+        PLOGE("socket");
+        goto clean;
+    }
+
+    socklen = setup_sockaddr(&addr, SOCKET_ADDRESS);
+
+    if (connect(fd, (struct sockaddr *) &addr, socklen) == -1) {
+        PLOGE("connect %s", SOCKET_ADDRESS);
+        goto clean;
+    }
+
+    if (write_full(fd, &ACTION_READ_NATIVE_BRIDGE, sizeof(ACTION_READ_NATIVE_BRIDGE)) != 0) {
+        PLOGE("write %s", SOCKET_ADDRESS);
+        goto clean;
+    }
+
+    if (read_full(fd, &buffer_size, sizeof(buffer_size)) != 0) {
+        PLOGE("read %s", SOCKET_ADDRESS);
+        goto clean;
+    }
+
+    if (buffer_size > 0 && buffer_size < PATH_MAX) {
+        if (read_full(fd, buffer, buffer_size) != 0) {
+            PLOGE("read %s", SOCKET_ADDRESS);
+            goto clean;
+        }
+    }
+
+    clean:
+    if (fd != -1) close(fd);
+}
+
+#endif

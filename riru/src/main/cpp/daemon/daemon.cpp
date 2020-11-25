@@ -29,6 +29,20 @@ static bool handle_read(int fd) {
            && write_full(fd, buf, size) == 0;
 }
 
+static bool handle_read_original_native_bridge(int clifd) {
+    char buf[PATH_MAX]{0};
+    int32_t size = 0;
+    int fd = open(CONFIG_DIR "/native_bridge", O_RDONLY);
+    if (fd == -1) {
+        PLOGE("access " CONFIG_DIR "/native_bridge");
+    } else {
+        size = read(fd, buf, PATH_MAX);
+        close(fd);
+    }
+
+    return write_full(clifd, &size, sizeof(size)) == 0 && (size <= 0 || write_full(clifd, buf, size) == 0);
+}
+
 static bool handle_write(int fd) {
     uint8_t *buf;
     uint32_t size;
@@ -66,7 +80,9 @@ static void socket_server() {
     socklen_t fromlen;
     struct ucred cred{};
 
-    setsockcreatecon("u:r:zygote:s0");
+    if (setsockcreatecon("u:r:zygote:s0") != 0) {
+        PLOGE("setsockcreatecon");
+    }
 
     if ((socket_fd = socket(PF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0)) < 0) {
         PLOGE("socket");
@@ -108,12 +124,17 @@ static void socket_server() {
 
         switch (action) {
             case Status::ACTION_READ: {
-                LOGI("read status request from socket");
+                LOGI("socket request: read status");
                 handle_read(clifd);
                 break;
             }
+            case Status::ACTION_READ_NATIVE_BRIDGE: {
+                LOGI("socket request: read orignal native bridge");
+                handle_read_original_native_bridge(clifd);
+                break;
+            }
             case Status::ACTION_WRITE: {
-                LOGI("write file request from socket");
+                LOGI("socket request: write status");
                 handle_write(clifd);
                 break;
             }
