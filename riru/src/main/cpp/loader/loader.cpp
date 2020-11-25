@@ -73,12 +73,6 @@ static void ReadOriginalNativeBridgeFromSocket(char *buffer, int32_t &buffer_siz
 
     if (read_full(fd, &buffer_size, sizeof(buffer_size)) != 0) {
         PLOGE("read %s", SOCKET_ADDRESS);
-
-        char path[PATH_MAX], path2[PATH_MAX] = {0};
-        snprintf(path, PATH_MAX, "/proc/self/fd/%d", fd);
-        readlink(path, path2, PATH_MAX);
-        LOGE("readlink: %s", path2);
-        sleep(100);
         goto clean;
     }
 
