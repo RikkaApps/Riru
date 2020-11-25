@@ -13,7 +13,7 @@ def moduleProp = [
         id         : "riru-core",
         name       : "Riru",
         version    : "v22.2",
-        versionCode: "43",
+        versionCode: "44",
         author     : "Rikka",
         description: "Inject into zygote process. Required by all \"Riru\" modules."
 ]
