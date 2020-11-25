@@ -11,6 +11,7 @@
 #include <socket.h>
 #include <misc.h>
 #include <flatbuffers/flatbuffers.h>
+#include <selinux.h>
 #include "status.h"
 #include "status_generated.h"
 
@@ -64,6 +65,8 @@ static void socket_server() {
     uint32_t action;
     socklen_t fromlen;
     struct ucred cred{};
+
+    setsockcreatecon("u:r:zygote:s0");
 
     if ((socket_fd = socket(PF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0)) < 0) {
         PLOGE("socket");
@@ -150,6 +153,8 @@ static void sig_handler(int sig) {
     sigemptyset(&s);
     sigaddset(&s, SIGUSR2);
     sigprocmask(SIG_BLOCK, &s, nullptr);
+
+    dload_selinux();
 
     while (true) {
         socket_server();

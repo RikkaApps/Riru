@@ -1,3 +1,5 @@
 #pragma once
 
-int (*setfilecon)(const char *, const char *) = __setfilecon;
+void dload_selinux();
+
+extern int (*setsockcreatecon)(const char *con);
