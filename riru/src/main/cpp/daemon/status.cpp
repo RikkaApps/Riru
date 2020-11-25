@@ -72,11 +72,11 @@ static int OpenFile(bool is_64bit, const char *name, ...) {
     char dir[PATH_MAX];
 
     strcpy(dir, TMP_DIR);
-#ifdef __LP64__
-    strcat(dir, "/riru64_");
-#else
-    strcat(dir, "/riru_");
-#endif
+    if (is_64bit) {
+        strcat(dir, "/riru64_");
+    } else {
+        strcat(dir, "/riru_");
+    }
     strcat(dir, random_name);
 
 
