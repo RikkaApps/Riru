@@ -6,9 +6,22 @@ All other Riru modules requires Riru.
 
 See [https://github.com/RikkaApps/Riru](https://github.com/RikkaApps/Riru) for more details.
 
+### Config
+
+* When the file `/data/adb/riru/disable` exists, Riru will do nothing
+* When the file `/data/adb/riru/enable_hide` exists, the hide mechanism will be enabled
+
 ## Changelog
 
-### v22.0 (37) (2020-10-09)
+### v22.1 (42) (2020-11-25)
+
+- To avoid SELinux problem, add a socket run under `u:r:zygote:s0` context that handles all file operations from zygote
+
+  The reason is that Magisk's `sepolicy.rule` not work on some device, haven't seen any report to Magisk 🙃
+
+- For Magisk < v21.1, reboot twice is no longer required
+
+### v22.0 (41) (2020-10-09)
 
 Riru v22 has a new hide mechanism which makes detection "not that easy".
 
