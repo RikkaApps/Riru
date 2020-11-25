@@ -13,7 +13,7 @@ See [https://github.com/RikkaApps/Riru](https://github.com/RikkaApps/Riru) for m
 
 ## Changelog
 
-### v22.1 (42) (2020-11-25)
+### v22.2 (43) (2020-11-25)
 
 - To avoid SELinux problem, add a socket run under `u:r:zygote:s0` context that handles all file operations from zygote
 
