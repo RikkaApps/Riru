@@ -14,6 +14,8 @@
 #include "status.h"
 #include "status_generated.h"
 
+static int socket_fd = -1;
+
 static bool handle_read(int fd) {
     flatbuffers::FlatBufferBuilder builder;
     Status::ReadFromFile(builder);
@@ -55,82 +57,105 @@ static bool handle_write(int fd) {
     return true;
 }
 
-[[noreturn]] static void socket_server() {
-    int fd, clifd;
+static void socket_server() {
+    int clifd;
     struct sockaddr_un addr{};
     struct sockaddr_un from{};
     uint32_t action;
     socklen_t fromlen;
     struct ucred cred{};
 
+    if ((socket_fd = socket(PF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0)) < 0) {
+        PLOGE("socket");
+        return;
+    }
+
+    socklen_t socklen = setup_sockaddr(&addr, SOCKET_ADDRESS);
+    if (bind(socket_fd, (sockaddr *) (&addr), socklen) < 0) {
+        PLOGE("bind %s", SOCKET_ADDRESS);
+        return;
+    }
+    LOGI("socket " SOCKET_ADDRESS" created");
+
+    listen(socket_fd, 10);
+
     while (true) {
-        if ((fd = socket(PF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0)) < 0) {
-            PLOGE("socket");
-            sleep(1);
-            continue;
-        }
-
-        socklen_t socklen = setup_sockaddr(&addr, SOCKET_ADDRESS);
-        if (bind(fd, (sockaddr *) (&addr), socklen) < 0) {
-            PLOGE("bind %s", SOCKET_ADDRESS);
-            sleep(1);
-            continue;
-        }
-        LOGI("socket " SOCKET_ADDRESS" created");
-
-        listen(fd, 10);
-
-        while (true) {
-            clifd = accept4(fd, (struct sockaddr *) &from, &fromlen, SOCK_CLOEXEC);
-            if (clifd == -1) {
+        clifd = accept4(socket_fd, (struct sockaddr *) &from, &fromlen, SOCK_CLOEXEC);
+        if (clifd == -1) {
+            if (errno == EINTR) {
+                LOGI("interrupted system call");
+                return;
+            } else {
                 PLOGE("accept");
-                break;
+                continue;
             }
+        }
 
-            if (get_client_cred(clifd, &cred) == 0) {
-                if (cred.uid != 0) {
-                    LOGE("accept not from root (uid=%d, pid=%d)", cred.uid, cred.pid);
-                    goto clean;
-                }
-            }
-
-            if (read_full(clifd, &action, sizeof(action)) == -1) {
-                PLOGE("read");
+        if (get_client_cred(clifd, &cred) == 0) {
+            if (cred.uid != 0) {
+                LOGE("accept not from root (uid=%d, pid=%d)", cred.uid, cred.pid);
                 goto clean;
             }
-
-            switch (action) {
-                case Status::ACTION_READ: {
-                    LOGI("read status request from socket");
-                    handle_read(clifd);
-                    break;
-                }
-                case Status::ACTION_WRITE: {
-                    LOGI("write file request from socket");
-                    handle_write(clifd);
-                    break;
-                }
-                default:
-                    break;
-            }
-
-            clean:
-            close(clifd);
         }
 
-        LOGI("close");
-        close(fd);
+        if (read_full(clifd, &action, sizeof(action)) == -1) {
+            PLOGE("read");
+            goto clean;
+        }
+
+        switch (action) {
+            case Status::ACTION_READ: {
+                LOGI("read status request from socket");
+                handle_read(clifd);
+                break;
+            }
+            case Status::ACTION_WRITE: {
+                LOGI("write file request from socket");
+                handle_write(clifd);
+                break;
+            }
+            default:
+                break;
+        }
+
+        clean:
+        close(clifd);
     }
 }
 
-static void start_socket_server() {
-    // Ignore SIGPIPE
-    struct sigaction act{};
-    memset(&act, 0, sizeof(act));
+static void sig_handler(int sig) {
+    LOGD("sig %d", sig);
+
+    if (sig == SIGUSR1) {
+        if (socket_fd != -1) {
+            LOGI("close socket");
+            close(socket_fd);
+        } else {
+            LOGW("socket is not running?");
+        }
+    }
+}
+
+[[noreturn]] static void daemon_main() {
+    int sig;
+    sigset_t s;
+    struct sigaction act{}, act2{};
+
     act.sa_handler = SIG_IGN;
     sigaction(SIGPIPE, &act, nullptr);
 
-    socket_server();
+    act2.sa_handler = sig_handler;
+    sigaction(SIGUSR1, &act2, nullptr);
+
+    sigemptyset(&s);
+    sigaddset(&s, SIGUSR2);
+    sigprocmask(SIG_BLOCK, &s, nullptr);
+
+    while (true) {
+        socket_server();
+        sigwait(&s, &sig);
+        LOGI("restart socket");
+    }
 }
 
 int main(int argc, char **argv) {
@@ -138,8 +163,7 @@ int main(int argc, char **argv) {
 
     switch (fork()) {
         case 0:
-            start_socket_server();
-            break;
+            daemon_main();
         case -1:
             PLOGE("fork");
             return -1;
