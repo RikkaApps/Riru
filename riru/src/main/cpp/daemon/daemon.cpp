@@ -17,6 +17,10 @@
 
 static int socket_fd = -1;
 
+static bool handle_ping(int fd) {
+    return write_full(fd, &Status::CODE_OK, sizeof(Status::CODE_OK)) == 0;
+}
+
 static bool handle_read(int fd) {
     flatbuffers::FlatBufferBuilder builder;
     Status::ReadFromFile(builder);
@@ -123,6 +127,11 @@ static void socket_server() {
         }
 
         switch (action) {
+            case Status::ACTION_PING: {
+                LOGI("socket request: ping");
+                handle_ping(clifd);
+                break;
+            }
             case Status::ACTION_READ: {
                 LOGI("socket request: read status");
                 handle_read(clifd);

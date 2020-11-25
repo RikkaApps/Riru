@@ -43,9 +43,102 @@ __used __attribute__((destructor)) void destructor() {
     if (original_bridge) dlclose(original_bridge);
 }
 
-static void ReadFromSocket(char *buffer, int32_t &buffer_size);
+static const uint32_t ACTION_PING = 0;
+static const uint32_t ACTION_READ_NATIVE_BRIDGE = 3;
+
+static const uint8_t CODE_OK = 0;
+static const uint8_t CODE_FAILED = 1;
+
+static void ReadOriginalNativeBridgeFromSocket(char *buffer, int32_t &buffer_size) {
+    struct sockaddr_un addr{};
+    int fd;
+    socklen_t socklen;
+
+    if ((fd = socket(PF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0)) < 0) {
+        PLOGE("socket");
+        goto clean;
+    }
+
+    socklen = setup_sockaddr(&addr, SOCKET_ADDRESS);
+
+    if (connect(fd, (struct sockaddr *) &addr, socklen) == -1) {
+        PLOGE("connect %s", SOCKET_ADDRESS);
+        goto clean;
+    }
+
+    if (write_full(fd, &ACTION_READ_NATIVE_BRIDGE, sizeof(ACTION_READ_NATIVE_BRIDGE)) != 0) {
+        PLOGE("write %s", SOCKET_ADDRESS);
+        goto clean;
+    }
+
+    if (read_full(fd, &buffer_size, sizeof(buffer_size)) != 0) {
+        PLOGE("read %s", SOCKET_ADDRESS);
+
+        char path[PATH_MAX], path2[PATH_MAX] = {0};
+        snprintf(path, PATH_MAX, "/proc/self/fd/%d", fd);
+        readlink(path, path2, PATH_MAX);
+        LOGE("readlink: %s", path2);
+        sleep(100);
+        goto clean;
+    }
+
+    LOGD("size=%d", buffer_size);
+
+    if (buffer_size > 0 && buffer_size < PATH_MAX) {
+        if (read_full(fd, buffer, buffer_size) != 0) {
+            PLOGE("read %s", SOCKET_ADDRESS);
+            goto clean;
+        }
+    }
+
+    clean:
+    if (fd != -1) close(fd);
+}
 
 #endif
+
+static void WaitForSocket(uint8_t retry) {
+    struct sockaddr_un addr{};
+    int fd;
+    socklen_t socklen;
+    uint8_t reply = CODE_FAILED;
+
+    while (retry > 0) {
+        if ((fd = socket(PF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0)) < 0) {
+            PLOGE("socket");
+            goto clean;
+        }
+
+        socklen = setup_sockaddr(&addr, SOCKET_ADDRESS);
+
+        if (connect(fd, (struct sockaddr *) &addr, socklen) == -1) {
+            PLOGE("connect %s", SOCKET_ADDRESS);
+            goto clean;
+        }
+
+        if (write_full(fd, &ACTION_PING, sizeof(ACTION_PING)) != 0) {
+            PLOGE("write %s", SOCKET_ADDRESS);
+            goto clean;
+        }
+
+        if (read_full(fd, &reply, sizeof(reply)) != 0) {
+            PLOGE("read %s", SOCKET_ADDRESS);
+            goto clean;
+        }
+
+        clean:
+        if (fd != -1) close(fd);
+        retry -= 1;
+
+        if (reply == CODE_OK) {
+            LOGI("socket is running!");
+            break;
+        } else {
+            LOGI("socket is not running, %d retries left...", retry);
+            sleep(1);
+        }
+    }
+}
 
 __used __attribute__((constructor)) void constructor() {
     if (getuid() != 0)
@@ -63,6 +156,8 @@ __used __attribute__((constructor)) void constructor() {
         return;
     }
 
+    WaitForSocket(10);
+
     dlopen(LIB_PATH "libriru.so", 0);
 
 #ifdef HAS_NATIVE_BRIDGE
@@ -71,7 +166,7 @@ __used __attribute__((constructor)) void constructor() {
     int32_t buf_size;
     ssize_t size;
 
-    ReadFromSocket(buf, buf_size);
+    ReadOriginalNativeBridgeFromSocket(buf, buf_size);
 
     if (buf_size <= 0) {
         LOGW("socket failed, try file");
@@ -149,46 +244,3 @@ __used __attribute__((constructor)) void constructor() {
     memcpy(NativeBridgeItf, original_NativeBridgeItf, callbacks_size);
 #endif
 }
-
-#ifdef HAS_NATIVE_BRIDGE
-
-static void ReadFromSocket(char *buffer, int32_t &buffer_size) {
-    struct sockaddr_un addr{};
-    int fd;
-    socklen_t socklen;
-    uint32_t ACTION_READ_NATIVE_BRIDGE = 3;
-
-    if ((fd = socket(PF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0)) < 0) {
-        PLOGE("socket");
-        goto clean;
-    }
-
-    socklen = setup_sockaddr(&addr, SOCKET_ADDRESS);
-
-    if (connect(fd, (struct sockaddr *) &addr, socklen) == -1) {
-        PLOGE("connect %s", SOCKET_ADDRESS);
-        goto clean;
-    }
-
-    if (write_full(fd, &ACTION_READ_NATIVE_BRIDGE, sizeof(ACTION_READ_NATIVE_BRIDGE)) != 0) {
-        PLOGE("write %s", SOCKET_ADDRESS);
-        goto clean;
-    }
-
-    if (read_full(fd, &buffer_size, sizeof(buffer_size)) != 0) {
-        PLOGE("read %s", SOCKET_ADDRESS);
-        goto clean;
-    }
-
-    if (buffer_size > 0 && buffer_size < PATH_MAX) {
-        if (read_full(fd, buffer, buffer_size) != 0) {
-            PLOGE("read %s", SOCKET_ADDRESS);
-            goto clean;
-        }
-    }
-
-    clean:
-    if (fd != -1) close(fd);
-}
-
-#endif
