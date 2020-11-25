@@ -4,6 +4,8 @@ RIRU_PATH="/data/adb/riru"
 RIRU_API="%%%RIRU_API%%%"
 RIRU_VERSION_CODE="%%%RIRU_VERSION_CODE%%%"
 RIRU_VERSION_NAME="%%%RIRU_VERSION_NAME%%%"
+# Use magisk_file like other Magisk files
+SECONTEXT="u:object_r:magisk_file:s0"
 
 ui_print "- Installing Riru $RIRU_VERSION_NAME ($RIRU_VERSION_CODE, API v$RIRU_API)"
 
@@ -40,6 +42,12 @@ if [ ! -f "$TMPDIR/verify.sh" ]; then
   abort    "*********************************************************"
 fi
 . $TMPDIR/verify.sh
+
+ui_print "- Creating Riru path"
+mkdir "$RIRU_PATH"
+set_perm "$RIRU_PATH" 0 0 0700 $SECONTEXT
+mkdir "$RIRU_PATH/bin"
+set_perm "$RIRU_PATH/bin" 0 0 0700 $SECONTEXT
 
 ui_print "- Extracting Magisk files"
 
@@ -84,15 +92,6 @@ fi
 
 mv "$RIRU_PATH/bin/librirud.so" "$RIRU_PATH/bin/rirud"
 set_perm "$RIRU_PATH/bin/rirud" 0 0 0700 $SECONTEXT
-
-# Use magisk_file like other Magisk files
-SECONTEXT="u:object_r:magisk_file:s0"
-
-ui_print "- Creating Riru path"
-mkdir "$RIRU_PATH"
-set_perm "$RIRU_PATH" 0 0 0700 $SECONTEXT
-mkdir "$RIRU_PATH/bin"
-set_perm "$RIRU_PATH/bin" 0 0 0700 $SECONTEXT
 
 ui_print "- Extracting classes.dex"
 extract "$ZIPFILE" "classes.dex" "$RIRU_PATH/bin"
