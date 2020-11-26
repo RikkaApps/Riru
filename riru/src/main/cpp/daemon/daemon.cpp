@@ -174,6 +174,8 @@ static void sig_handler(int sig) {
     sigset_t s;
     struct sigaction act{}, act2{};
 
+    Status::GenerateRandomName();
+
     act.sa_handler = SIG_IGN;
     sigaction(SIGPIPE, &act, nullptr);
 

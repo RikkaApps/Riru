@@ -12,6 +12,8 @@ namespace Status {
     const uint8_t CODE_OK = 0;
     const uint8_t CODE_FAILED = 1;
 
+    void GenerateRandomName();
+
     void WriteToFile(const FbStatus *status);
 
     void ReadFromFile(flatbuffers::FlatBufferBuilder &builder);

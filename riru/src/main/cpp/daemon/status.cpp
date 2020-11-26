@@ -18,7 +18,7 @@
 #define TMP_DIR "/dev"
 #define DEV_RANDOM CONFIG_DIR "/dev_random"
 
-static const char *getRandomName() {
+static const char *GetRandomName() {
     static char *name = nullptr;
     if (name != nullptr) return name;
 
@@ -59,8 +59,12 @@ static const char *getRandomName() {
     return name;
 }
 
+void Status::GenerateRandomName() {
+    GetRandomName();
+}
+
 static int OpenFile(bool is_64bit, const char *name, ...) {
-    auto random_name = getRandomName();
+    auto random_name = GetRandomName();
     if (random_name == nullptr) {
         LOGE("unable to get random name");
         return -1;
