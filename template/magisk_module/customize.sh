@@ -11,13 +11,6 @@ ui_print "- Installing Riru $RIRU_VERSION_NAME ($RIRU_VERSION_CODE, API v$RIRU_A
 
 # check Magisk
 ui_print "- Magisk version: $MAGISK_VER ($MAGISK_VER_CODE)"
-if [ "$MAGISK_VER_CODE" -lt 20200 ]; then
-  ui_print "*******************************"
-  ui_print " Riru requires features provided by Magisk v20.2+"
-  ui_print " Please install Magisk v20.2+! "
-  ui_print "*******************************"
-  exit 1
-fi
 
 # check android
 if [ "$API" -lt 23 ]; then
@@ -105,10 +98,3 @@ set_perm "$RIRU_PATH/api_version.new" 0 0 0600 $SECONTEXT
 
 ui_print "- Setting permissions"
 set_perm_recursive "$MODPATH" 0 0 0755 0644
-
-# before Magisk 16e4c67, sepolicy.rule is copied on the second reboot
-if [ "$MAGISK_VER_CODE" -lt 21006 ]; then
-  ui_print "*******************************"
-  ui_print "- Before Magisk v21.1, you will have to manually reboot twice for the first time installation."
-  ui_print "*******************************"
-fi
