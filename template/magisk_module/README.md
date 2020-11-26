@@ -6,6 +6,12 @@ All other Riru modules requires Riru.
 
 See [https://github.com/RikkaApps/Riru](https://github.com/RikkaApps/Riru) for more details.
 
+### Note
+
+If you are use other modules that changes `ro.dalvik.vm.native.bridge`, Riru will not work. (Riru will automatically set it back)
+
+A typical example is, some "optimize" modules changes this property. Since changing this property is meaningless for "optimization", their quality is very questionable. In fact, changing properties for optimization is a joke.
+
 ### Config
 
 * When the file `/data/adb/riru/disable` exists, Riru will do nothing

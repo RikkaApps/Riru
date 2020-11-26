@@ -24,6 +24,10 @@ Android 6.0+ devices rooted with [Magisk](https://github.com/topjohnwu/Magisk)
   1. Download the zip from [GitHub release](https://github.com/RikkaApps/Riru/releases)
   2. Install in Magisk Manager (Modules - Install from storage - Select downloaded zip)
 
+**If you are use other modules that changes `ro.dalvik.vm.native.bridge`, Riru will not work.** (Riru will automatically set it back)
+
+A typical example is, some "optimize" modules changes this property. Since changing this property is meaningless for "optimization", their quality is very questionable. In fact, changing properties for optimization is a joke.
+
 ### Config
 
 * When the file `/data/adb/riru/disable` exists, Riru will do nothing
