@@ -15,9 +15,9 @@ See [https://github.com/RikkaApps/Riru](https://github.com/RikkaApps/Riru) for m
 
 ### v22.4 (46) (2020-11-26)
 
-Magisk's `sepolicy.rule` not work on some device, no one report to Magisk 😒. This version attempts to workaround it.
+Magisk's `sepolicy.rule` does not work on some devices and no one report to Magisk 😒. Versions from 22.1 to 22.4 attempt to workaround it.
 
-- Add a socket run under `u:r:zygote:s0` context that handles all file operations from zygote
+- Add a socket runs under `u:r:zygote:s0 context` to handle all file operations from zygote (Riru)
 - For Magisk < v21.1, reboot twice is no longer required
 
 ### v22.0 (41) (2020-10-09)
