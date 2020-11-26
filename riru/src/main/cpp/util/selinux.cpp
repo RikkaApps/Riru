@@ -3,11 +3,21 @@
 #include <fcntl.h>
 #include <cstring>
 #include <cerrno>
+#include <syscall.h>
+#include <cstdio>
 
 static int setsockcreatecon_builtin_impl(const char *ctx) {
     int fd = open("/proc/thread-self/attr/sockcreate", O_RDWR | O_CLOEXEC);
-    if (fd < 0)
-        return fd;
+    if (fd == -1 && errno == ENOENT) {
+        char path[PATH_MAX];
+        pid_t tid;
+
+        // bionic gettid sometimes does not return correct tid, https://twitter.com/HaruueIcymoon/status/1059365098265882624
+        tid = syscall(__NR_gettid);
+        snprintf(path, PATH_MAX, "/proc/self/task/%d/attr/sockcreate", tid);
+        fd = open(path, O_RDWR | O_CLOEXEC);
+    }
+    if (fd < 0) return -1;
     ssize_t rc;
     if (ctx) {
         do {
