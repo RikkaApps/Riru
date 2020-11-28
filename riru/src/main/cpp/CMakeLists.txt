@@ -43,11 +43,11 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LINKER_FLAGS}")
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LINKER_FLAGS}")
 
 find_package(xhook REQUIRED CONFIG)
-find_package(riru-api REQUIRED CONFIG)
 find_package(flatbuffers REQUIRED CONFIG)
 
 include_directories(include)
 include_directories(include_generated)
+include_directories(include_riru)
 
 add_library(utils STATIC
         util/misc.cpp
@@ -66,7 +66,7 @@ add_library(riru SHARED
         module.cpp
         daemon/status.cpp)
 target_include_directories(riru PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(riru log utils xhook::xhook flatbuffers::flatbuffers riru-api::riru-api)
+target_link_libraries(riru log utils xhook::xhook flatbuffers::flatbuffers)
 
 add_library(riruhide SHARED hide/hide.cpp)
 target_include_directories(riruhide PRIVATE ${CMAKE_SOURCE_DIR})

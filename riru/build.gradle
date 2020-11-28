@@ -62,7 +62,6 @@ repositories {
 }
 
 dependencies {
-    implementation project(':riru-api')
     implementation 'rikka.ndk.thirdparty:xhook:1.2.0'
     implementation 'rikka.ndk.thirdparty:flatbuffers:1.12.0'
 
