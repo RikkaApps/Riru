@@ -81,5 +81,6 @@ target_link_libraries(riruloader log utils)
 
 add_executable(librirud.so
         daemon/daemon.cpp
+        daemon/setproctitle.c
         daemon/status.cpp)
 target_link_libraries(librirud.so log utils flatbuffers::flatbuffers)

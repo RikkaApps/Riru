@@ -83,36 +83,13 @@ typedef struct {
     RiruPutGlobalValue_v9 *putGlobalValue;
 } RiruApiV9;
 
-// ---------------------------------------------------------
-
-typedef struct {
-
-    const char *path;
-    int flags;
-    mode_t modes;
-    int fd;
-} RiruFile;
-
-typedef void(RiruOpenFiles)(RiruFile *files, size_t count);
-
-typedef struct {
-
-    uint32_t token;
-    RiruGetFunc_v9 *getFunc;
-    RiruGetJNINativeMethodFunc_v9 *getJNINativeMethodFunc;
-    RiruSetFunc_v9 *setFunc;
-    RiruSetJNINativeMethodFunc_v9 *setJNINativeMethodFunc;
-    RiruGetOriginalJNINativeMethodFunc_v9 *getOriginalJNINativeMethodFunc;
-    RiruGetGlobalValue_v9 *getGlobalValue;
-    RiruPutGlobalValue_v9 *putGlobalValue;
-    RiruOpenFiles *openFiles;
-} RiruApiV10;
-
-// ---------------------------------------------------------
+typedef RiruApiV9 RiruApiV10;
 
 typedef void *(RiruInit_t)(void *);
 
 #ifdef RIRU_MODULE
+#define RIRUD_ADDRESS "rirud"
+
 #define RIRU_EXPORT __attribute__((visibility("default"))) __attribute__((used))
 
 /*

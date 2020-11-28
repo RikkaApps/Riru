@@ -124,7 +124,7 @@ void load_modules() {
         module->handle = handle;
         module->apiVersion = *apiVersion;
 
-        if (*apiVersion == 9) {
+        if (*apiVersion == 10 || *apiVersion == 9) {
             auto info = init_module_v9(module->token, init);
             if (info == nullptr) {
                 LOGE("%s returns null on step 2", path);

@@ -35,7 +35,7 @@ static uint8_t WriteToSocket(uint8_t *buffer, uint32_t buffer_size) {
         goto clean;
     }
 
-    if (write_full(fd, &Status::ACTION_WRITE, sizeof(Status::ACTION_WRITE)) != 0
+    if (write_full(fd, &Status::ACTION_WRITE_STATUS, sizeof(Status::ACTION_WRITE_STATUS)) != 0
         || write_full(fd, &buffer_size, sizeof(buffer_size)) != 0
         || write_full(fd, buffer, buffer_size) != 0) {
         PLOGE("write %s", SOCKET_ADDRESS);
@@ -148,7 +148,7 @@ static uint8_t ReadFromSocket(uint8_t *&buffer, uint32_t &buffer_size) {
         goto clean;
     }
 
-    if (write_full(fd, &Status::ACTION_READ, sizeof(Status::ACTION_READ)) != 0) {
+    if (write_full(fd, &Status::ACTION_READ_STATUS, sizeof(Status::ACTION_READ_STATUS)) != 0) {
         PLOGE("write %s", SOCKET_ADDRESS);
         goto clean;
     }
