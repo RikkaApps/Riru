@@ -1,1 +1,0 @@
-// Seems prefabPublishing dose not support headers only lib

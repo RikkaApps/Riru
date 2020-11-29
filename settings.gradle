@@ -1,1 +1,1 @@
-include ':riru', ':riru-api', ':app', ':riru-api', ':stub'
+include ':riru', ':app', ':stub'

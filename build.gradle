@@ -2,6 +2,7 @@ apply plugin: 'idea'
 
 idea.module {
     excludeDirs += file('out')
+    excludeDirs += file('aar')
     resourceDirs += file('template')
     resourceDirs += file('scripts')
     resourceDirs += file('docs')
