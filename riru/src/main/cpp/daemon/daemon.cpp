@@ -85,7 +85,6 @@ static bool handle_read_file(int sockfd) {
     char path[PATH_MAX]{0};
     uint32_t size;
     int32_t reply;
-    off_t offset;
     ssize_t res;
 
     if (read_full(sockfd, &size, sizeof(uint32_t)) == -1
@@ -100,23 +99,34 @@ static bool handle_read_file(int sockfd) {
     int fd = open(path, O_RDONLY);
 
     reply = (int32_t) errno;
-    write_full(sockfd, &reply, sizeof(int32_t));
+    if (write_full(sockfd, &reply, sizeof(int32_t)) == -1) {
+        PLOGE("write errno");
+        return false;
+    }
 
     if (fd == -1) {
         PLOGE("open %s", path);
         return true;
     }
 
-    auto bytes_remaining = lseek(fd, 0, SEEK_END);
-    lseek(fd, 0, SEEK_SET);
+    auto file_size = (int32_t) lseek(fd, 0, SEEK_END);
+    if (file_size != -1) {
+        lseek(fd, 0, SEEK_SET);
+    }
 
-    if (bytes_remaining > 0) {
+    if (write_full(sockfd, &file_size, sizeof(int32_t)) == -1) {
+        PLOGE("write bytes count");
+        return false;
+    }
+
+    if (file_size > 0) {
+        auto bytes_remaining = (size_t) file_size;
         size_t count;
         do {
             count = bytes_remaining > 0x7ffff000 ? 0x7ffff000 : (size_t) bytes_remaining;
             LOGV("attempt to send %" PRIuPTR" bytes", count);
 
-            res = sendfile(sockfd, fd, &offset, count);
+            res = sendfile(sockfd, fd, nullptr, count);
             if (res == -1) {
                 PLOGE("sendfile");
             } else {
@@ -124,8 +134,8 @@ static bool handle_read_file(int sockfd) {
                 bytes_remaining -= res;
             }
         } while (bytes_remaining > 0);
-    } else {
-        LOGW("%s has size 0, fallback to read and write", path);
+    } else if (file_size == -1) {
+        LOGW("%s don't has size, fallback to read and write", path);
 
         size_t buffer_size = 8192;
         char buffer[buffer_size];
@@ -133,6 +143,8 @@ static bool handle_read_file(int sockfd) {
             LOGV("sent %" PRIdPTR " bytes", res);
             TEMP_FAILURE_RETRY(write(sockfd, buffer, res));
         }
+    } else {
+        LOGV("%s is a empty file", path);
     }
     close(fd);
 
