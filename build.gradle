@@ -37,6 +37,6 @@ ext {
     minSdkVersion = 23
     targetSdkVersion = 30
 
-    riruApiVersion = 9
+    riruApiVersion = 10
     riruMinApiVersion = 9
 }
