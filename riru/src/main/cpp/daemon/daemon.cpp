@@ -86,6 +86,8 @@ static bool handle_read_file(int sockfd) {
     uint32_t size;
     int32_t reply;
     ssize_t res;
+    int32_t file_size;
+    struct stat st{};
 
     if (read_full(sockfd, &size, sizeof(uint32_t)) == -1
         || read_full(sockfd, path, size) == -1) {
@@ -109,9 +111,10 @@ static bool handle_read_file(int sockfd) {
         return true;
     }
 
-    auto file_size = (int32_t) lseek(fd, 0, SEEK_END);
-    if (file_size != -1) {
-        lseek(fd, 0, SEEK_SET);
+    if (fstat(fd, &st) == 0) {
+        file_size = (int32_t) st.st_size;
+    } else {
+        file_size = -1;
     }
 
     if (write_full(sockfd, &file_size, sizeof(int32_t)) == -1) {
