@@ -3,7 +3,7 @@ apply plugin: 'kotlin-android'
 
 def gitCommitId = 'git rev-parse --short HEAD'.execute([], project.rootDir).text.trim()
 def gitCommitCount = Integer.parseInt('git rev-list --count HEAD'.execute([], project.rootDir).text.trim())
-def baseVersionName = '22.0'
+def baseVersionName = '23.0'
 
 android {
     compileSdkVersion rootProject.ext.targetSdkVersion
