@@ -10,9 +10,9 @@ assignees: ''
 **Describe the bug:**
 A clear and concise description of what the bug is.
 
-Please report bugs of Riru itself, reports related to other modules will be immediately closed. You can disable other modules to confirm if the problem comes from Riru itself.
+Please report bugs of Riru itself and always use the lastest version of Riru, **reports not meet the requirements will be immediately closed**.
 
-Information from "Riru" app (show Riru status) maybe helpful.
+You can disable other modules to confirm if the problem comes from Riru itself. Also, information from "Riru" app maybe helpful.
 
 **Device information:**
  - Device: [e.g. Pixel 4]
