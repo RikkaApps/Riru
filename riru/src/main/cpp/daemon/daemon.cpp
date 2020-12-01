@@ -15,9 +15,12 @@
 #include <selinux.h>
 #include <cinttypes>
 #include <wait.h>
+#include <dirent.h>
 #include "status.h"
 #include "status_generated.h"
 #include "setproctitle.h"
+
+#define WORKER_PROCESS "rirud_worker"
 
 static int server_socket_fd = -1;
 static std::vector<pid_t> child_pids;
@@ -95,19 +98,22 @@ static bool handle_read_file(int sockfd) {
         return false;
     }
 
-    LOGI("socket request: read %s", path);
+    LOGI("socket request: read file %s", path);
 
     errno = 0;
     int fd = open(path, O_RDONLY);
-
     reply = (int32_t) errno;
+
+    if (fd == -1) {
+        PLOGE("open %s", path);
+    }
+
     if (write_full(sockfd, &reply, sizeof(int32_t)) == -1) {
         PLOGE("write errno");
         return false;
     }
 
     if (fd == -1) {
-        PLOGE("open %s", path);
         return true;
     }
 
@@ -152,6 +158,85 @@ static bool handle_read_file(int sockfd) {
     close(fd);
 
     return true;
+}
+
+static bool handle_read_dir(int sockfd) {
+    char path[PATH_MAX]{0};
+    uint32_t size;
+    int32_t reply;
+    uint8_t continue_read;
+    DIR *dir = nullptr;
+    dirent *dirent = nullptr;
+    bool res = true;
+
+    if (read_full(sockfd, &size, sizeof(uint32_t)) == -1
+        || read_full(sockfd, path, size) == -1) {
+        PLOGE("read");
+        goto failed;
+    }
+
+    LOGI("socket request: read dir %s", path);
+
+    errno = 0;
+    dir = opendir(path);
+    reply = (int32_t) errno;
+
+    if (dir == nullptr) {
+        PLOGE("opendir %s", path);
+    }
+
+    if (write_full(sockfd, &reply, sizeof(int32_t)) == -1) {
+        PLOGE("write errno");
+        goto failed;
+    }
+
+    if (dir == nullptr) {
+        goto clean;
+    }
+
+    for (;;) {
+        if (read_full(sockfd, &continue_read, sizeof(uint8_t)) == -1) {
+            PLOGE("read");
+            goto failed;
+        }
+
+        if (continue_read == 0) {
+            goto clean;
+        }
+
+        errno = 0;
+        dirent = readdir(dir);
+        reply = (int32_t) errno;
+
+        if (dirent == nullptr && reply == 0) {
+            reply = -1;
+        }
+
+        if (write_full(sockfd, &reply, sizeof(int32_t)) == -1) {
+            PLOGE("write");
+            goto failed;
+        }
+
+        if (dirent == nullptr) {
+            if (reply == -1) {
+                goto clean;
+            } else {
+                continue;
+            }
+        }
+
+        if (write_full(sockfd, &dirent->d_type, sizeof(unsigned char)) == -1
+            || write_full(sockfd, &dirent->d_name, 256) == -1) {
+            PLOGE("write");
+            goto failed;
+        }
+    }
+
+    failed:
+    res = false;
+    clean:
+    if (dir) closedir(dir);
+    return res;
 }
 
 static void socket_server() {
@@ -230,12 +315,31 @@ static void socket_server() {
 
                 auto pid = fork();
                 if (pid == 0) {
-                    setproctitle("rirud_worker");
+                    setproctitle(WORKER_PROCESS);
                     handle_read_file(clifd);
                     close(clifd);
                     exit(0);
                 } else {
                     LOGI("forked process %d for read file request", pid);
+
+                    if (pid != -1) {
+                        child_pids.emplace_back(pid);
+                    }
+                    close(clifd);
+                }
+                break;
+            }
+            case Status::ACTION_READ_DIR: {
+                LOGI("socket request: read dir");
+
+                auto pid = fork();
+                if (pid == 0) {
+                    setproctitle(WORKER_PROCESS);
+                    handle_read_dir(clifd);
+                    close(clifd);
+                    exit(0);
+                } else {
+                    LOGI("forked process %d for read dir request", pid);
 
                     if (pid != -1) {
                         child_pids.emplace_back(pid);
