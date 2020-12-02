@@ -19,6 +19,10 @@ A typical example is, some "optimize" modules changes this property. Since chang
 
 ## Changelog
 
+### v23.0 (49) (2020-12-02)
+
+- Add read file & read dir function for "rirud". Modules can use this to read files that zygote itself has no permission to access.
+
 ### v22.4 (46) (2020-11-26)
 
 Magisk's `sepolicy.rule` does not work on some devices and no one report to Magisk 😒. Versions from 22.1 to 22.4 attempt to workaround it.
