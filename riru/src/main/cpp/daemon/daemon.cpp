@@ -98,7 +98,7 @@ static bool handle_read_file(int sockfd) {
         return false;
     }
 
-    LOGI("socket request: read file %s", path);
+    LOGI("read file %s", path);
 
     errno = 0;
     int fd = open(path, O_RDONLY);
@@ -175,7 +175,7 @@ static bool handle_read_dir(int sockfd) {
         goto failed;
     }
 
-    LOGI("socket request: read dir %s", path);
+    LOGI("read dir %s", path);
 
     errno = 0;
     dir = opendir(path);
@@ -239,13 +239,63 @@ static bool handle_read_dir(int sockfd) {
     return res;
 }
 
+static void handle_socket(int sockfd, int action) {
+    switch (action) {
+        case Status::ACTION_PING: {
+            LOGI("action: ping");
+            handle_ping(sockfd);
+            break;
+        }
+        case Status::ACTION_READ_STATUS: {
+            LOGI("action: read status");
+            handle_read(sockfd);
+            break;
+        }
+        case Status::ACTION_READ_NATIVE_BRIDGE: {
+            LOGI("action: read original native bridge");
+            handle_read_original_native_bridge(sockfd);
+            break;
+        }
+        case Status::ACTION_WRITE_STATUS: {
+            LOGI("action: write status");
+            handle_write(sockfd);
+            break;
+        }
+        case Status::ACTION_READ_FILE: {
+            LOGI("action: read file");
+            handle_read_file(sockfd);
+            break;
+        }
+        case Status::ACTION_READ_DIR: {
+            LOGI("action: read dir");
+            handle_read_dir(sockfd);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+static void handle_socket(int sockfd) {
+    uint32_t action;
+
+    while (true) {
+        if (read_full(sockfd, &action, sizeof(action)) == -1) {
+            LOGE("failed to read next action, exiting...");
+            return;
+        }
+
+        handle_socket(sockfd, action);
+    }
+}
+
 static void socket_server() {
     int clifd;
     struct sockaddr_un addr{};
     struct sockaddr_un from{};
-    uint32_t action;
     socklen_t fromlen;
     struct ucred cred{};
+    pid_t pid;
 
     if (setsockcreatecon("u:r:zygote:s0") != 0) {
         PLOGE("setsockcreatecon");
@@ -284,72 +334,17 @@ static void socket_server() {
             }
         }
 
-        if (read_full(clifd, &action, sizeof(action)) == -1) {
-            PLOGE("read");
-            goto clean;
-        }
-
-        switch (action) {
-            case Status::ACTION_PING: {
-                LOGI("socket request: ping");
-                handle_ping(clifd);
-                break;
+        pid = fork();
+        if (pid == 0) {
+            setproctitle(WORKER_PROCESS);
+            handle_socket(clifd);
+            close(clifd);
+            exit(0);
+        } else {
+            LOGI("forked process %d", pid);
+            if (pid != -1) {
+                child_pids.emplace_back(pid);
             }
-            case Status::ACTION_READ_STATUS: {
-                LOGI("socket request: read status");
-                handle_read(clifd);
-                break;
-            }
-            case Status::ACTION_READ_NATIVE_BRIDGE: {
-                LOGI("socket request: read orignal native bridge");
-                handle_read_original_native_bridge(clifd);
-                break;
-            }
-            case Status::ACTION_WRITE_STATUS: {
-                LOGI("socket request: write status");
-                handle_write(clifd);
-                break;
-            }
-            case Status::ACTION_READ_FILE: {
-                LOGI("socket request: read file");
-
-                auto pid = fork();
-                if (pid == 0) {
-                    setproctitle(WORKER_PROCESS);
-                    handle_read_file(clifd);
-                    close(clifd);
-                    exit(0);
-                } else {
-                    LOGI("forked process %d for read file request", pid);
-
-                    if (pid != -1) {
-                        child_pids.emplace_back(pid);
-                    }
-                    close(clifd);
-                }
-                break;
-            }
-            case Status::ACTION_READ_DIR: {
-                LOGI("socket request: read dir");
-
-                auto pid = fork();
-                if (pid == 0) {
-                    setproctitle(WORKER_PROCESS);
-                    handle_read_dir(clifd);
-                    close(clifd);
-                    exit(0);
-                } else {
-                    LOGI("forked process %d for read dir request", pid);
-
-                    if (pid != -1) {
-                        child_pids.emplace_back(pid);
-                    }
-                    close(clifd);
-                }
-                break;
-            }
-            default:
-                break;
         }
 
         clean:
