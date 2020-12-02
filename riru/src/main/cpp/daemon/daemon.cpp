@@ -29,7 +29,7 @@ static bool handle_ping(int sockfd) {
     return write_full(sockfd, &Status::CODE_OK, sizeof(Status::CODE_OK)) == 0;
 }
 
-static bool handle_read(int sockfd) {
+static bool handle_read_status(int sockfd) {
     flatbuffers::FlatBufferBuilder builder;
     Status::ReadFromFile(builder);
 
@@ -55,7 +55,7 @@ static bool handle_read_original_native_bridge(int sockfd) {
     return write_full(sockfd, &size, sizeof(size)) == 0 && (size <= 0 || write_full(sockfd, buf, size) == 0);
 }
 
-static bool handle_write(int sockfd) {
+static bool handle_write_status(int sockfd) {
     uint8_t *buf;
     uint32_t size;
 
@@ -239,7 +239,7 @@ static bool handle_read_dir(int sockfd) {
     return res;
 }
 
-static void handle_socket(int sockfd, int action) {
+static void handle_socket(int sockfd, uint32_t action) {
     switch (action) {
         case Status::ACTION_PING: {
             LOGI("action: ping");
@@ -248,7 +248,7 @@ static void handle_socket(int sockfd, int action) {
         }
         case Status::ACTION_READ_STATUS: {
             LOGI("action: read status");
-            handle_read(sockfd);
+            handle_read_status(sockfd);
             break;
         }
         case Status::ACTION_READ_NATIVE_BRIDGE: {
@@ -258,7 +258,7 @@ static void handle_socket(int sockfd, int action) {
         }
         case Status::ACTION_WRITE_STATUS: {
             LOGI("action: write status");
-            handle_write(sockfd);
+            handle_write_status(sockfd);
             break;
         }
         case Status::ACTION_READ_FILE: {
@@ -278,14 +278,20 @@ static void handle_socket(int sockfd, int action) {
 
 static void handle_socket(int sockfd) {
     uint32_t action;
+    bool first = true;
 
     while (true) {
         if (read_full(sockfd, &action, sizeof(action)) == -1) {
-            LOGE("failed to read next action, exiting...");
+            if (first) {
+                PLOGE("read action");
+            } else {
+                LOGI("no next action, exiting...");
+            }
             return;
         }
 
         handle_socket(sockfd, action);
+        first = false;
     }
 }
 
