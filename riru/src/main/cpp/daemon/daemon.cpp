@@ -299,7 +299,7 @@ static void socket_server() {
     int clifd;
     struct sockaddr_un addr{};
     struct sockaddr_un from{};
-    socklen_t fromlen;
+    socklen_t fromlen = sizeof(from);
     struct ucred cred{};
     pid_t pid;
 
@@ -319,7 +319,10 @@ static void socket_server() {
     }
     LOGI("socket " SOCKET_ADDRESS" created");
 
-    listen(server_socket_fd, 10);
+    if (listen(server_socket_fd, 10) == -1) {
+        PLOGE("listen");
+        return;
+    }
 
     while (true) {
         clifd = accept4(server_socket_fd, (struct sockaddr *) &from, &fromlen, SOCK_CLOEXEC);
