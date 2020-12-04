@@ -172,7 +172,7 @@ static uint8_t ReadFromSocket(uint8_t *&buffer, uint32_t &buffer_size) {
     verifier = new flatbuffers::Verifier(buffer, (size_t) buffer_size);
     if (!Status::VerifyFbStatusBuffer(*verifier)) {
         LOGW("invalid data");
-        return reply;
+        goto clean;
     }
 
     LOGD("socket reply: %u", reply);
