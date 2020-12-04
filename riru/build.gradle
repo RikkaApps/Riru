@@ -147,12 +147,23 @@ android.applicationVariants.all { variant ->
                 file(f.file.path + ".sha256sum").text = sha256sum(f.file)
             }
         }
-        task.finalizedBy zipMagiskMoudle
+
+        if (variant.buildType.name == "debug") {
+            task.finalizedBy zipMagiskMoudleDebug
+        } else {
+            task.finalizedBy zipMagiskMoudleRelease
+        }
     }
 }
 
-task zipMagiskMoudle(type: Zip) {
+task zipMagiskMoudleRelease(type: Zip) {
     from magiskDir
-    archiveName zipName
+    archiveName "riru-${moduleProp['version']}-release.zip"
+    destinationDir outDir
+}
+
+task zipMagiskMoudleDebug(type: Zip) {
+    from magiskDir
+    archiveName "riru-${moduleProp['version']}-debug.zip"
     destinationDir outDir
 }
