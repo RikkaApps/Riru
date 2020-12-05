@@ -27,13 +27,11 @@ public class Daemon {
     private final Handler handler;
     private final String name;
     private final String originalNativeBridge;
-    private final int rirudPid;
 
-    public Daemon(String name, String originalNativeBridge, int rirudPid) {
+    public Daemon(String name, String originalNativeBridge) {
         this.handler = new Handler(Looper.myLooper());
         this.name = name;
         this.originalNativeBridge = originalNativeBridge;
-        this.rirudPid = rirudPid;
 
         handler.post(() -> startWait(false));
     }
@@ -62,12 +60,12 @@ public class Daemon {
         DaemonUtils.resetNativeBridgeProp(originalNativeBridge);
 
         Log.i(TAG, "Riru loaded, stop rirud socket...");
-        DaemonUtils.stopSocket(rirudPid);
+        DaemonUtils.stopSocket(DaemonUtils.findNativeDaemonPid());
 
         try {
             binder.linkToDeath(() -> {
                 Log.i(TAG, "Zygote is probably dead, restart rirud socket...");
-                DaemonUtils.startSocket(rirudPid);
+                DaemonUtils.startSocket(DaemonUtils.findNativeDaemonPid());
 
                 Log.i(TAG, "Zygote is probably dead, reset native bridge to " + RIRU_LOADER + "...");
                 DaemonUtils.resetNativeBridgeProp(RIRU_LOADER);
@@ -94,11 +92,8 @@ public class Daemon {
             originalNativeBridge = "0";
         }
 
-        int rirudPid = DaemonUtils.findNativeDaemonPid();
-        Log.i(TAG, "rirud: " + rirudPid);
-
         Looper.prepare();
-        new Daemon(SERVICE_FOR_TEST, originalNativeBridge, rirudPid);
+        new Daemon(SERVICE_FOR_TEST, originalNativeBridge);
         Looper.loop();
     }
 }
