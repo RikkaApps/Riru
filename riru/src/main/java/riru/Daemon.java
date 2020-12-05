@@ -27,20 +27,26 @@ public class Daemon {
     private final Handler handler;
     private final String name;
     private final String originalNativeBridge;
+    private final boolean enableHide;
 
-    public Daemon(String name, String originalNativeBridge) {
+    public Daemon(String name, String originalNativeBridge, boolean enableHide) {
         this.handler = new Handler(Looper.myLooper());
         this.name = name;
         this.originalNativeBridge = originalNativeBridge;
+        this.enableHide = enableHide;
 
-        handler.post(() -> startWait(false));
+        handler.post(() -> startWait(true, true));
     }
 
-    private void startWait(boolean allowRestart) {
+    private void startWait(boolean allowRestart, boolean isFirst) {
         IBinder binder = DaemonUtils.waitForSystemService(name);
 
         if (!DaemonUtils.isRiruLoaded()) {
             Log.w(TAG, "Riru is not loaded.");
+
+            if (isFirst) {
+                Log.w(TAG, "https://github.com/RikkaApps/Riru/issues/154#issuecomment-739128851");
+            }
 
             if (allowRestart) {
                 handler.post(() -> {
@@ -50,9 +56,15 @@ public class Daemon {
                     } else {
                         SystemProperties.set("ctl.restart", "zygote");
                     }
-                    startWait(false);
+                    startWait(false, false);
                 });
             }
+            return;
+        }
+
+        if (!enableHide) {
+            Log.i(TAG, "Exit because Riru is loaded and hide is disabled.");
+            System.exit(0);
             return;
         }
 
@@ -70,7 +82,7 @@ public class Daemon {
                 Log.i(TAG, "Zygote is probably dead, reset native bridge to " + RIRU_LOADER + "...");
                 DaemonUtils.resetNativeBridgeProp(RIRU_LOADER);
 
-                handler.post(() -> startWait(true));
+                handler.post(() -> startWait(true, false));
             }, 0);
         } catch (RemoteException e) {
             Log.w(TAG, "linkToDeath", e);
@@ -79,21 +91,18 @@ public class Daemon {
 
     @Keep
     public static void main(String[] args) {
-        if (!new File("/data/adb/riru/enable_hide").exists() && !BuildConfig.DEBUG) {
-            Log.i(TAG, "Hide is not enabled.");
-            System.exit(0);
-            return;
-        }
+        boolean enableHide = new File("/data/adb/riru/enable_hide").exists() || BuildConfig.DEBUG;
+        Log.i(TAG, enableHide ? "Hide is enabled," : "Hide is not enabled.");
 
         String originalNativeBridge = DaemonUtils.readOriginalNativeBridge();
-        Log.i(TAG, "readOriginalNativeBridge: " + originalNativeBridge);
+        Log.i(TAG, "Original native bridge is " + originalNativeBridge);
 
         if (originalNativeBridge == null) {
             originalNativeBridge = "0";
         }
 
         Looper.prepare();
-        new Daemon(SERVICE_FOR_TEST, originalNativeBridge);
+        new Daemon(SERVICE_FOR_TEST, originalNativeBridge, enableHide);
         Looper.loop();
     }
 }
