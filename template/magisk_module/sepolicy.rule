@@ -1,4 +1,8 @@
-# Starting from Riru v21.1, zygote will try "rirud" socket first
+# Hide need this rule to run.
+# Add this rule here because it is added from Android 10.
+allow zygote zygote process execmem
+
+# Starting from Riru v22.1, zygote will try "rirud" socket first
 # Keep these rules as a backup
 
 # Enter /data/adb
