@@ -39,6 +39,15 @@ static int get_prot(const procmaps_struct *procstruct) {
     return prot;
 }
 
+#define FAILURE_RETURN(exp, failure_value) ({   \
+    __typeof__(exp) _rc;                    \
+    _rc = (exp);                            \
+    if (_rc == failure_value) {             \
+        PLOGE(#exp);                        \
+        return 1;                           \
+    }                                       \
+    _rc; })
+
 static int do_hide(hide_struct *data) {
     auto procstruct = data->original;
     auto start = (uintptr_t) procstruct->addr_start;
@@ -47,34 +56,30 @@ static int do_hide(hide_struct *data) {
     int prot = get_prot(procstruct);
 
     // backup
-    data->backup_address = (uintptr_t) _mmap(nullptr, length, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-    if (data->backup_address == (uintptr_t) MAP_FAILED) {
-        return 1;
-    }
-    LOGD("%" PRIxPTR"-%" PRIxPTR" %s %ld %s is backup to %" PRIxPTR, start, end, procstruct->perm, procstruct->offset, procstruct->pathname,
-         data->backup_address);
+    data->backup_address = (uintptr_t) FAILURE_RETURN(mmap(nullptr, length, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0), MAP_FAILED);
+    LOGD("%" PRIxPTR"-%" PRIxPTR" %s %ld %s is backup to %" PRIxPTR, start, end, procstruct->perm, procstruct->offset, procstruct->pathname, data->backup_address);
 
     if (!procstruct->is_r) {
         LOGD("mprotect +r");
-        _mprotect((void *) start, length, prot | PROT_READ);
+        FAILURE_RETURN(mprotect((void *) start, length, prot | PROT_READ), -1);
     }
     LOGD("memcpy -> backup");
     memcpy((void *) data->backup_address, (void *) start, length);
 
     // munmap original
     LOGD("munmap original");
-    munmap((void *) start, length);
+    FAILURE_RETURN(munmap((void *) start, length), -1);
 
     // restore
     LOGD("mmap original");
-    _mmap((void *) start, length, prot, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    FAILURE_RETURN(mmap((void *) start, length, prot, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0), MAP_FAILED);
     LOGD("mprotect +w");
-    _mprotect((void *) start, length, prot | PROT_WRITE);
+    FAILURE_RETURN(mprotect((void *) start, length, prot | PROT_WRITE), -1);
     LOGD("memcpy -> original");
     memcpy((void *) start, (void *) data->backup_address, length);
     if (!procstruct->is_w) {
         LOGD("mprotect -w");
-        _mprotect((void *) start, length, prot);
+        FAILURE_RETURN(mprotect((void *) start, length, prot), -1);
     }
     return 0;
 }
