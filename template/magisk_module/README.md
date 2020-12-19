@@ -19,6 +19,12 @@ A typical example is, some "optimize" modules changes this property. Since chang
 
 ## Changelog
 
+### v23.1 (51) (2020-12-18)
+
+- Restart zygote even for the first time (for "broken environment", such as modules are loaded after than zygote is started)
+- Hide should work for pre-Android-10
+- Prevent crash caused by hiding failure
+
 ### v23.0 (49) (2020-12-02)
 
 - Add read file & read dir function for "rirud". Modules can use this to read files that zygote itself has no permission to access.
