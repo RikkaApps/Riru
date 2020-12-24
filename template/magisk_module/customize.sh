@@ -83,13 +83,16 @@ else
   fi
 fi
 
-mv "$RIRU_PATH/bin/librirud.so" "$RIRU_PATH/bin/rirud"
-set_perm "$RIRU_PATH/bin/rirud" 0 0 0700 $SECONTEXT
+ui_print "- Moving rirud"
+rm "$RIRU_PATH/bin/rirud.new"
+mv "$RIRU_PATH/bin/librirud.so" "$RIRU_PATH/bin/rirud.new"
+set_perm "$RIRU_PATH/bin/rirud.new" 0 0 0700 $SECONTEXT
 
-ui_print "- Extracting classes.dex"
+ui_print "- Extracting rirud.dex"
 extract "$ZIPFILE" "classes.dex" "$RIRU_PATH/bin"
-mv "$RIRU_PATH/bin/classes.dex" "$RIRU_PATH/bin/rirud.dex"
-set_perm "$RIRU_PATH/bin/rirud.dex" 0 0 0700 $SECONTEXT
+rm "$RIRU_PATH/bin/rirud.dex.new"
+mv "$RIRU_PATH/bin/classes.dex" "$RIRU_PATH/bin/rirud.dex.new"
+set_perm "$RIRU_PATH/bin/rirud.dex.new" 0 0 0700 $SECONTEXT
 
 # write api version to a persist file, only for the check process of the module installation
 ui_print "- Writing Riru files"
