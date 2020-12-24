@@ -328,8 +328,12 @@ static void socket_server() {
         clifd = accept4(server_socket_fd, (struct sockaddr *) &from, &fromlen, SOCK_CLOEXEC);
         if (clifd == -1) {
             if (errno == EINTR) {
-                LOGI("interrupted system call");
-                return;
+                if (server_socket_fd == -1) {
+                    LOGI("interrupted system call");
+                    return;
+                } else {
+                    continue;
+                }
             } else {
                 PLOGE("accept");
                 continue;
@@ -368,6 +372,7 @@ static void sig_handler(int sig) {
         if (server_socket_fd != -1) {
             LOGI("close socket");
             close(server_socket_fd);
+            server_socket_fd = -1;
         } else {
             LOGW("socket is not running?");
         }
