@@ -19,6 +19,10 @@ A typical example is, some "optimize" modules changes this property. Since chang
 
 ## Changelog
 
+### v23.2 (52) (2021-01-02)
+
+- Add `/data/adb/riru/util_functions.sh` for module installer to use
+
 ### v23.1 (51) (2020-12-18)
 
 - Restart zygote even for the first time (for "broken environment", such as modules are loaded after than zygote is started)

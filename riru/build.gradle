@@ -12,8 +12,8 @@ def minApiVersion = rootProject.ext.riruMinApiVersion
 def moduleProp = [
         id         : "riru-core",
         name       : "Riru",
-        version    : "v23.1",
-        versionCode: "51",
+        version    : "v23.2",
+        versionCode: "52",
         author     : "Rikka",
         description: "Inject into zygote process. Required by all \"Riru\" modules."
 ]
@@ -92,10 +92,10 @@ android.applicationVariants.all { variant ->
             copy {
                 from "$rootDir/template/magisk_module"
                 into magiskDir.path
-                exclude 'customize.sh'
+                exclude 'customize.sh', 'util_functions.sh'
             }
             copy {
-                from file("$rootDir/template/magisk_module/customize.sh")
+                from file("$rootDir/template/magisk_module/customize.sh"), file("$rootDir/template/magisk_module/util_functions.sh")
                 into magiskDir.path
                 filter { line ->
                     line.replaceAll('%%%RIRU_API%%%', apiVersion.toString())
