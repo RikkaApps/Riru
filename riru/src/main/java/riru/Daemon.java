@@ -92,7 +92,7 @@ public class Daemon {
     @Keep
     public static void main(String[] args) {
         boolean enableHide = new File("/data/adb/riru/enable_hide").exists() || BuildConfig.DEBUG;
-        Log.i(TAG, enableHide ? "Hide is enabled," : "Hide is not enabled.");
+        Log.i(TAG, enableHide ? "Hide is enabled" : "Hide is not enabled.");
 
         String originalNativeBridge = DaemonUtils.readOriginalNativeBridge();
         Log.i(TAG, "Original native bridge is " + originalNativeBridge);
