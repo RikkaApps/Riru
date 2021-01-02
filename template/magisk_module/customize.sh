@@ -50,6 +50,7 @@ extract "$ZIPFILE" 'service.sh' "$MODPATH"
 extract "$ZIPFILE" 'uninstall.sh' "$MODPATH"
 extract "$ZIPFILE" 'sepolicy.rule' "$MODPATH"
 extract "$ZIPFILE" 'system.prop' "$MODPATH"
+extract "$ZIPFILE" 'util_functions.sh' "$RIRU_PATH" true
 
 if [ "$ARCH" = "x86" ] || [ "$ARCH" = "x64" ]; then
   ui_print "- Extracting x86 libraries"
