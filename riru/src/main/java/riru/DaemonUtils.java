@@ -61,7 +61,7 @@ public class DaemonUtils {
         } while (true);
     }
 
-    public static boolean isRiruLoaded() {
+    public static String getRiruRandom() {
         String devRandom = null;
         try (BufferedReader br = new BufferedReader(new FileReader(new File("/data/adb/riru/dev_random")))) {
             char[] buf = new char[4096];
@@ -72,12 +72,25 @@ public class DaemonUtils {
         } catch (IOException e) {
             Log.w(Daemon.TAG, "Can't read dev_random.", e);
         }
+        return devRandom;
+    }
 
+    public static boolean isRiruLoaded() {
+        String devRandom = getRiruRandom();
         if (devRandom == null) {
             return false;
         }
 
         return new File("/dev/riru_" + devRandom).exists();
+    }
+
+    public static boolean deleteDevFolder() {
+        String devRandom = getRiruRandom();
+        if (devRandom == null) {
+            return false;
+        }
+
+        return new File("/dev/riru_" + devRandom).delete();
     }
 
     public static int findNativeDaemonPid() {
