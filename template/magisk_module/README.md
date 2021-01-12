@@ -22,6 +22,7 @@ A typical example is, some "optimize" modules changes this property. Since chang
 ### v23.2 (52) (2021-01-02)
 
 - Add `/data/adb/riru/util_functions.sh` for module installer to use
+- Ensure auto restart works
 
 ### v23.1 (51) (2020-12-18)
 
