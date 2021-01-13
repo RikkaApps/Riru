@@ -19,6 +19,10 @@ A typical example is, some "optimize" modules changes this property. Since chang
 
 ## Changelog
 
+### v23.3 (53) (2021-01-13)
+
+- Ensure auto restart works
+
 ### v23.2 (52) (2021-01-02)
 
 - Add `/data/adb/riru/util_functions.sh` for module installer to use

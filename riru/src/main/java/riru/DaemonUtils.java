@@ -84,13 +84,40 @@ public class DaemonUtils {
         return new File("/dev/riru_" + devRandom).exists();
     }
 
-    public static boolean deleteDevFolder() {
+    private static boolean deleteDir(File file) {
+        boolean res = true;
+        File[] files = file.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                res &= deleteDir(f);
+            }
+        }
+        return res & file.delete();
+    }
+
+    public static void deleteDevFolder() {
         String devRandom = getRiruRandom();
         if (devRandom == null) {
-            return false;
+            return;
         }
 
-        return new File("/dev/riru_" + devRandom).delete();
+        File file;
+
+        file = new File("/dev/riru_" + devRandom);
+        Log.i(Daemon.TAG, "Attempt to delete " + file + ".");
+        if (!deleteDir(file)) {
+            file.renameTo(new File("/dev/riru_" + devRandom + "_" + System.currentTimeMillis()));
+        } else {
+            Log.i(Daemon.TAG, "Deleted " + file + ".");
+        }
+
+        file = new File("/dev/riru64_" + devRandom);
+        Log.i(Daemon.TAG, "Attempt to delete " + file + ".");
+        if (!deleteDir(file)) {
+            file.renameTo(new File("/dev/riru_" + devRandom + "_" + System.currentTimeMillis()));
+        } else {
+            Log.i(Daemon.TAG, "Deleted " + file + ".");
+        }
     }
 
     public static int findNativeDaemonPid() {

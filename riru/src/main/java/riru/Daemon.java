@@ -76,6 +76,7 @@ public class Daemon {
 
         try {
             binder.linkToDeath(() -> {
+                Log.i(TAG, "Zygote is probably dead, delete existing /dev/riru_ folders...");
                 DaemonUtils.deleteDevFolder();
 
                 Log.i(TAG, "Zygote is probably dead, restart rirud socket...");
