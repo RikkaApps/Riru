@@ -79,11 +79,11 @@ public class Daemon {
                 Log.i(TAG, "Zygote is probably dead, delete existing /dev/riru_ folders...");
                 DaemonUtils.deleteDevFolder();
 
-                Log.i(TAG, "Zygote is probably dead, restart rirud socket...");
-                DaemonUtils.startSocket(DaemonUtils.findNativeDaemonPid());
-
                 Log.i(TAG, "Zygote is probably dead, reset native bridge to " + RIRU_LOADER + "...");
                 DaemonUtils.resetNativeBridgeProp(RIRU_LOADER);
+
+                Log.i(TAG, "Zygote is probably dead, restart rirud socket...");
+                DaemonUtils.startSocket(DaemonUtils.findNativeDaemonPid());
 
                 handler.post(() -> startWait(true, false));
             }, 0);

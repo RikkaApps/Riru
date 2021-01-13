@@ -104,15 +104,15 @@ public class DaemonUtils {
         File file;
 
         file = new File("/dev/riru_" + devRandom);
-        Log.i(Daemon.TAG, "Attempt to delete " + file + ".");
+        Log.i(Daemon.TAG, "Attempt to delete " + file + "...");
         if (!deleteDir(file)) {
             file.renameTo(new File("/dev/riru_" + devRandom + "_" + System.currentTimeMillis()));
         } else {
-            Log.i(Daemon.TAG, "Deleted " + file + ".");
+            Log.i(Daemon.TAG, "Deleted " + file);
         }
 
         file = new File("/dev/riru64_" + devRandom);
-        Log.i(Daemon.TAG, "Attempt to delete " + file + ".");
+        Log.i(Daemon.TAG, "Attempt to delete " + file + "...");
         if (!deleteDir(file)) {
             file.renameTo(new File("/dev/riru_" + devRandom + "_" + System.currentTimeMillis()));
         } else {
