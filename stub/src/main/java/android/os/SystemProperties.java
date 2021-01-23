@@ -6,7 +6,7 @@ public class SystemProperties {
         throw new RuntimeException("STUB");
     }
 
-    public static String set(String key, String value) {
+    public static void set(String key, String value) {
         throw new RuntimeException("STUB");
     }
 }
