@@ -19,6 +19,10 @@ A typical example is, some "optimize" modules changes this property. Since chang
 
 ## Changelog
 
+### v23.4 (54) (2021-01-23)
+
+- Ensure auto restart works
+
 ### v23.3 (53) (2021-01-13)
 
 - Ensure auto restart works
