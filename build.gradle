@@ -9,15 +9,15 @@ idea.module {
 }
 
 buildscript {
-    ext.kotlin_version = '1.4.10'
-    ext.kotlin_coroutines_version = '1.3.9'
+    ext.kotlin_version = '1.4.21'
+    ext.kotlin_coroutines_version = '1.4.2'
 
     repositories {
         google()
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.1.1'
+        classpath 'com.android.tools.build:gradle:4.1.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
