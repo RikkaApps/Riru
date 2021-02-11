@@ -67,10 +67,14 @@ add_library(riru SHARED
         daemon/status.cpp)
 target_include_directories(riru PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(riru log utils xhook::xhook flatbuffers::flatbuffers)
+add_custom_command(TARGET riru POST_BUILD
+        COMMAND ${CMAKE_STRIP} --remove-section=.comment "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libriru.so")
 
 add_library(riruhide SHARED hide/hide.cpp)
 target_include_directories(riruhide PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(riruhide log utils)
+add_custom_command(TARGET riruhide POST_BUILD
+        COMMAND ${CMAKE_STRIP} --remove-section=.comment "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libriruhide.so")
 
 if ("${ANDROID_ABI}" STREQUAL "x86" OR "${ANDROID_ABI}" STREQUAL "x86_64")
     add_definitions(-DHAS_NATIVE_BRIDGE)
@@ -78,9 +82,13 @@ endif ()
 
 add_library(riruloader SHARED loader/loader.cpp)
 target_link_libraries(riruloader log utils)
+add_custom_command(TARGET riruloader POST_BUILD
+        COMMAND ${CMAKE_STRIP} --remove-section=.comment "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libriruloader.so")
 
 add_executable(librirud.so
         daemon/daemon.cpp
         daemon/setproctitle.c
         daemon/status.cpp)
 target_link_libraries(librirud.so log utils flatbuffers::flatbuffers)
+add_custom_command(TARGET librirud.so POST_BUILD
+        COMMAND ${CMAKE_STRIP} --remove-section=.comment "librirud.so")
