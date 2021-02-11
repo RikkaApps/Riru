@@ -26,10 +26,10 @@ add_definitions(-DRIRU_API_VERSION=${RIRU_API_VERSION})
 add_definitions(-DRIRU_MIN_API_VERSION=${RIRU_MIN_API_VERSION})
 
 set(LINKER_FLAGS "-ffixed-x18 -Wl,--hash-style=both")
-set(C_FLAGS "-Werror=format -fdata-sections -ffunction-sections")
+set(C_FLAGS "-Werror=format -fdata-sections -ffunction-sections -fno-exceptions -fno-rtti")
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
-    set(C_FLAGS "${C_FLAGS} -O2 -fvisibility=hidden -fvisibility-inlines-hidden")
+    set(C_FLAGS "${C_FLAGS} -O2")
     set(LINKER_FLAGS "${LINKER_FLAGS} -Wl,-exclude-libs,ALL -Wl,--gc-sections")
 else ()
     add_definitions(-DDEBUG)
@@ -54,7 +54,8 @@ add_library(utils STATIC
         util/wrap.cpp
         util/pmparser.c
         util/selinux.cpp
-        util/socket.cpp)
+        util/socket.cpp
+        util/tinynew.cpp)
 
 add_library(riru SHARED
         main.cpp
