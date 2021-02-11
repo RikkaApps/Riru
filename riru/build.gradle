@@ -12,8 +12,8 @@ def minApiVersion = rootProject.ext.riruMinApiVersion
 def moduleProp = [
         id         : "riru-core",
         name       : "Riru",
-        version    : "v23.4",
-        versionCode: "54",
+        version    : "v23.5",
+        versionCode: "55",
         author     : "Rikka",
         description: "Inject into zygote process. Required by all \"Riru\" modules."
 ]
