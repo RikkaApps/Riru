@@ -7,6 +7,16 @@ RIRU_VERSION_NAME="%%%RIRU_VERSION_NAME%%%"
 # Use magisk_file like other Magisk files
 SECONTEXT="u:object_r:magisk_file:s0"
 
+if $BOOTMOE; then
+  ui_print "- Installing from Magisk app"
+else
+  ui_print "*********************************************************"
+  ui_print "! Install from recovery is NOT supported"
+  ui_print "! Some recovery has broken implementations, install with such recovery will finally cause Riru or Riru modules not working"
+  ui_print "! Please install from Magisk app"
+  abort "*********************************************************"
+fi
+
 ui_print "- Installing Riru $RIRU_VERSION_NAME ($RIRU_VERSION_CODE, API v$RIRU_API)"
 
 # check Magisk
