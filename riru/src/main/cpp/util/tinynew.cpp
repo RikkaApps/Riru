@@ -55,7 +55,7 @@ void operator delete[](void* ptr, const std::nothrow_t&) {
 //eof
 
 __attribute__((__visibility__("default")))
-std::terminate_handler __cxa_terminate_handler = std::terminate;
+std::terminate_handler __cxa_terminate_handler = abort;
 
 __attribute__((__visibility__("default")))
-std::unexpected_handler __cxa_unexpected_handler = std::abort;
+std::unexpected_handler __cxa_unexpected_handler = abort;
