@@ -1,6 +1,7 @@
 package moe.riru.manager
 
 import android.annotation.SuppressLint
+import android.os.Build
 import android.os.Bundle
 import android.os.SystemProperties
 import android.util.Log
@@ -40,7 +41,10 @@ class MainActivity : AppActivity() {
 
         detail.appendLine("$devRandomFile: $devRandom")
 
-        val devRootFile = SuFile.open("/dev/riru_$devRandom")
+        val has64Bit = Build.SUPPORTED_64_BIT_ABIS.isNotEmpty()
+        val root = if (has64Bit) "/dev/riru64_$devRandom" else "/dev/riru_$devRandom"
+
+        val devRootFile = SuFile.open(root)
         if (!devRootFile.exists()) {
             message.append("Riru not installed or not enabled.")
             detail.append("$devRootFile not exist")
@@ -53,10 +57,10 @@ class MainActivity : AppActivity() {
             }
             return
         }
-        val apiFile = SuFile.open("/dev/riru_$devRandom/api")
-        val hideFile = SuFile.open("/dev/riru_$devRandom/hide")
-        val versionFile = SuFile.open("/dev/riru_$devRandom/version")
-        val versionNameFile = SuFile.open("/dev/riru_$devRandom/version_name")
+        val apiFile = SuFile.open("$root/api")
+        val hideFile = SuFile.open("$root/hide")
+        val versionFile = SuFile.open("$root/version")
+        val versionNameFile = SuFile.open("$root/version_name")
         val api = apiFile.readTextOrNull()
         val hide = hideFile.readTextOrNull()
         val version = versionFile.readTextOrNull()
@@ -75,7 +79,7 @@ class MainActivity : AppActivity() {
         message.appendLine("\nNative methods:")
 
         Riru.methodNames.forEach { methodName ->
-            SuFile.open("/dev/riru_$devRandom/methods/$methodName").let {
+            SuFile.open("$root/methods/$methodName").let {
                 message.append(methodName).append(": ")
 
                 val method = it.readTextOrNull()?.split('\n')
@@ -93,7 +97,7 @@ class MainActivity : AppActivity() {
 
         message.appendLine("\nLoaded modules:")
 
-        val moduleFiles = SuFile.open("/dev/riru_$devRandom/modules").listFiles()
+        val moduleFiles = SuFile.open("$root/modules").listFiles()
         if (moduleFiles?.isNotEmpty() == true) {
             moduleFiles.forEach { module ->
                 message.append(module.name).append(": ")

@@ -77,7 +77,7 @@ public class Daemon {
 
         try {
             binder.linkToDeath(() -> {
-                Log.i(TAG, "Zygote is probably dead, delete existing /dev/riru_ folders...");
+                Log.i(TAG, "Zygote is probably dead, delete existing /dev/riru folders...");
                 DaemonUtils.deleteDevFolder();
 
                 Log.i(TAG, "Zygote is probably dead, reset native bridge to " + RIRU_LOADER + "...");

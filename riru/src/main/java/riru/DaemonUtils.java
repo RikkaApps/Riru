@@ -1,5 +1,6 @@
 package riru;
 
+import android.os.Build;
 import android.os.IBinder;
 import android.os.ServiceManager;
 import android.system.ErrnoException;
@@ -15,6 +16,15 @@ import java.io.IOException;
 import java.util.Objects;
 
 public class DaemonUtils {
+
+    private static Boolean has32Bit = null, has64Bit = null;
+
+    public static boolean has64Bit() {
+        if (has64Bit == null) {
+            has64Bit = Build.SUPPORTED_64_BIT_ABIS.length > 0;
+        }
+        return has64Bit;
+    }
 
     public static String readOriginalNativeBridge() {
         try (BufferedReader br = new BufferedReader(new FileReader(new File("/data/adb/riru/native_bridge")))) {
@@ -75,13 +85,22 @@ public class DaemonUtils {
         return devRandom;
     }
 
-    public static boolean isRiruLoaded() {
+    public static File getRiruDevFile() {
         String devRandom = getRiruRandom();
         if (devRandom == null) {
-            return false;
+            return null;
         }
 
-        return new File("/dev/riru_" + devRandom).exists();
+        if (has64Bit()) {
+            return new File("/dev/riru_" + devRandom);
+        } else {
+            return new File("/dev/riru64_" + devRandom);
+        }
+    }
+
+    public static boolean isRiruLoaded() {
+        File file = getRiruDevFile();
+        return file != null && file.exists();
     }
 
     private static boolean deleteDir(File file) {
