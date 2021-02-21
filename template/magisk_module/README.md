@@ -17,16 +17,22 @@ A typical example is, some "optimize" modules changes this property. Since chang
 * When the file `/data/adb/riru/disable` exists, Riru will do nothing
 * When the file `/data/adb/riru/enable_hide` exists, the hide mechanism will be enabled
 
+### Install from recovery is NOT supported
+
+Riru requires files in `/data/adb/riru` folder, this folder is created during installation.
+
+Many TWRP has broken implementations, causing the folder cannot be created, this will finally cause Riru and Riru modules not working.
+
 ## Changelog
+
+### v23.6 (56) (2021-02-21)
+
+- Continue reduce the file size
+- Works on devices that have dropped 32-bit support (Android 12 emulator or devices in the future)
 
 ### v23.5 (55) (2021-02-11)
 
 - Reduce the file size
-- Prevent to be installed from recovery
-
-  Riru requires files in `/data/adb/riru` folder, this folder is created during installation.
-
-  Many TWRP has broken implementations, causing the folder cannot be created, this will finally cause Riru and Riru modules not working.
 
 ### v23.4 (54) (2021-01-23)
 
