@@ -55,7 +55,8 @@ add_library(utils STATIC
         util/pmparser.c
         util/selinux.cpp
         util/socket.cpp
-        util/tinynew.cpp)
+        util/tinynew.cpp
+        util/plt.c)
 
 add_library(riru SHARED
         main.cpp

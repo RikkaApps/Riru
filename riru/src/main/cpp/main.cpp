@@ -1,5 +1,7 @@
 #include <xhook/xhook.h>
 #include <sys/system_properties.h>
+#include <dlfcn.h>
+#include <util/plt.h>
 #include "misc.h"
 #include "jni_native_method.h"
 #include "logging.h"
@@ -14,9 +16,16 @@
 static int sdkLevel;
 static int previewSdkLevel;
 static char androidVersionName[PROP_VALUE_MAX + 1];
+static bool useTableOverride = false;
 
-static JNINativeMethod *onRegisterZygote(
-        JNIEnv *env, const char *className, const JNINativeMethod *methods, int numMethods) {
+using GetJniNativeInterface_t = const JNINativeInterface *();
+using SetTableOverride_t = void(JNINativeInterface *);
+using RegisterNatives_t = jint(JNIEnv *, jclass, const JNINativeMethod *, jint);
+
+static SetTableOverride_t *setTableOverride = nullptr;
+static RegisterNatives_t *old_RegisterNatives = nullptr;
+
+static JNINativeMethod *onRegisterZygote(const char *className, const JNINativeMethod *methods, int numMethods) {
 
     auto *newMethods = new JNINativeMethod[numMethods];
     memcpy(newMethods, methods, sizeof(JNINativeMethod) * numMethods);
@@ -115,8 +124,7 @@ static JNINativeMethod *onRegisterZygote(
     return newMethods;
 }
 
-static JNINativeMethod *onRegisterSystemProperties(
-        JNIEnv *env, const char *className, const JNINativeMethod *methods, int numMethods) {
+static JNINativeMethod *onRegisterSystemProperties(const char *className, const JNINativeMethod *methods, int numMethods) {
 
     auto *newMethods = new JNINativeMethod[numMethods];
     memcpy(newMethods, methods, sizeof(JNINativeMethod) * numMethods);
@@ -144,12 +152,25 @@ static JNINativeMethod *onRegisterSystemProperties(
     return newMethods;
 }
 
+static JNINativeMethod *handleRegisterNative(const char *className, const JNINativeMethod *methods, int numMethods) {
+    if (strcmp("com/android/internal/os/Zygote", className) == 0) {
+        return onRegisterZygote(className, methods, numMethods);
+    } else if (strcmp("android/os/SystemProperties", className) == 0) {
+        // hook android.os.SystemProperties#native_set to prevent a critical problem on Android 9
+        // see comment of SystemProperties_set in jni_native_method.cpp for detail
+        return onRegisterSystemProperties(className, methods, numMethods);
+    } else {
+        return nullptr;
+    }
+}
+
 #define XHOOK_REGISTER(PATH_REGEX, NAME) \
     if (xhook_register(PATH_REGEX, #NAME, (void*) new_##NAME, (void **) &old_##NAME) != 0) \
         LOGE("failed to register hook " #NAME "."); \
 
 #define NEW_FUNC_DEF(ret, func, ...) \
-    static ret (*old_##func)(__VA_ARGS__); \
+    using func##_t = ret(__VA_ARGS__); \
+    static func##_t *old_##func; \
     static ret new_##func(__VA_ARGS__)
 
 NEW_FUNC_DEF(int, jniRegisterNativeMethods, JNIEnv *env, const char *className,
@@ -158,17 +179,8 @@ NEW_FUNC_DEF(int, jniRegisterNativeMethods, JNIEnv *env, const char *className,
 
     LOGD("jniRegisterNativeMethods %s", className);
 
-    JNINativeMethod *newMethods = nullptr;
-    if (strcmp("com/android/internal/os/Zygote", className) == 0) {
-        newMethods = onRegisterZygote(env, className, methods, numMethods);
-    } else if (strcmp("android/os/SystemProperties", className) == 0) {
-        // hook android.os.SystemProperties#native_set to prevent a critical problem on Android 9
-        // see comment of SystemProperties_set in jni_native_method.cpp for detail
-        newMethods = onRegisterSystemProperties(env, className, methods, numMethods);
-    }
-
-    int res = old_jniRegisterNativeMethods(env, className, newMethods ? newMethods : methods,
-                                           numMethods);
+    JNINativeMethod *newMethods = handleRegisterNative(className, methods, numMethods);
+    int res = old_jniRegisterNativeMethods(env, className, newMethods ? newMethods : methods, numMethods);
     /*if (!newMethods) {
         NativeMethod::jniRegisterNativeMethodsPost(env, className, methods, numMethods);
     }*/
@@ -176,19 +188,65 @@ NEW_FUNC_DEF(int, jniRegisterNativeMethods, JNIEnv *env, const char *className,
     return res;
 }
 
-void restore_replaced_func(JNIEnv *env) {
-    xhook_register(".*\\libandroid_runtime.so$", "jniRegisterNativeMethods",
-                   (void *) old_jniRegisterNativeMethods,
-                   nullptr);
-    if (xhook_refresh(0) == 0) {
-        xhook_clear();
-        LOGD("hook removed");
+static jclass zygoteClass;
+static jclass systemPropertiesClass;
+
+static void prepareClassesForRegisterNativeHook(JNIEnv *env) {
+    static bool called = false;
+    if (called) return;
+    called = true;
+
+    auto _zygoteClass = env->FindClass("com/android/internal/os/Zygote");
+    auto _systemPropertiesClass = env->FindClass("android/os/SystemProperties");
+
+    // There are checks that enforces no local refs exists during Runtime::Start, make them global ref
+    zygoteClass = (jclass) env->NewGlobalRef(_zygoteClass);
+    systemPropertiesClass = (jclass) env->NewGlobalRef(_systemPropertiesClass);
+
+    env->DeleteLocalRef(_zygoteClass);
+    env->DeleteLocalRef(_systemPropertiesClass);
+}
+
+static int new_RegisterNative(JNIEnv *env, jclass cls, const JNINativeMethod *methods, jint numMethods) {
+    prepareClassesForRegisterNativeHook(env);
+
+    const char *className;
+    if (zygoteClass != nullptr && env->IsSameObject(zygoteClass, cls)) {
+        className = "com/android/internal/os/Zygote";
+        LOGD("RegisterNative %s", className);
+        env->DeleteGlobalRef(zygoteClass);
+    } else if (systemPropertiesClass != nullptr && env->IsSameObject(systemPropertiesClass, cls)) {
+        className = "android/os/SystemProperties";
+        LOGD("RegisterNative %s", className);
+        env->DeleteGlobalRef(systemPropertiesClass);
+    } else {
+        className = "";
     }
 
-#define restoreMethod(cls, method) \
-    if (JNI::cls::method != nullptr) { \
-        old_jniRegisterNativeMethods(env, JNI::cls::classname, JNI::cls::method, 1); \
-        delete JNI::cls::method; \
+    JNINativeMethod *newMethods = handleRegisterNative(className, methods, numMethods);
+    auto res = old_RegisterNatives(env, cls, newMethods ? newMethods : methods, numMethods);
+    delete newMethods;
+    return res;
+}
+
+#define restoreMethod(_cls, method) \
+    if (JNI::_cls::method != nullptr) { \
+        if (old_jniRegisterNativeMethods) \
+        old_jniRegisterNativeMethods(env, JNI::_cls::classname, JNI::_cls::method, 1); \
+        delete JNI::_cls::method; \
+    }
+
+void restore_replaced_func(JNIEnv *env) {
+    if (useTableOverride) {
+        setTableOverride(nullptr);
+    } else {
+        xhook_register(".*\\libandroid_runtime.so$", "jniRegisterNativeMethods",
+                       (void *) old_jniRegisterNativeMethods,
+                       nullptr);
+        if (xhook_refresh(0) == 0) {
+            xhook_clear();
+            LOGD("hook removed");
+        }
     }
 
     restoreMethod(Zygote, nativeForkAndSpecialize)
@@ -250,6 +308,34 @@ void constructor() {
         LOGI("hook installed");
     } else {
         LOGE("failed to refresh hook");
+    }
+
+    useTableOverride = old_jniRegisterNativeMethods == nullptr;
+
+    if (useTableOverride) {
+        LOGI("no jniRegisterNativeMethods");
+
+        auto *GetJniNativeInterface = (GetJniNativeInterface_t *) plt_dlsym("_ZN3art21GetJniNativeInterfaceEv", nullptr);
+        setTableOverride = (SetTableOverride_t *) plt_dlsym("_ZN3art9JNIEnvExt16SetTableOverrideEPK18JNINativeInterface", nullptr);
+
+        if (setTableOverride != nullptr && GetJniNativeInterface != nullptr) {
+            auto functions = GetJniNativeInterface();
+            auto new_JNINativeInterface = new JNINativeInterface();
+            memcpy(new_JNINativeInterface, functions, sizeof(JNINativeInterface));
+            old_RegisterNatives = functions->RegisterNatives;
+            new_JNINativeInterface->RegisterNatives = new_RegisterNative;
+
+            setTableOverride(new_JNINativeInterface);
+            LOGI("override table installed");
+        } else {
+            if (GetJniNativeInterface == nullptr) LOGE("cannot find GetJniNativeInterface");
+            if (setTableOverride == nullptr) LOGE("cannot find setTableOverride");
+        }
+
+        auto handle = dlopen("libnativehelper.so", 0);
+        if (handle) {
+            old_jniRegisterNativeMethods = (jniRegisterNativeMethods_t *) dlsym(handle, "jniRegisterNativeMethods");
+        }
     }
 
     load_modules();
