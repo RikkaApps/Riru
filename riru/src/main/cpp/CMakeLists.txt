@@ -29,7 +29,7 @@ set(LINKER_FLAGS "-ffixed-x18 -Wl,--hash-style=both")
 set(C_FLAGS "-Werror=format -fdata-sections -ffunction-sections -fno-exceptions -fno-rtti")
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
-    set(C_FLAGS "${C_FLAGS} -O2")
+    set(C_FLAGS "${C_FLAGS} -O2 -fvisibility=hidden -fvisibility-inlines-hidden")
     set(LINKER_FLAGS "${LINKER_FLAGS} -Wl,-exclude-libs,ALL -Wl,--gc-sections")
 else ()
     add_definitions(-DDEBUG)
