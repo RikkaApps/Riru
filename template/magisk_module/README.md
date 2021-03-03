@@ -27,7 +27,8 @@ Many TWRP has broken implementations, causing the folder cannot be created, this
 
 ### v23.7 (57) (2021-03-01)
 
-- Prepare for changes brought bylibnativehelper_lazy (these changes may come in Android 12 DP2 or later)
+- Prepare for changes brought by libnativehelper_lazy (these changes may come in Android 12 DP2 or later)
+- Fix symbols are incorrectly exported
 
 ### v23.6 (56) (2021-02-21)
 
