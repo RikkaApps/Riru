@@ -25,6 +25,10 @@ Many TWRP has broken implementations, causing the folder cannot be created, this
 
 ## Changelog
 
+### v23.9 (59) (2021-03-06)
+
+- Fix crash when JVM reuses reference index on devices with `libnativehelper_lazy` (these changes may come in Android 12 DP2 or later) (by LSPosed devs)
+
 ### v23.8 (58) (2021-03-05)
 
 - Fix a problem that only exists on 32-bit devices
