@@ -25,6 +25,10 @@ Many TWRP has broken implementations, causing the folder cannot be created, this
 
 ## Changelog
 
+### v23.8 (58) (2021-03-05)
+
+- Fix a problem that only exists on 32-bit devices
+
 ### v23.7 (57) (2021-03-01)
 
 - Prepare for changes brought by libnativehelper_lazy (these changes may come in Android 12 DP2 or later)
