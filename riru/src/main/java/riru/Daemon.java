@@ -51,7 +51,7 @@ public class Daemon {
             if (allowRestart) {
                 handler.post(() -> {
                     Log.w(TAG, "Restarting zygote...");
-                    if (Build.SUPPORTED_64_BIT_ABIS.length > 0 && Build.SUPPORTED_32_BIT_ABIS.length > 0) {
+                    if (DaemonUtils.has64Bit() && DaemonUtils.has32Bit()) {
                         // Only devices with both 32-bit and 64-bit support have zygote_secondary
                         SystemProperties.set("ctl.restart", "zygote_secondary");
                     } else {

@@ -19,6 +19,13 @@ public class DaemonUtils {
 
     private static Boolean has32Bit = null, has64Bit = null;
 
+    public static boolean has32Bit() {
+        if (has32Bit == null) {
+            has32Bit = Build.SUPPORTED_32_BIT_ABIS.length > 0;
+        }
+        return has32Bit;
+    }
+
     public static boolean has64Bit() {
         if (has64Bit == null) {
             has64Bit = Build.SUPPORTED_64_BIT_ABIS.length > 0;
@@ -92,9 +99,9 @@ public class DaemonUtils {
         }
 
         if (has64Bit()) {
-            return new File("/dev/riru_" + devRandom);
-        } else {
             return new File("/dev/riru64_" + devRandom);
+        } else {
+            return new File("/dev/riru_" + devRandom);
         }
     }
 
