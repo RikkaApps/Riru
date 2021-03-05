@@ -215,10 +215,12 @@ static int new_RegisterNative(JNIEnv *env, jclass cls, const JNINativeMethod *me
         className = "com/android/internal/os/Zygote";
         LOGD("RegisterNative %s", className);
         env->DeleteGlobalRef(zygoteClass);
+        zygoteClass = nullptr;
     } else if (systemPropertiesClass != nullptr && env->IsSameObject(systemPropertiesClass, cls)) {
         className = "android/os/SystemProperties";
         LOGD("RegisterNative %s", className);
         env->DeleteGlobalRef(systemPropertiesClass);
+        systemPropertiesClass = nullptr;
     } else {
         className = "";
     }
