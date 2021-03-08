@@ -54,13 +54,12 @@ static uint8_t WriteToSocket(uint8_t *buffer, uint32_t buffer_size) {
     return reply;
 }
 
-static void TryWriteSocketOrFile(const flatbuffers::FlatBufferBuilder &builder) {
+static void WriteToSocket(const flatbuffers::FlatBufferBuilder &builder) {
     LOGV("try write status via socket");
     if (WriteToSocket(builder.GetBufferPointer(), builder.GetSize()) == Status::CODE_OK) {
         LOGV("write to socket succeed");
     } else {
-        LOGW("write to socket failed, try file");
-        Status::WriteToFile(Status::GetFbStatus(builder.GetBufferPointer()));
+        LOGW("write to socket failed");
     }
 }
 
@@ -100,7 +99,7 @@ void Status::WriteSelfAndModules() {
     status_builder.add_modules(modules);
     FinishFbStatusBuffer(builder, status_builder.Finish());
 
-    TryWriteSocketOrFile(builder);
+    WriteToSocket(builder);
 }
 
 void Status::WriteMethod(Method method, bool replaced, const char *sig) {
@@ -126,7 +125,7 @@ void Status::WriteMethod(Method method, bool replaced, const char *sig) {
     status_builder.add_jni_methods(methods);
     FinishFbStatusBuffer(builder, status_builder.Finish());
 
-    TryWriteSocketOrFile(builder);
+    WriteToSocket(builder);
 }
 
 static uint8_t ReadFromSocket(uint8_t *&buffer, uint32_t &buffer_size) {
@@ -183,22 +182,13 @@ static uint8_t ReadFromSocket(uint8_t *&buffer, uint32_t &buffer_size) {
     return reply;
 }
 
-static void TryReadSocketOrFile(uint8_t *&buffer, uint32_t &buffer_size) {
+bool Status::Read(uint8_t *&buffer, uint32_t &buffer_size) {
     LOGV("try read status via socket");
     if (ReadFromSocket(buffer, buffer_size) == Status::CODE_OK) {
         LOGV("read from socket succeed");
+        return true;
     } else {
-        LOGW("read from socket failed, try file");
-
-        flatbuffers::FlatBufferBuilder builder;
-        Status::ReadFromFile(builder);
-
-        buffer_size = builder.GetSize();
-        buffer = (uint8_t *) malloc(buffer_size);
-        memcpy(buffer, builder.GetBufferPointer(), buffer_size);
+        LOGW("read from socket failed");
+        return false;
     }
-}
-
-void Status::Read(uint8_t *&buffer, uint32_t &buffer_size) {
-    TryReadSocketOrFile(buffer, buffer_size);
 }

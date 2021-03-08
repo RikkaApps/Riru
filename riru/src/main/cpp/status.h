@@ -11,7 +11,7 @@ namespace Status {
         COUNT
     };
 
-    void Read(uint8_t *&buffer, uint32_t &buffer_size);
+    bool Read(uint8_t *&buffer, uint32_t &buffer_size);
 
     void WriteSelfAndModules();
 

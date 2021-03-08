@@ -69,7 +69,10 @@ void load_modules() {
     void *handle;
     const int riruApiVersion = RIRU_API_VERSION;
 
-    Status::Read(buffer, buffer_size);
+    if (!Status::Read(buffer, buffer_size)) {
+        return;
+    }
+
     auto status = Status::GetFbStatus(buffer);
 
     if (!status->core()) {
