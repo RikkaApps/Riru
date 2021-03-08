@@ -19,10 +19,13 @@ Please report bugs of Riru itself. Always **use the latest version of Riru**, an
 - Device: (optional)
 - OS: (optional)
 
+**Logs:**
+
+Related **full logcat**. For example, if you have a "Riru module not loaded" problem, a full boot log will be helpful.
+
 **Describe the bug:**
 
 A clear and concise description of what the bug is.
-
 
 **Additional context:**
 
