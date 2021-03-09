@@ -30,7 +30,7 @@ namespace Magisk {
         return str;
     }
 
-    void ForEachRiruModuleLibrary(const function<void(string_view, const char*)> &fn) {
+    void ForEachRiruModuleLibrary(const function<void(const char *, const char *)> &fn) {
         auto root = GetPath();
         if (!root) return;
 
@@ -71,7 +71,22 @@ namespace Magisk {
                     auto end = buf + strlen(buf);
                     strcat(buf, lib_entry->d_name);
 
-                    auto id = string(entry->d_name) + "/" + (lib_entry->d_name);
+                    char id[PATH_MAX]{0};
+                    strcpy(id, entry->d_name);
+                    strcat(id, "@");
+
+                    // remove "lib" or "libriru_"
+                    if (strncmp(lib_entry->d_name, "libriru_", 8) == 0) {
+                        strcat(id, lib_entry->d_name + 8);
+                    } else if (strncmp(lib_entry->d_name, "lib", 3) == 0) {
+                        strcat(id, lib_entry->d_name + 3);
+                    } else {
+                        strcat(id, lib_entry->d_name);
+                    }
+
+                    // remove ".so"
+                    id[strlen(id) - 3] = '\0';
+
                     fn(id, buf);
 
                     *end = '\0';

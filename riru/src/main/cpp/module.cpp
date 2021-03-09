@@ -65,10 +65,8 @@ static void cleanup(void *handle, const char *path) {
     pmparser_free(maps);
 }
 
-static void load_module(string_view id, const char *path) {
-    char *name = (char *) malloc(id.size() + 1);
-    name[id.size()] = 0;
-    memcpy(name, id.data(), id.size());
+static void load_module(const char* id, const char *path) {
+    char *name = strdup(id);
 
     const int riruApiVersion = RIRU_API_VERSION;
 
@@ -133,7 +131,7 @@ void load_modules() {
     uint8_t *buffer;
     uint32_t buffer_size;
 
-    Magisk::ForEachRiruModuleLibrary([](std::string_view id, const char *path) {
+    Magisk::ForEachRiruModuleLibrary([](const char* id, const char *path) {
         load_module(id, path);
     });
 
