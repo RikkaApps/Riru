@@ -163,23 +163,9 @@ __used __attribute__((constructor)) void constructor() {
     ReadOriginalNativeBridgeFromSocket(buf, buf_size);
 
     if (buf_size <= 0) {
-        LOGW("socket failed, try file");
-
-        int fd = open(CONFIG_DIR "/native_bridge", O_RDONLY);
-        if (fd == -1) {
-            PLOGE("access " CONFIG_DIR "/native_bridge");
-            return;
-        }
-
-        size = read(fd, buf, PATH_MAX);
-        close(fd);
-
-        if (size <= 0) {
-            LOGE("can't read native_bridge");
-            return;
-        }
-        buf[size] = 0;
-        if (size > 1 && buf[size - 1] == '\n') buf[size - 1] = 0;
+        LOGW("read original native bridge from socket failed");
+        buf[0] = '0';
+        buf[1] = '\0';
     } else {
         size = buf_size;
     }
