@@ -1,9 +1,11 @@
+import org.apache.tools.ant.filters.FixCrLfFilter
+
 apply plugin: 'idea'
 
 idea.module {
     excludeDirs += file('out')
-    excludeDirs += file('aar')
     resourceDirs += file('template')
+    excludeDirs += file('template/aar')
     resourceDirs += file('scripts')
     resourceDirs += file('docs')
 }
@@ -40,4 +42,58 @@ ext {
 
     riruApiVersion = 11
     riruMinApiVersion = 9
+}
+
+task generateLibraryAar(type: Zip) {
+    copy {
+        from 'riru/src/main/cpp/include_riru/riru.h'
+        into 'template/aar/riru.aar/prefab/modules/riru/include'
+    }
+
+    from 'template/aar/riru.aar'
+    archiveName "riru-${riruApiVersion}.aar"
+    destinationDir file("out/aar/dev/rikka/ndk/riru/${riruApiVersion}")
+}
+
+task generateLibraryPom(type: Copy) {
+    from 'template/aar/riru.pom'
+    into file("out/aar/dev/rikka/ndk/riru/${riruApiVersion}")
+    filter { line -> line.replaceAll('%%%VERSION%%%', "$riruApiVersion") }
+    filter(FixCrLfFilter.class,
+            eol: FixCrLfFilter.CrLf.newInstance("lf"))
+    rename { "riru-${riruApiVersion}.pom" }
+}
+
+task generateLibrarySourceJar(type: Zip) {
+    from 'template/aar/riru-sources.jar'
+    archiveName "riru-${riruApiVersion}-sources.jar"
+    destinationDir file("out/aar/dev/rikka/ndk/riru/${riruApiVersion}")
+}
+
+task generateLibraryJavaDocJar(type: Zip) {
+    from 'template/aar/riru-javadoc.jar'
+    archiveName "riru-${riruApiVersion}-javadoc.jar"
+    destinationDir file("out/aar/dev/rikka/ndk/riru/${riruApiVersion}")
+}
+
+task generateLibrary(type: GradleBuild) {
+    tasks = [':generateLibraryAar', ':generateLibraryPom', ':generateLibrarySourceJar', ':generateLibraryJavaDocJar']
+}
+
+task signLibrary {
+    def dir = "out/aar/dev/rikka/ndk/riru/${riruApiVersion}"
+    fileTree(dir).each { f ->
+        if (f.name.endsWith(".asc")) return
+
+        exec {
+            commandLine "gpg",
+                    "--armor",
+                    "--detach-sign",
+                    "--passphrase=${findProperty("signing.password")}",
+                    "--batch",
+                    "--yes",
+                    "${f.name}"
+            workingDir dir
+        }
+    }
 }
