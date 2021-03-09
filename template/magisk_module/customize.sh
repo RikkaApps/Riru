@@ -110,5 +110,17 @@ ui_print "- Writing Riru files"
 echo -n "$RIRU_API" > "$RIRU_PATH/api_version.new"
 set_perm "$RIRU_PATH/api_version.new" 0 0 0600 $SECONTEXT
 
+# Copy old config
+if [ "$MAGISK_VER_CODE" -ge 21000 ]; then
+  ENABLE_HIDE=$(magisk --path)/.magisk/modules/riru-core/enable_hide
+else
+  ENABLE_HIDE=/sbin/.magisk/modules/riru-core/enable_hide
+fi
+
+if [ -f $ENABLE_HIDE ] || [ -f /data/adb/riru/enable_hide ]; then
+  ui_print "- Hide is enabled"
+  touch "$MODPATH"/enable_hide
+fi
+
 ui_print "- Setting permissions"
 set_perm_recursive "$MODPATH" 0 0 0755 0644

@@ -11,7 +11,8 @@
 struct RiruModule {
 
 public:
-    const char *name;
+    const char *id;
+    const char *path;
     int apiVersion;
     uint32_t token;
 
@@ -33,7 +34,7 @@ private:
     void *_specializeAppProcessPost;
 
 public:
-    explicit RiruModule(const char *name, uint32_t token = 0) : name(name), token(token ? token : (uintptr_t) name) {
+    explicit RiruModule(const char *id, const char *path, uint32_t token = 0) : id(id), path(path), token(token ? token : (uintptr_t) id) {
         funcs = new std::map<std::string, void *>();
         apiVersion = 0;
         handle = nullptr;

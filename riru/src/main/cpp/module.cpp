@@ -22,7 +22,7 @@ bool is_hide_enabled() {
 }
 
 std::vector<RiruModule *> *get_modules() {
-    static auto *modules = new std::vector<RiruModule *>({new RiruModule(strdup(MODULE_NAME_CORE))});
+    static auto *modules = new std::vector<RiruModule *>({new RiruModule(strdup(MODULE_NAME_CORE), "")});
     return modules;
 }
 
@@ -107,7 +107,7 @@ static void load_module(string_view id, const char *path) {
     }
 
     // 2. create and pass Riru struct by module's api version
-    auto module = new RiruModule(name);
+    auto module = new RiruModule(name, strdup(path));
     module->handle = handle;
     module->apiVersion = *apiVersion;
 
@@ -126,7 +126,7 @@ static void load_module(string_view id, const char *path) {
 
     get_modules()->push_back(module);
 
-    LOGI("module loaded: %s (api %d)", module->name, module->apiVersion);
+    LOGI("module loaded: %s (api %d)", module->id, module->apiVersion);
 }
 
 void load_modules() {
@@ -152,7 +152,7 @@ void load_modules() {
         goto clean;
     }
 
-    hide_enabled = status->core()->hide();
+    hide_enabled = access(Magisk::GetPathForSelf("enable_hide").c_str(), F_OK) == 0;
 
     for (auto it : *status->modules()) {
         char path[PATH_MAX];
@@ -168,12 +168,12 @@ void load_modules() {
         auto names = (const char **) malloc(sizeof(char *) * modules->size());
         int names_count = 0;
         for (auto module : *get_modules()) {
-            if (strcmp(module->name, MODULE_NAME_CORE) == 0) continue;
+            if (strcmp(module->id, MODULE_NAME_CORE) == 0) continue;
             if (!module->supportHide) {
-                LOGI("module %s does not support hide", module->name);
+                LOGI("module %s does not support hide", module->id);
                 continue;
             }
-            names[names_count] = module->name;
+            names[names_count] = module->path;
             names_count += 1;
         }
         hide::hide_modules(names, names_count);
@@ -183,7 +183,7 @@ void load_modules() {
 
     for (auto module : *get_modules()) {
         if (module->hasOnModuleLoaded()) {
-            LOGV("%s: onModuleLoaded", module->name);
+            LOGV("%s: onModuleLoaded", module->id);
 
             module->onModuleLoaded();
         }

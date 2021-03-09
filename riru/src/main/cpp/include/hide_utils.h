@@ -6,6 +6,6 @@
 
 namespace hide {
 
-    void hide_modules(const char **names, int names_count);
+    void hide_modules(const char **paths, int paths_count);
 }
 #endif //RIRU_HIDE_UTILS_H

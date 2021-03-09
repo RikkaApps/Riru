@@ -11,7 +11,7 @@
 #define EXPORT __attribute__((visibility("default"))) __attribute__((used))
 
 extern "C" {
-int riru_hide(const char **names, int names_count) EXPORT;
+int riru_hide(const char **paths, int paths_count) EXPORT;
 }
 
 #ifdef __LP64__
@@ -84,7 +84,7 @@ static int do_hide(hide_struct *data) {
     return 0;
 }
 
-int riru_hide(const char **names, int names_count) {
+int riru_hide(const char **paths, int paths_count) {
     procmaps_iterator *maps = pmparser_parse(-1);
     if (maps == nullptr) {
         LOGE("cannot parse the memory map");
@@ -101,9 +101,8 @@ int riru_hide(const char **names, int names_count) {
         matched = strstr(maps_tmp->pathname, "libriru.so");
 #endif
         if (!matched) {
-            for (int i = 0; i < names_count; ++i) {
-                snprintf(buf, PATH_MAX, LIB_PATH "libriru_%s.so", names[i]);
-                if (strcmp(maps_tmp->pathname, buf) == 0) {
+            for (int i = 0; i < paths_count; ++i) {
+                if (strcmp(maps_tmp->pathname, paths[i]) == 0) {
                     matched = true;
                     break;
                 }

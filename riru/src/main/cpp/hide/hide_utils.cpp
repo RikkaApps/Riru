@@ -16,7 +16,7 @@
 
 namespace hide {
 
-    void hide_modules(const char **names, int names_count) {
+    void hide_modules(const char **paths, int paths_count) {
         // load riruhide.so and run the hide
         LOGD("dlopen libriruhide");
         auto handle = dlopen(LIB_PATH "libriruhide.so", 0);
@@ -32,7 +32,7 @@ namespace hide {
         }
 
         LOGD("do hide");
-        riru_hide(names, names_count);
+        riru_hide(paths, paths_count);
 
         // cleanup riruhide.so
         LOGD("dlclose");

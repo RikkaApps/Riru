@@ -86,7 +86,7 @@ static void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, ji
          *
          * Don't known why, so we just don't print log in zygote and see what will happen
          */
-        if (res == 0) LOGD("%s: forkAndSpecializePost", module->name);
+        if (res == 0) LOGD("%s: forkAndSpecializePost", module->id);
 
         module->forkAndSpecializePost(env, clazz, res);
     }
@@ -120,7 +120,7 @@ static void nativeSpecializeAppProcess_post(JNIEnv *env, jclass clazz) {
         if (!module->hasSpecializeAppProcessPost())
             continue;
 
-        LOGD("%s: specializeAppProcessPost", module->name);
+        LOGD("%s: specializeAppProcessPost", module->id);
         module->specializeAppProcessPost(env, clazz);
     }
 }
@@ -146,7 +146,7 @@ static void nativeForkSystemServer_post(JNIEnv *env, jclass clazz, jint res) {
         if (!module->hasForkSystemServerPost())
             continue;
 
-        if (res == 0) LOGD("%s: forkSystemServerPost", module->name);
+        if (res == 0) LOGD("%s: forkSystemServerPost", module->id);
         module->forkSystemServerPost(env, clazz, res);
     }
 }

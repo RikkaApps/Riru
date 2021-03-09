@@ -83,10 +83,10 @@ void Status::WriteSelfAndModules() {
 
     std::vector<flatbuffers::Offset<Module>> modules_vector;
     for (auto module : *get_modules()) {
-        if (strcmp(module->name, MODULE_NAME_CORE) == 0) continue;
+        if (strcmp(module->id, MODULE_NAME_CORE) == 0) continue;
         modules_vector.emplace_back(CreateModuleDirect(
                 builder,
-                module->name,
+                module->id,
                 module->apiVersion,
                 module->version,
                 module->versionName,
