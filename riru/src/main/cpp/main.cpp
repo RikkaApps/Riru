@@ -296,10 +296,6 @@ void constructor() {
 
     LOGI("config dir is %s", CONFIG_DIR);
 
-    if (access(CONFIG_DIR "/disable", F_OK) == 0) {
-        LOGI("%s exists, do nothing", CONFIG_DIR "/disable");
-        return;
-    }
 
     read_prop();
 

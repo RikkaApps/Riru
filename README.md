@@ -34,7 +34,6 @@ A typical example is, some "optimize" modules change this property. Since changi
 
 ### Config
 
-* When the file `/data/adb/riru/disable` exists, Riru will do nothing
 * When the file `/data/adb/riru/enable_hide` exists, the hidden mechanism will be enabled (also requires the support of the modules)
 
 ## How Riru works?
