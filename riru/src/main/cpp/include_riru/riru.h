@@ -54,6 +54,7 @@ typedef struct {
 } RiruModuleInfoV9;
 
 typedef RiruModuleInfoV9 RiruModuleInfoV10;
+typedef RiruModuleInfoV9 RiruModuleInfoV11;
 
 // ---------------------------------------------------------
 
@@ -84,6 +85,19 @@ typedef struct {
 } RiruApiV9;
 
 typedef RiruApiV9 RiruApiV10;
+
+typedef struct {
+
+    uint32_t token;
+    const char *magisk_module_path;
+    RiruGetFunc_v9 *getFunc;
+    RiruGetJNINativeMethodFunc_v9 *getJNINativeMethodFunc;
+    RiruSetFunc_v9 *setFunc;
+    RiruSetJNINativeMethodFunc_v9 *setJNINativeMethodFunc;
+    RiruGetOriginalJNINativeMethodFunc_v9 *getOriginalJNINativeMethodFunc;
+    RiruGetGlobalValue_v9 *getGlobalValue;
+    RiruPutGlobalValue_v9 *putGlobalValue;
+} RiruApiV11;
 
 typedef void *(RiruInit_t)(void *);
 

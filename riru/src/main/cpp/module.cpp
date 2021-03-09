@@ -22,13 +22,28 @@ bool is_hide_enabled() {
 }
 
 std::vector<RiruModule *> *get_modules() {
-    static auto *modules = new std::vector<RiruModule *>({new RiruModule(strdup(MODULE_NAME_CORE), "")});
+    static auto *modules = new std::vector<RiruModule *>({new RiruModule(strdup(MODULE_NAME_CORE), "", "")});
     return modules;
 }
 
 static RiruModuleInfoV9 *init_module_v9(uint32_t token, RiruInit_t *init) {
     auto riru = new RiruApiV9();
     riru->token = token;
+    riru->getFunc = api::getFunc;
+    riru->setFunc = api::setFunc;
+    riru->getJNINativeMethodFunc = api::getNativeMethodFunc;
+    riru->setJNINativeMethodFunc = api::setNativeMethodFunc;
+    riru->getOriginalJNINativeMethodFunc = api::getOriginalNativeMethod;
+    riru->getGlobalValue = api::getGlobalValue;
+    riru->putGlobalValue = api::putGlobalValue;
+
+    return (RiruModuleInfoV9 *) init(riru);
+}
+
+static RiruModuleInfoV9 *init_module_v11(uint32_t token, const char *magisk_module_path, RiruInit_t *init) {
+    auto riru = new RiruApiV11();
+    riru->token = token;
+    riru->magisk_module_path = magisk_module_path;
     riru->getFunc = api::getFunc;
     riru->setFunc = api::setFunc;
     riru->getJNINativeMethodFunc = api::getNativeMethodFunc;
@@ -65,7 +80,7 @@ static void cleanup(void *handle, const char *path) {
     pmparser_free(maps);
 }
 
-static void load_module(const char* id, const char *path) {
+static void load_module(const char *id, const char *path, const char *magisk_module_path) {
     char *name = strdup(id);
 
     const int riruApiVersion = RIRU_API_VERSION;
@@ -105,18 +120,32 @@ static void load_module(const char* id, const char *path) {
     }
 
     // 2. create and pass Riru struct by module's api version
-    auto module = new RiruModule(name, strdup(path));
+    auto module = new RiruModule(name, strdup(path), strdup(magisk_module_path));
     module->handle = handle;
     module->apiVersion = *apiVersion;
 
-    if (*apiVersion == 10 || *apiVersion == 9) {
-        auto info = init_module_v9(module->token, init);
-        if (info == nullptr) {
-            LOGE("%s returns null on step 2", path);
-            cleanup(handle, path);
-            return;
+    switch (*apiVersion) {
+        case 11: {
+            auto info = init_module_v11(module->token, module->magisk_module_path, init);
+            if (info == nullptr) {
+                LOGE("%s returns null on step 2", path);
+                cleanup(handle, path);
+                return;
+            }
+            module->info(info);
+            break;
         }
-        module->info(info);
+        case 10:
+        case 9: {
+            auto info = init_module_v9(module->token, init);
+            if (info == nullptr) {
+                LOGE("%s returns null on step 2", path);
+                cleanup(handle, path);
+                return;
+            }
+            module->info(info);
+            break;
+        }
     }
 
     // 3. let the module to do some cleanup jobs
@@ -131,8 +160,56 @@ void load_modules() {
     uint8_t *buffer;
     uint32_t buffer_size;
 
-    Magisk::ForEachRiruModuleLibrary([](const char* id, const char *path) {
-        load_module(id, path);
+    Magisk::ForEachModule([](const char *path) {
+        auto magisk_module_name = basename(path);
+        char buf[PATH_MAX];
+        DIR *dir;
+        struct dirent *entry;
+
+        strcpy(buf, path);
+        strcat(buf, "/riru/lib");
+#ifdef __LP64__
+        strcat(buf, "64");
+#endif
+
+        if (access(buf, F_OK) == -1) {
+            return;
+        }
+
+        LOGI("Magisk module %s is a Riru module", magisk_module_name);
+
+        if (!(dir = opendir(buf))) return;
+
+        strcat(buf, "/");
+
+        while ((entry = readdir(dir))) {
+            if (entry->d_type != DT_REG) continue;
+
+            auto end = buf + strlen(buf);
+            strcat(buf, entry->d_name);
+
+            char id[PATH_MAX]{0};
+            strcpy(id, magisk_module_name);
+            strcat(id, "@");
+
+            // remove "lib" or "libriru_"
+            if (strncmp(entry->d_name, "libriru_", 8) == 0) {
+                strcat(id, entry->d_name + 8);
+            } else if (strncmp(entry->d_name, "lib", 3) == 0) {
+                strcat(id, entry->d_name + 3);
+            } else {
+                strcat(id, entry->d_name);
+            }
+
+            // remove ".so"
+            id[strlen(id) - 3] = '\0';
+
+            load_module(id, buf, path);
+
+            *end = '\0';
+        }
+
+        closedir(dir);
     });
 
     if (!Status::ReadModules(buffer, buffer_size)) {
@@ -161,7 +238,7 @@ void load_modules() {
         snprintf(path, PATH_MAX, "/system/lib/libriru_%s.so", name);
 
 #endif
-        load_module(name, path);
+        load_module(name, path, nullptr);
     }
 
     if (hide_enabled) {

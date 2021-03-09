@@ -8,5 +8,5 @@ namespace Magisk {
 
     std::string GetPathForSelf(const char *name);
 
-    void ForEachRiruModuleLibrary(const std::function<void(const char* id, const char* riru_files_path)> &fn);
+    void ForEachModule(const std::function<void(const char* riru_files_path)> &fn);
 }
