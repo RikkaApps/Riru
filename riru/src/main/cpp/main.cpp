@@ -280,7 +280,6 @@ void constructor() {
 
     LOGI("Riru %s (%d) in %s", RIRU_VERSION_NAME, RIRU_VERSION_CODE, cmdline);
     LOGI("Magisk tmpfs path is %s", Magisk::GetPath());
-    LOGI("Config dir is %s", CONFIG_DIR);
     LOGI("Android %s (api %d, preview_api %d)", AndroidProp::GetRelease(), AndroidProp::GetApiLevel(), AndroidProp::GetPreviewApiLevel());
 
     XHOOK_REGISTER(".*\\libandroid_runtime.so$", jniRegisterNativeMethods);

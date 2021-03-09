@@ -8,6 +8,7 @@
 #include <sys/un.h>
 #include <socket.h>
 #include <malloc.h>
+#include <dl.h>
 #include "config.h"
 #include "logging.h"
 #include "misc.h"
@@ -24,11 +25,8 @@
 #endif
 #endif
 
-static const uint32_t ACTION_PING = 0;
 static const uint32_t ACTION_READ_NATIVE_BRIDGE = 3;
-
-static const uint8_t CODE_OK = 0;
-static const uint8_t CODE_FAILED = 1;
+static const uint32_t ACTION_READ_MAGISK_TMPFS_PATH = 6;
 
 #ifdef HAS_NATIVE_BRIDGE
 
@@ -49,7 +47,9 @@ __used __attribute__((destructor)) void destructor() {
     if (original_bridge) dlclose(original_bridge);
 }
 
-static void ReadOriginalNativeBridgeFromSocket(char *buffer, int32_t &buffer_size) {
+#endif
+
+static void ReadFromSocket(uint32_t code, char *buffer, int32_t &buffer_size) {
     struct sockaddr_un addr{};
     int fd;
     socklen_t socklen;
@@ -66,7 +66,7 @@ static void ReadOriginalNativeBridgeFromSocket(char *buffer, int32_t &buffer_siz
         goto clean;
     }
 
-    if (write_full(fd, &ACTION_READ_NATIVE_BRIDGE, sizeof(ACTION_READ_NATIVE_BRIDGE)) != 0) {
+    if (write_full(fd, &code, sizeof(code)) != 0) {
         PLOGE("write %s", SOCKET_ADDRESS);
         goto clean;
     }
@@ -89,51 +89,6 @@ static void ReadOriginalNativeBridgeFromSocket(char *buffer, int32_t &buffer_siz
     if (fd != -1) close(fd);
 }
 
-#endif
-
-static void WaitForSocket(uint8_t retry) {
-    struct sockaddr_un addr{};
-    int fd;
-    socklen_t socklen;
-    uint8_t reply = CODE_FAILED;
-
-    while (retry > 0) {
-        if ((fd = socket(PF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0)) < 0) {
-            PLOGE("socket");
-            goto clean;
-        }
-
-        socklen = setup_sockaddr(&addr, SOCKET_ADDRESS);
-
-        if (connect(fd, (struct sockaddr *) &addr, socklen) == -1) {
-            PLOGE("connect %s", SOCKET_ADDRESS);
-            goto clean;
-        }
-
-        if (write_full(fd, &ACTION_PING, sizeof(ACTION_PING)) != 0) {
-            PLOGE("write %s", SOCKET_ADDRESS);
-            goto clean;
-        }
-
-        if (read_full(fd, &reply, sizeof(reply)) != 0) {
-            PLOGE("read %s", SOCKET_ADDRESS);
-            goto clean;
-        }
-
-        clean:
-        if (fd != -1) close(fd);
-        retry -= 1;
-
-        if (reply == CODE_OK) {
-            LOGI("socket is running!");
-            break;
-        } else {
-            LOGI("socket is not running, %d retries left...", retry);
-            sleep(1);
-        }
-    }
-}
-
 __used __attribute__((constructor)) void constructor() {
     if (getuid() != 0)
         return;
@@ -150,40 +105,46 @@ __used __attribute__((constructor)) void constructor() {
         return;
     }
 
-    WaitForSocket(10);
+    char magisk_path[PATH_MAX]{0};
+    int32_t buf_size = -1;
+    int retry = 10;
 
-    dlopen(LIB_PATH "libriru.so", 0);
+    while (retry > 0) {
+        ReadFromSocket(ACTION_READ_MAGISK_TMPFS_PATH, magisk_path, buf_size);
+        if (buf_size > 0) {
+            LOGI("Magisk tmpfs path is %s", magisk_path);
+            break;
+        }
+        retry --;
+        LOGI("Failed to read Magisk tmpfs path from socket, %d retires left...", retry);
+        sleep(1);
+    }
+
+    if (buf_size <= 0) {
+        return;
+    }
+
+    char riru_path[PATH_MAX];
+    strcpy(riru_path, magisk_path);
+    strcat(riru_path, "/.magisk/modules/riru-core/lib");
+#ifdef __LP64__
+    strcat(riru_path, "64");
+#endif
+    strcat(riru_path, "/libriru.so");
+
+    dl_dlopen(riru_path, 0);
 
 #ifdef HAS_NATIVE_BRIDGE
 
-    char buf[PATH_MAX]{0};
-    int32_t buf_size;
-    ssize_t size;
+    char native_bridge[PATH_MAX]{0};
 
-    ReadOriginalNativeBridgeFromSocket(buf, buf_size);
-
+    ReadFromSocket(ACTION_READ_NATIVE_BRIDGE, native_bridge, buf_size);
     if (buf_size <= 0) {
-        LOGW("read original native bridge from socket failed");
-        buf[0] = '0';
-        buf[1] = '\0';
-    } else {
-        size = buf_size;
-    }
-
-    LOGI("original native bridge: %s", buf);
-
-    if (buf[0] == '0' && buf[1] == 0) {
+        LOGW("Failed to read original native bridge from socket");
         return;
     }
 
-    auto native_bridge = buf + size + 1;
-    strcpy(native_bridge, LIB_PATH);
-    strncat(native_bridge, buf, size);
-
-    if (access(native_bridge, F_OK) != 0) {
-        PLOGE("access %s", native_bridge);
-        return;
-    }
+    LOGI("original native bridge: %s", native_bridge);
 
     original_bridge = dlopen(native_bridge, RTLD_NOW);
     if (original_bridge == nullptr) {

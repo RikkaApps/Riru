@@ -157,8 +157,12 @@ void load_modules() {
     for (auto it : *status->modules()) {
         char path[PATH_MAX];
         auto name = it->name()->c_str();
-        snprintf(path, PATH_MAX, MODULE_PATH_FMT, name);
+#ifdef __LP64__
+        snprintf(path, PATH_MAX, "/system/lib64/libriru_%s.so", name);
+#else
+        snprintf(path, PATH_MAX, "/system/lib/libriru_%s.so", name);
 
+#endif
         load_module(name, path);
     }
 
@@ -168,15 +172,22 @@ void load_modules() {
         auto names = (const char **) malloc(sizeof(char *) * modules->size());
         int names_count = 0;
         for (auto module : *get_modules()) {
-            if (strcmp(module->id, MODULE_NAME_CORE) == 0) continue;
-            if (!module->supportHide) {
+            if (strcmp(module->id, MODULE_NAME_CORE) == 0) {
+#ifdef __LP64__
+                names[names_count] = strdup(Magisk::GetPathForSelf("lib64/libriru.so").c_str());
+#else
+                names[names_count] = strdup(Magisk::GetPathForSelf("lib/libriru.so").c_str());
+#endif
+            } else if (module->supportHide) {
+                names[names_count] = module->path;
+            } else {
                 LOGI("module %s does not support hide", module->id);
                 continue;
             }
-            names[names_count] = module->path;
             names_count += 1;
         }
         hide::hide_modules(names, names_count);
+        free(names);
     } else {
         LOGI("hide is not enabled");
     }

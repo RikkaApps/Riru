@@ -5,6 +5,7 @@
 #include <cerrno>
 #include <syscall.h>
 #include <cstdio>
+#include <sys/xattr.h>
 
 static int setsockcreatecon_builtin_impl(const char *ctx) {
     int fd = open("/proc/thread-self/attr/sockcreate", O_RDWR | O_CLOEXEC);
@@ -32,18 +33,28 @@ static int setsockcreatecon_builtin_impl(const char *ctx) {
     return rc == -1 ? -1 : 0;
 }
 
+static int setfilecon_builtin_impl(const char *path, const char *ctx) {
+    return syscall(__NR_setxattr, path, XATTR_NAME_SELINUX, ctx, strlen(ctx) + 1, 0);
+}
+
 static int stub(const char *) {
     return 0;
 }
 
+static int stub(const char *, const char *) {
+    return 0;
+}
+
 int (*setsockcreatecon)(const char *con) = stub;
+int (*setfilecon)(const char *, const char *) = stub;
 
 void selinux_builtin_impl() {
     setsockcreatecon = setsockcreatecon_builtin_impl;
+    setfilecon = setfilecon_builtin_impl;
 }
 
 void dload_selinux() {
-    if (access("/system/lib/libselinux.so", F_OK) != 0) {
+    if (access("/system/lib/libselinux.so", F_OK) != 0 && access("/system/lib64/libselinux.so", F_OK) != 0) {
         return;
     }
 

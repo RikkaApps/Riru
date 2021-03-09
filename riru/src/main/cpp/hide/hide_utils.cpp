@@ -1,27 +1,27 @@
 #include <sys/mman.h>
 #include <dlfcn.h>
+#include <dl.h>
+#include <string>
+#include <magisk.h>
 #include "hide_utils.h"
 #include "wrap.h"
 #include "logging.h"
 
-#ifndef DEBUG_APP
-#ifdef __LP64__
-#define LIB_PATH "/system/lib64/"
-#else
-#define LIB_PATH "/system/lib/"
-#endif
-#else
-#define LIB_PATH "/data/data/moe.riru.manager/lib/"
-#endif
-
 namespace hide {
 
     void hide_modules(const char **paths, int paths_count) {
+        const char *hide_lib_path;
+#ifdef __LP64__
+        hide_lib_path = Magisk::GetPathForSelf("lib64/libriruhide.so").c_str();
+#else
+        hide_lib_path = Magisk::GetPathForSelf("lib/libriruhide.so").c_str();
+#endif
+
         // load riruhide.so and run the hide
         LOGD("dlopen libriruhide");
-        auto handle = dlopen(LIB_PATH "libriruhide.so", 0);
+        auto handle = dl_dlopen(hide_lib_path, 0);
         if (!handle) {
-            LOGE("dlopen %s failed: %s", LIB_PATH "libriruhide.so", dlerror());
+            LOGE("dlopen %s failed: %s", hide_lib_path, dlerror());
             return;
         }
         using riru_hide_t = int(const char **names, int names_count);

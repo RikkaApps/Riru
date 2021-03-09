@@ -56,8 +56,10 @@ static int do_hide(hide_struct *data) {
     int prot = get_prot(procstruct);
 
     // backup
-    data->backup_address = (uintptr_t) FAILURE_RETURN(mmap(nullptr, length, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0), MAP_FAILED);
-    LOGD("%" PRIxPTR"-%" PRIxPTR" %s %ld %s is backup to %" PRIxPTR, start, end, procstruct->perm, procstruct->offset, procstruct->pathname, data->backup_address);
+    data->backup_address = (uintptr_t) FAILURE_RETURN(
+            mmap(nullptr, length, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0), MAP_FAILED);
+    LOGD("%" PRIxPTR"-%" PRIxPTR" %s %ld %s is backup to %" PRIxPTR, start, end, procstruct->perm, procstruct->offset,
+         procstruct->pathname, data->backup_address);
 
     if (!procstruct->is_r) {
         LOGD("mprotect +r");
@@ -96,18 +98,17 @@ int riru_hide(const char **paths, int paths_count) {
     size_t data_count = 0;
     procmaps_struct *maps_tmp;
     while ((maps_tmp = pmparser_next(maps)) != nullptr) {
-        bool matched = strcmp(maps_tmp->pathname, LIB_PATH "libriru.so") == 0;
+        bool matched = false;
 #ifdef DEBUG_APP
         matched = strstr(maps_tmp->pathname, "libriru.so");
 #endif
-        if (!matched) {
-            for (int i = 0; i < paths_count; ++i) {
-                if (strcmp(maps_tmp->pathname, paths[i]) == 0) {
-                    matched = true;
-                    break;
-                }
+        for (int i = 0; i < paths_count; ++i) {
+            if (strcmp(maps_tmp->pathname, paths[i]) == 0) {
+                matched = true;
+                break;
             }
         }
+
         if (!matched) continue;
 
         auto start = (uintptr_t) maps_tmp->addr_start;

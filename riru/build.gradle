@@ -71,7 +71,6 @@ dependencies {
 
 def outDir = file("$rootDir/out")
 def magiskDir = file("$outDir/magisk_module")
-def zipName = "riru-${moduleProp['version']}.zip"
 
 static def sha256sum(file) {
     def md = MessageDigest.getInstance("SHA-256")
@@ -116,21 +115,11 @@ android.applicationVariants.all { variant ->
             file("$magiskDir/module.prop").text = modulePropText
 
             // copy libs
+            def nativeOutDir = file("build/intermediates/cmake/$variant.name/obj")
             copy {
-                from zipTree(file(outputFile)).matching { include 'lib/armeabi-v7a/*' }.files
-                into file("$magiskDir/system/lib")
-            }
-            copy {
-                from zipTree(file(outputFile)).matching { include 'lib/arm64-v8a/*' }.files
-                into file("$magiskDir/system/lib64")
-            }
-            copy {
-                from zipTree(file(outputFile)).matching { include 'lib/x86/*' }.files
-                into file("$magiskDir/system_x86/lib")
-            }
-            copy {
-                from zipTree(file(outputFile)).matching { include 'lib/x86_64/*' }.files
-                into file("$magiskDir/system_x86/lib64")
+                from "$nativeOutDir"
+                into "$magiskDir/lib"
+                exclude "**/*.txt"
             }
 
             // copy dex
