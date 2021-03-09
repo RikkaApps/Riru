@@ -13,10 +13,5 @@ move_new_file "$RIRU_PATH/api_version"
 move_new_file "$MODDIR/rirud"
 move_new_file "$MODDIR/rirud.dex"
 
-# Remove old files to avoid downgrade problems
-rm /data/misc/riru/api_version
-rm /data/misc/riru/version_code
-rm /data/misc/riru/version_name
-
 # Start daemon which runs socket "rirud"
 exec "$MODDIR"/rirud

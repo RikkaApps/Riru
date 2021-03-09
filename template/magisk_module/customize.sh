@@ -123,3 +123,9 @@ if [ -f $ENABLE_HIDE ] || [ -f /data/adb/riru/enable_hide ]; then
   touch "$MODPATH"/enable_hide
   set_perm "$MODPATH/enable_hide" 0 0 0700
 fi
+
+ui_print "- Removing old files"
+rm -rf /data/adb/riru/bin
+rm /data/misc/riru/api_version
+rm /data/misc/riru/version_code
+rm /data/misc/riru/version_name
