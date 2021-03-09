@@ -1,6 +1,5 @@
 #!/system/bin/sh
 MODDIR=${0%/*}
-RIRU_PATH="/data/adb/riru"
 
 # Rename .new file
 move_new_file() {
@@ -9,7 +8,6 @@ move_new_file() {
     mv "$1.new" "$1"
   fi
 }
-move_new_file "$RIRU_PATH/api_version"
 move_new_file "$MODDIR/rirud"
 move_new_file "$MODDIR/rirud.dex"
 

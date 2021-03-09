@@ -1,6 +1,5 @@
 SKIPUNZIP=1
 
-RIRU_PATH="/data/adb/riru"
 RIRU_API="%%%RIRU_API%%%"
 RIRU_VERSION_CODE="%%%RIRU_VERSION_CODE%%%"
 RIRU_VERSION_NAME="%%%RIRU_VERSION_NAME%%%"
@@ -49,10 +48,9 @@ ui_print "- Extracting Magisk files"
 extract "$ZIPFILE" 'module.prop' "$MODPATH"
 extract "$ZIPFILE" 'post-fs-data.sh' "$MODPATH"
 extract "$ZIPFILE" 'service.sh' "$MODPATH"
-extract "$ZIPFILE" 'uninstall.sh' "$MODPATH"
 extract "$ZIPFILE" 'sepolicy.rule' "$MODPATH"
 extract "$ZIPFILE" 'system.prop' "$MODPATH"
-extract "$ZIPFILE" 'util_functions.sh' "$RIRU_PATH" true
+extract "$ZIPFILE" 'util_functions.sh' "$MODPATH"
 
 mkdir "$MODPATH/lib"
 mkdir "$MODPATH/lib64"
@@ -108,8 +106,8 @@ set_perm "$MODPATH/rirud.dex.new" 0 0 0600
 
 # write api version to a persist file, only for the check process of the module installation
 ui_print "- Writing Riru files"
-echo -n "$RIRU_API" > "$RIRU_PATH/api_version.new"
-set_perm "$RIRU_PATH/api_version.new" 0 0 0600
+echo -n "$RIRU_API" > "$MODPATH/api_version"
+set_perm "$MODPATH/api_version" 0 0 0600
 
 # Copy old config
 if [ "$MAGISK_VER_CODE" -ge 21000 ]; then
