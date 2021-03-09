@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.4.1)
 
 message("Build type: ${CMAKE_BUILD_TYPE}")
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 if (NOT DEFINED RIRU_VERSION_NAME)
     message(FATAL_ERROR "RIRU_VERSION_NAME is not set")
@@ -50,13 +50,15 @@ include_directories(include_generated)
 include_directories(include_riru)
 
 add_library(utils STATIC
+        util/android_prop.cpp
         util/misc.cpp
         util/wrap.cpp
         util/pmparser.c
         util/selinux.cpp
         util/socket.cpp
         util/tinynew.cpp
-        util/plt.c)
+        util/plt.c
+        util/dl.cpp)
 
 add_library(riru SHARED
         main.cpp
@@ -66,6 +68,7 @@ add_library(riru SHARED
         hide/hide_utils.cpp
         status.cpp
         module.cpp
+        magisk.cpp
         daemon/status.cpp)
 target_include_directories(riru PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(riru log utils xhook::xhook flatbuffers::flatbuffers)

@@ -7,6 +7,9 @@
 #include <sys/stat.h>
 #include <cstdlib>
 #include <cctype>
+#include <logging.h>
+#include <sys/wait.h>
+#include <vector>
 
 #include "wrap.h"
 
@@ -169,4 +172,129 @@ int mkdirs(const char *pathname, mode_t mode) {
     }
     free(path);
     return 0;
+}
+
+/*
+   fd == NULL -> Ignore output
+  *fd < 0     -> Open pipe and set *fd to the read end
+  *fd >= 0    -> STDOUT (or STDERR) will be redirected to *fd
+  *cb         -> A callback function which runs after fork
+*/
+static int exec_command_v(int err, int *fd, const char *pathname, char *const *argv) {
+    int pipefd[2], writeEnd = -1;
+
+    if (fd) {
+        if (*fd < 0) {
+            if (pipe2(pipefd, O_CLOEXEC) == -1)
+                return -1;
+            writeEnd = pipefd[1];
+        } else {
+            writeEnd = *fd;
+        }
+    }
+
+    // Setup environment
+    char *const *envp;
+    extern char **environ;
+    envp = environ;
+
+    int pid = fork();
+    if (pid == -1) {
+        return -1;
+    }
+
+    if (pid != 0) {
+        if (fd && *fd < 0) {
+            // Give the read end and close write end
+            *fd = pipefd[0];
+            close(pipefd[1]);
+        }
+        return pid;
+    }
+
+    if (fd) {
+        dup2(writeEnd, STDOUT_FILENO);
+        if (err) dup2(writeEnd, STDERR_FILENO);
+    }
+
+    execvpe(pathname, argv, envp);
+    PLOGE("execvpe %s", pathname);
+    exit(1);
+}
+
+int execv_sync(const char *pathname, char *const *argv) {
+    int pid, status;
+    pid = exec_command_v(0, nullptr, pathname, argv);
+    if (pid < 0)
+        return pid;
+    waitpid(pid, &status, 0);
+
+    if (WIFEXITED(status)) {
+        int returned = WEXITSTATUS(status);
+        LOGD("%s exited normally with status %d", pathname, returned);
+        return returned;
+    } else if (WIFSIGNALED(status)) {
+        int signum = WTERMSIG(status);
+        LOGD("%s exited due to receiving signal %d", pathname, signum);
+        return -1;
+    } else if (WIFSTOPPED(status)) {
+        int signum = WSTOPSIG(status);
+        LOGD("%s stopped due to receiving signal %d", pathname, signum);
+        return -1;
+    } else {
+        LOGD("%s something strange just happened", pathname);
+        return -1;
+    }
+}
+
+/*
+   fd == NULL -> Ignore output
+  *fd < 0     -> Open pipe and set *fd to the read end
+  *fd >= 0    -> STDOUT (or STDERR) will be redirected to *fd
+  *cb         -> A callback function which runs after fork
+*/
+static int exec_command_l(int err, int *fd, const char *argv0, va_list argv) {
+    // Collect va_list into vector
+    std::vector<char *> args;
+    args.push_back(strdup(argv0));
+    for (char *arg = va_arg(argv, char*); arg; arg = va_arg(argv, char*))
+        args.push_back(strdup(arg));
+    args.push_back(nullptr);
+    return exec_command_v(err, fd, argv0, args.data());
+}
+
+int execl_sync(const char *argv0, ...) {
+    va_list argv;
+    va_start(argv, argv0);
+    int pid, status;
+    pid = exec_command_l(0, nullptr, argv0, argv);
+    va_end(argv);
+    if (pid < 0)
+        return pid;
+    waitpid(pid, &status, 0);
+
+    if (WIFEXITED(status)) {
+        int returned = WEXITSTATUS(status);
+        LOGD("%s exited normally with status %d", argv0, returned);
+        return returned;
+    } else if (WIFSIGNALED(status)) {
+        int signum = WTERMSIG(status);
+        LOGD("%s exited due to receiving signal %d", argv0, signum);
+        return -1;
+    } else if (WIFSTOPPED(status)) {
+        int signum = WSTOPSIG(status);
+        LOGD("%s stopped due to receiving signal %d", argv0, signum);
+        return -1;
+    } else {
+        LOGD("%s something strange just happened", argv0);
+        return -1;
+    }
+}
+
+int exec_command(int err, int *fd, const char *argv0, ...) {
+    va_list argv;
+    va_start(argv, argv0);
+    int pid = exec_command_l(err, fd, argv0, argv);
+    va_end(argv);
+    return pid;
 }

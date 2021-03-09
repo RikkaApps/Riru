@@ -8,7 +8,7 @@
 
 namespace NativeMethod {
 
-#define NEW_FUNC_DEF(ret, func, ...) \
+#define FUNC_DEF(ret, func, ...) \
     static ret (*old_##func)(__VA_ARGS__); \
     static ret new_##func(__VA_ARGS__)
 

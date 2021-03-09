@@ -10,6 +10,10 @@
 #include "status.h"
 #include "hide_utils.h"
 #include "status_generated.h"
+#include "magisk.h"
+#include "dl.h"
+
+using namespace std;
 
 static bool hide_enabled;
 
@@ -61,15 +65,79 @@ static void cleanup(void *handle, const char *path) {
     pmparser_free(maps);
 }
 
+static void load_module(string_view id, const char *path) {
+    char *name = (char *) malloc(id.size() + 1);
+    name[id.size()] = 0;
+    memcpy(name, id.data(), id.size());
+
+    const int riruApiVersion = RIRU_API_VERSION;
+
+    void *handle;
+
+    if (access(path, F_OK) != 0) {
+        PLOGE("access %s", path);
+        return;
+    }
+
+    handle = dl_dlopen(path, 0);
+    if (!handle) {
+        LOGE("dlopen %s failed: %s", path, dlerror());
+        return;
+    }
+
+    auto init = (RiruInit_t *) dlsym(handle, "init");
+    if (!init) {
+        LOGW("%s does not export init", path);
+        cleanup(handle, path);
+        return;
+    }
+
+    // 1. pass riru api version, return module's api version
+    auto apiVersion = (int *) init((void *) &riruApiVersion);
+    if (apiVersion == nullptr) {
+        LOGE("%s returns null on step 1", path);
+        cleanup(handle, path);
+        return;
+    }
+
+    if (*apiVersion < RIRU_MIN_API_VERSION || *apiVersion > RIRU_API_VERSION) {
+        LOGW("unsupported API %s: %d", name, *apiVersion);
+        cleanup(handle, path);
+        return;
+    }
+
+    // 2. create and pass Riru struct by module's api version
+    auto module = new RiruModule(name);
+    module->handle = handle;
+    module->apiVersion = *apiVersion;
+
+    if (*apiVersion == 10 || *apiVersion == 9) {
+        auto info = init_module_v9(module->token, init);
+        if (info == nullptr) {
+            LOGE("%s returns null on step 2", path);
+            cleanup(handle, path);
+            return;
+        }
+        module->info(info);
+    }
+
+    // 3. let the module to do some cleanup jobs
+    init(nullptr);
+
+    get_modules()->push_back(module);
+
+    LOGI("module loaded: %s (api %d)", module->name, module->apiVersion);
+}
+
 void load_modules() {
     uint8_t *buffer;
     uint32_t buffer_size;
 
-    char path[PATH_MAX];
-    void *handle;
-    const int riruApiVersion = RIRU_API_VERSION;
+    Magisk::ForEachRiruModuleLibrary([](std::string_view id, const char *path) {
+        load_module(id, path);
+    });
 
-    if (!Status::Read(buffer, buffer_size)) {
+    if (!Status::ReadModules(buffer, buffer_size)) {
         return;
     }
 
@@ -87,62 +155,11 @@ void load_modules() {
     hide_enabled = status->core()->hide();
 
     for (auto it : *status->modules()) {
+        char path[PATH_MAX];
         auto name = it->name()->c_str();
         snprintf(path, PATH_MAX, MODULE_PATH_FMT, name);
 
-        if (access(path, F_OK) != 0) {
-            PLOGE("access %s", path);
-            continue;
-        }
-
-        handle = dlopen(path, 0);
-        if (!handle) {
-            LOGE("dlopen %s failed: %s", path, dlerror());
-            continue;
-        }
-
-        auto init = (RiruInit_t *) dlsym(handle, "init");
-        if (!init) {
-            LOGW("%s does not export init", path);
-            cleanup(handle, path);
-            continue;
-        }
-
-        // 1. pass riru api version, return module's api version
-        auto apiVersion = (int *) init((void *) &riruApiVersion);
-        if (apiVersion == nullptr) {
-            LOGE("%s returns null on step 1", path);
-            cleanup(handle, path);
-            continue;
-        }
-
-        if (*apiVersion < RIRU_MIN_API_VERSION || *apiVersion > RIRU_API_VERSION) {
-            LOGW("unsupported API %s: %d", name, *apiVersion);
-            cleanup(handle, path);
-            continue;
-        }
-
-        // 2. create and pass Riru struct by module's api version
-        auto module = new RiruModule(strdup(name));
-        module->handle = handle;
-        module->apiVersion = *apiVersion;
-
-        if (*apiVersion == 10 || *apiVersion == 9) {
-            auto info = init_module_v9(module->token, init);
-            if (info == nullptr) {
-                LOGE("%s returns null on step 2", path);
-                cleanup(handle, path);
-                continue;
-            }
-            module->info(info);
-        }
-
-        // 3. let the module to do some cleanup jobs
-        init(nullptr);
-
-        get_modules()->push_back(module);
-
-        LOGI("module loaded: %s (api %d)", module->name, module->apiVersion);
+        load_module(name, path);
     }
 
     if (hide_enabled) {

@@ -207,7 +207,7 @@ void Status::ReadFromFile(flatbuffers::FlatBufferBuilder &builder) {
 
     std::vector<flatbuffers::Offset<Module>> modules_vector;
 
-    if (!(dir = opendir(MODULES_DIR))) goto create_buffer;
+    if (!(dir = opendir("/data/adb/riru/modules"))) goto create_buffer;
     while ((entry = readdir(dir))) {
         if (entry->d_type != DT_DIR) continue;
 
@@ -227,4 +227,52 @@ void Status::ReadFromFile(flatbuffers::FlatBufferBuilder &builder) {
     status_builder.add_core(core);
     status_builder.add_modules(modules);
     FinishFbStatusBuffer(builder, status_builder.Finish());
+}
+
+int Status::GetMagiskVersion() {
+    static int version = -1;
+    if (version != -1) return version;
+
+    int fd = -1;
+    int pid = exec_command(0, &fd, "magisk", "-V", nullptr);
+    if (pid == -1) {
+        version = 0;
+        return 0;
+    }
+
+    char buf[64];
+    auto size = TEMP_FAILURE_RETRY(read(fd, buf, 64));
+    close(fd);
+    if (size == -1) {
+        LOGE("read exec_command");
+        version = 0;
+        return 0;
+    }
+
+    if (buf[size - 1] == '\n') buf[size - 1] = '\0';
+    version = atoi(buf);
+    return version;
+}
+
+const char *Status::GetMagiskTmpfsPath() {
+    // "magisk --path" added from v21.0, always "/sbin" in older versions
+    if (GetMagiskVersion() < 21000) return "/sbin";
+
+    static char *path = nullptr;
+    if (path) return path;
+    path = new char[PATH_MAX]{0};
+
+    int fd = -1;
+    int pid = exec_command(0, &fd, "magisk", "--path", nullptr);
+    if (pid == -1) {
+        return path;
+    }
+    auto size = TEMP_FAILURE_RETRY(read(fd, path, PATH_MAX));
+    close(fd);
+    if (size == -1) {
+        return path;
+    }
+
+    if (path[size - 1] == '\n') path[size - 1] = '\0';
+    return path;
 }

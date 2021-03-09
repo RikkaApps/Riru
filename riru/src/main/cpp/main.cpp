@@ -1,7 +1,8 @@
 #include <xhook/xhook.h>
 #include <sys/system_properties.h>
 #include <dlfcn.h>
-#include <util/plt.h>
+#include <plt.h>
+#include <android_prop.h>
 #include "misc.h"
 #include "jni_native_method.h"
 #include "logging.h"
@@ -12,10 +13,8 @@
 #include "hide_utils.h"
 #include "status.h"
 #include "config.h"
+#include "magisk.h"
 
-static int sdkLevel;
-static int previewSdkLevel;
-static char androidVersionName[PROP_VALUE_MAX + 1];
 static bool useTableOverride = false;
 
 using GetJniNativeInterface_t = const JNINativeInterface *();
@@ -257,19 +256,6 @@ void restore_replaced_func(JNIEnv *env) {
     restoreMethod(SystemProperties, set)
 }
 
-static void read_prop() {
-    char sdk[PROP_VALUE_MAX + 1];
-    if (__system_property_get("ro.build.version.sdk", sdk) > 0)
-        sdkLevel = atoi(sdk);
-
-    if (__system_property_get("ro.build.version.preview_sdk", sdk) > 0)
-        previewSdkLevel = atoi(sdk);
-
-    __system_property_get("ro.build.version.release", androidVersionName);
-
-    LOGI("system version %s (api %d, preview_sdk %d)", androidVersionName, sdkLevel, previewSdkLevel);
-}
-
 extern "C" void constructor() __attribute__((constructor));
 
 void constructor() {
@@ -293,11 +279,9 @@ void constructor() {
     }
 
     LOGI("Riru %s (%d) in %s", RIRU_VERSION_NAME, RIRU_VERSION_CODE, cmdline);
-
-    LOGI("config dir is %s", CONFIG_DIR);
-
-
-    read_prop();
+    LOGI("Magisk tmpfs path is %s", Magisk::GetPath());
+    LOGI("Config dir is %s", CONFIG_DIR);
+    LOGI("Android %s (api %d, preview_api %d)", AndroidProp::GetRelease(), AndroidProp::GetApiLevel(), AndroidProp::GetPreviewApiLevel());
 
     XHOOK_REGISTER(".*\\libandroid_runtime.so$", jniRegisterNativeMethods);
 

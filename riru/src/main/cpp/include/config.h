@@ -10,5 +10,3 @@
 #define LIB_PATH "/system/lib/"
 #endif
 #define MODULE_PATH_FMT LIB_PATH "libriru_%s.so"
-
-#define MODULES_DIR CONFIG_DIR "/modules"

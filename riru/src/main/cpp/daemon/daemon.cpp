@@ -49,6 +49,12 @@ static bool handle_read_original_native_bridge(int sockfd) {
     return write_full(sockfd, &size, sizeof(size)) == 0 && (size <= 0 || write_full(sockfd, original_native_bridge, size) == 0);
 }
 
+static bool handle_read_magisk_tmpfs_path(int sockfd) {
+    auto path = Status::GetMagiskTmpfsPath();
+    int32_t size = strlen(path);
+    return write_full(sockfd, &size, sizeof(size)) == 0 && (size <= 0 || write_full(sockfd, path, size) == 0);
+}
+
 static bool handle_write_status(int sockfd) {
     uint8_t *buf;
     uint32_t size;
@@ -250,6 +256,11 @@ static void handle_socket(int sockfd, uint32_t action) {
             handle_read_original_native_bridge(sockfd);
             break;
         }
+        case Status::ACTION_READ_MAGISK_TMPFS_PATH: {
+            LOGI("action: read Magisk tmpfs path");
+            handle_read_magisk_tmpfs_path(sockfd);
+            break;
+        }
         case Status::ACTION_WRITE_STATUS: {
             LOGI("action: write status");
             handle_write_status(sockfd);
@@ -427,20 +438,20 @@ static void sig_handler(int sig) {
 }
 
 int main(int argc, char **argv) {
-    if (__system_property_get("ro.dalvik.vm.native.bridge", original_native_bridge) <= 0) {
+    if (__system_property_get("ro.dalvik.vm.native.bridge", original_native_bridge) > 0) {
         LOGI("backup original native bridge %s", original_native_bridge);
     } else {
         PLOGE("getprop ro.dalvik.vm.native.bridge");
     }
 
-    switch (fork()) {
-        case 0:
-            daemon_main();
+    LOGI("Magisk version is %d", Status::GetMagiskVersion());
+    LOGI("Magisk tmpfs path is %s", Status::GetMagiskTmpfsPath());
+
+    switch (daemon(0, 0)) {
         case -1:
-            PLOGE("fork");
+            PLOGE("daemon");
             return -1;
         default:
-            break;
+            daemon_main();
     }
-    return 0;
 }
