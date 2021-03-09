@@ -238,7 +238,7 @@ void load_modules() {
         snprintf(path, PATH_MAX, "/system/lib/libriru_%s.so", name);
 
 #endif
-        load_module(name, path, nullptr);
+        load_module(name, path, "");
     }
 
     if (hide_enabled) {
