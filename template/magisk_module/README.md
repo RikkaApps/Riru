@@ -14,20 +14,23 @@ A typical example is, some "optimize" modules changes this property. Since chang
 
 ### Config
 
-* When the file `/data/adb/riru/disable` exists, Riru will do nothing
-* When the file `/data/adb/riru/enable_hide` exists, the hide mechanism will be enabled
+* When the file `/data/adb/modules/riru-core/enable_hide` exists, the hide mechanism will be enabled
 
 ### Install from recovery is NOT supported
 
-Riru requires files in `/data/adb/riru` folder, this folder is created during installation.
-
-Many TWRP has broken implementations, causing the folder cannot be created, this will finally cause Riru and Riru modules not working.
+Many TWRP has broken implementations, which will finally cause Riru and Riru modules "installed" but not working.
 
 ## Changelog
 
+### v24.0.0 (2021-03-10)
+
+- Load module lib files from Magisk module path rather than `/system`, now only the entrance lib, `libriruloader.so`, needs to be mounted to `/system`
+- `/data/adb/riru` is no longer used, you can remove it when all modules are update to Riru API 11
+- Use git commit count as version code
+
 ### v23.9 (59) (2021-03-06)
 
-- Fix crash when JVM reuses reference index on devices with `libnativehelper_lazy` (these changes may come in Android 12 DP2 or later) (by LSPosed devs)
+- Fix crash when JVM reuses reference index on devices with `libnativehelper_lazy` (`libnativehelper_lazy` may come in Android 12 DP2 or later) (by LSPosed devs)
 
 ### v23.8 (58) (2021-03-05)
 
@@ -35,7 +38,7 @@ Many TWRP has broken implementations, causing the folder cannot be created, this
 
 ### v23.7 (57) (2021-03-01)
 
-- Prepare for changes brought by libnativehelper_lazy (these changes may come in Android 12 DP2 or later)
+- Prepare for changes brought by `libnativehelper_lazy` (these changes may come in Android 12 DP2 or later)
 - Fix symbols are incorrectly exported
 
 ### v23.6 (56) (2021-02-21)
