@@ -51,10 +51,12 @@ typedef struct {
     nativeForkSystemServerPost_v9 *forkSystemServerPost;
     nativeSpecializeAppProcessPre_v9 *specializeAppProcessPre;
     nativeSpecializeAppProcessPost_v9 *specializeAppProcessPost;
-} RiruModuleInfoV9;
+} RiruModuleInfo;
 
-typedef RiruModuleInfoV9 RiruModuleInfoV10;
-typedef RiruModuleInfoV9 RiruModuleInfoV11;
+typedef struct {
+    int moduleApiVersion;
+    RiruModuleInfo moduleInfo;
+} RiruVersionedModuleInfo;
 
 // ---------------------------------------------------------
 
@@ -64,16 +66,17 @@ typedef void (RiruSetFunc_v9)(uint32_t token, const char *name, void *func);
 
 typedef void *(RiruGetJNINativeMethodFunc_v9)(uint32_t token, const char *className, const char *name, const char *signature);
 
-typedef void (RiruSetJNINativeMethodFunc_v9)(uint32_t token, const char *className, const char *name, const char *signature, void *func);
+typedef void (RiruSetJNINativeMethodFunc_v9)(uint32_t token, const char *className, const char *name, const char *signature,
+                                             void *func);
 
-typedef const JNINativeMethod *(RiruGetOriginalJNINativeMethodFunc_v9)(const char *className, const char *name, const char *signature);
+typedef const JNINativeMethod *(RiruGetOriginalJNINativeMethodFunc_v9)(const char *className, const char *name,
+                                                                       const char *signature);
 
 typedef void *(RiruGetGlobalValue_v9)(const char *key);
 
 typedef void(RiruPutGlobalValue_v9)(const char *key, void *value);
 
 typedef struct {
-
     uint32_t token;
     RiruGetFunc_v9 *getFunc;
     RiruGetJNINativeMethodFunc_v9 *getJNINativeMethodFunc;
@@ -82,129 +85,64 @@ typedef struct {
     RiruGetOriginalJNINativeMethodFunc_v9 *getOriginalJNINativeMethodFunc;
     RiruGetGlobalValue_v9 *getGlobalValue;
     RiruPutGlobalValue_v9 *putGlobalValue;
-} RiruApiV9;
-
-typedef RiruApiV9 RiruApiV10;
+} RiruApi;
 
 typedef struct {
+    int riruApiVersion;
+    RiruApi *riruApi;
+    const char *magiskModulePath;
+} Riru;
 
-    uint32_t token;
-    const char *magisk_module_path;
-    RiruGetFunc_v9 *getFunc;
-    RiruGetJNINativeMethodFunc_v9 *getJNINativeMethodFunc;
-    RiruSetFunc_v9 *setFunc;
-    RiruSetJNINativeMethodFunc_v9 *setJNINativeMethodFunc;
-    RiruGetOriginalJNINativeMethodFunc_v9 *getOriginalJNINativeMethodFunc;
-    RiruGetGlobalValue_v9 *getGlobalValue;
-    RiruPutGlobalValue_v9 *putGlobalValue;
-} RiruApiV11;
-
-typedef void *(RiruInit_t)(void *);
+typedef RiruVersionedModuleInfo *(RiruInit_t)(Riru *);
 
 #ifdef RIRU_MODULE
 #define RIRUD_ADDRESS "rirud"
 
 #define RIRU_EXPORT __attribute__((visibility("default"))) __attribute__((used))
 
-/*
- * Init will be called three times.
- *
- * The first time:
- *   Returns the highest version number supported by both Riru and the module.
- *
- *   arg: (int *) Riru's API version
- *   returns: (int *) the highest possible API version
- *
- * The second time:
- *   Returns the RiruModuleX struct created by the module (X is the return of the first call).
- *
- *   arg: (RiruApiVX *) RiruApi strcut, this pointer can be saved for further use
- *   returns: (RiruModuleX *) RiruModule strcut
- *
- * The second time:
- *   Let the module to cleanup (such as RiruModuleX struct created before).
- *
- *   arg: null
- *   returns: (ignored)
- *
- */
-void *init(void *arg) RIRU_EXPORT;
+RiruVersionedModuleInfo *init(Riru *riru) RIRU_EXPORT;
 
 extern int riru_api_version;
-extern RiruApiV9 *riru_api_v9;
-extern RiruApiV11 *riru_api_v11;
-#define riru_api_v10 riru_api_v9
+extern RiruApi *riru_api;
+extern const char *riru_magisk_module_path;
 
 #if !defined(__cplusplus)
 #define inline attribute(inline)
 #endif
 
 inline const char *riru_get_magisk_module_path() {
-    if (riru_api_version == 11) {
-        return riru_api_v11->magisk_module_path;
+    if (riru_api_version >= 24) {
+        return riru_magisk_module_path;
     }
     return NULL;
 }
 
 inline void *riru_get_func(const char *name) {
-    if (riru_api_version == 9 || riru_api_version == 10) {
-        return riru_api_v9->getFunc(riru_api_v9->token, name);
-    } else if (riru_api_version == 11) {
-        return riru_api_v11->getFunc(riru_api_v11->token, name);
-    }
-    return NULL;
+    return riru_api->getFunc(riru_api->token, name);
 }
 
 inline void *riru_get_native_method_func(const char *className, const char *name, const char *signature) {
-    if (riru_api_version == 9 || riru_api_version == 10) {
-        return riru_api_v9->getJNINativeMethodFunc(riru_api_v9->token, className, name, signature);
-    } else if (riru_api_version == 11) {
-        return riru_api_v11->getJNINativeMethodFunc(riru_api_v11->token, className, name, signature);
-    }
-    return NULL;
+    return riru_api->getJNINativeMethodFunc(riru_api->token, className, name, signature);
 }
 
 inline const JNINativeMethod *riru_get_original_native_methods(const char *className, const char *name, const char *signature) {
-    if (riru_api_version == 9 || riru_api_version == 10) {
-        return riru_api_v9->getOriginalJNINativeMethodFunc(className, name, signature);
-    } else if (riru_api_version == 11) {
-        return riru_api_v11->getOriginalJNINativeMethodFunc(className, name, signature);
-    }
-    return NULL;
+    return riru_api->getOriginalJNINativeMethodFunc(className, name, signature);
 }
 
 inline void riru_set_func(const char *name, void *func) {
-    if (riru_api_version == 9 || riru_api_version == 10) {
-        riru_api_v9->setFunc(riru_api_v9->token, name, func);
-    } else if (riru_api_version == 11) {
-        riru_api_v11->setFunc(riru_api_v11->token, name, func);
-    }
+    riru_api->setFunc(riru_api->token, name, func);
 }
 
-inline void riru_set_native_method_func(const char *className, const char *name, const char *signature,
-                                 void *func) {
-    if (riru_api_version == 9 || riru_api_version == 10) {
-        riru_api_v9->setJNINativeMethodFunc(riru_api_v9->token, className, name, signature, func);
-    } else if (riru_api_version == 11) {
-        riru_api_v11->setJNINativeMethodFunc(riru_api_v11->token, className, name, signature, func);
-    }
+inline void riru_set_native_method_func(const char *className, const char *name, const char *signature, void *func) {
+    riru_api->setJNINativeMethodFunc(riru_api->token, className, name, signature, func);
 }
 
 inline void *riru_get_global_value(const char *key) {
-    if (riru_api_version == 9 || riru_api_version == 10) {
-        return riru_api_v9->getGlobalValue(key);
-    } else if (riru_api_version == 11) {
-        return riru_api_v11->getGlobalValue(key);
-    }
-    return NULL;
+    return riru_api->getGlobalValue(key);
 }
 
 inline void riru_put_global_value(const char *key, void *value) {
-    if (riru_api_version == 9 || riru_api_version == 10) {
-        riru_api_v9->putGlobalValue(key, value);
-    } else if (riru_api_version == 11) {
-        riru_api_v11->putGlobalValue(key, value);
-    }
+    riru_api->putGlobalValue(key, value);
 }
 
 #endif

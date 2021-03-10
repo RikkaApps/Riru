@@ -40,11 +40,12 @@ ext {
     minSdkVersion = 23
     targetSdkVersion = 30
 
-    riruApiVersion = 11
+    riruApiVersion = 24
     riruMinApiVersion = 9
 }
 
-def dir = "out/aar/dev/rikka/ndk/riru/${riruApiVersion}"
+def aarVersion = "${riruApiVersion}.0.0"
+def aarDir = "out/aar/dev/rikka/ndk/riru/${aarVersion}"
 
 task generateLibraryAar(type: Zip) {
     copy {
@@ -53,8 +54,8 @@ task generateLibraryAar(type: Zip) {
     }
 
     from 'template/aar/riru.aar'
-    archiveName "riru-${riruApiVersion}.aar"
-    destinationDir file(dir)
+    archiveName "riru-${aarVersion}.aar"
+    destinationDir file(aarDir)
 }
 
 task signLibraryAar(type: Exec) {
@@ -64,17 +65,17 @@ task signLibraryAar(type: Exec) {
             "--passphrase=${findProperty("signing.password")}",
             "--batch",
             "--yes",
-            "riru-${riruApiVersion}.aar"
-    workingDir dir
+            "riru-${aarVersion}.aar"
+    workingDir aarDir
 }
 
 task generateLibraryPom(type: Copy) {
     from 'template/aar/riru.pom'
-    into file(dir)
-    filter { line -> line.replaceAll('%%%VERSION%%%', "$riruApiVersion") }
+    into file(aarDir)
+    filter { line -> line.replaceAll('%%%VERSION%%%', "$aarVersion") }
     filter(FixCrLfFilter.class,
             eol: FixCrLfFilter.CrLf.newInstance("lf"))
-    rename { "riru-${riruApiVersion}.pom" }
+    rename { "riru-${aarVersion}.pom" }
 }
 
 task signLibraryPom(type: Exec) {
@@ -84,14 +85,14 @@ task signLibraryPom(type: Exec) {
             "--passphrase=${findProperty("signing.password")}",
             "--batch",
             "--yes",
-            "riru-${riruApiVersion}.pom"
-    workingDir dir
+            "riru-${aarVersion}.pom"
+    workingDir aarDir
 }
 
 task generateLibrarySourceJar(type: Zip) {
     from 'template/aar/riru-sources.jar'
-    archiveName "riru-${riruApiVersion}-sources.jar"
-    destinationDir file(dir)
+    archiveName "riru-${aarVersion}-sources.jar"
+    destinationDir file(aarDir)
 }
 
 task signLibrarySourceJar(type: Exec) {
@@ -101,14 +102,14 @@ task signLibrarySourceJar(type: Exec) {
             "--passphrase=${findProperty("signing.password")}",
             "--batch",
             "--yes",
-            "riru-${riruApiVersion}-sources.jar"
-    workingDir dir
+            "riru-${aarVersion}-sources.jar"
+    workingDir aarDir
 }
 
 task generateLibraryJavaDocJar(type: Zip) {
     from 'template/aar/riru-javadoc.jar'
-    archiveName "riru-${riruApiVersion}-javadoc.jar"
-    destinationDir file(dir)
+    archiveName "riru-${aarVersion}-javadoc.jar"
+    destinationDir file(aarDir)
 }
 
 task signLibraryJavaDocJar(type: Exec) {
@@ -118,8 +119,8 @@ task signLibraryJavaDocJar(type: Exec) {
             "--passphrase=${findProperty("signing.password")}",
             "--batch",
             "--yes",
-            "riru-${riruApiVersion}-javadoc.jar"
-    workingDir dir
+            "riru-${aarVersion}-javadoc.jar"
+    workingDir aarDir
 }
 
 task generateLibrary(type: GradleBuild) {

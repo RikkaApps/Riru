@@ -319,7 +319,7 @@ void constructor() {
         }
     }
 
-    load_modules();
+    Modules::Load();
 
     Status::WriteSelfAndModules();
 }

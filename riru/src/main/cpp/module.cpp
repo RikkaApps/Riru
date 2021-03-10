@@ -26,36 +26,7 @@ std::vector<RiruModule *> *get_modules() {
     return modules;
 }
 
-static RiruModuleInfoV9 *init_module_v9(uint32_t token, RiruInit_t *init) {
-    auto riru = new RiruApiV9();
-    riru->token = token;
-    riru->getFunc = api::getFunc;
-    riru->setFunc = api::setFunc;
-    riru->getJNINativeMethodFunc = api::getNativeMethodFunc;
-    riru->setJNINativeMethodFunc = api::setNativeMethodFunc;
-    riru->getOriginalJNINativeMethodFunc = api::getOriginalNativeMethod;
-    riru->getGlobalValue = api::getGlobalValue;
-    riru->putGlobalValue = api::putGlobalValue;
-
-    return (RiruModuleInfoV9 *) init(riru);
-}
-
-static RiruModuleInfoV9 *init_module_v11(uint32_t token, const char *magisk_module_path, RiruInit_t *init) {
-    auto riru = new RiruApiV11();
-    riru->token = token;
-    riru->magisk_module_path = magisk_module_path;
-    riru->getFunc = api::getFunc;
-    riru->setFunc = api::setFunc;
-    riru->getJNINativeMethodFunc = api::getNativeMethodFunc;
-    riru->setJNINativeMethodFunc = api::setNativeMethodFunc;
-    riru->getOriginalJNINativeMethodFunc = api::getOriginalNativeMethod;
-    riru->getGlobalValue = api::getGlobalValue;
-    riru->putGlobalValue = api::putGlobalValue;
-
-    return (RiruModuleInfoV9 *) init(riru);
-}
-
-static void cleanup(void *handle, const char *path) {
+static void Cleanup(void *handle, const char *path) {
     if (dlclose(handle) != 0) {
         LOGE("dlclose failed: %s", dlerror());
         return;
@@ -80,19 +51,15 @@ static void cleanup(void *handle, const char *path) {
     pmparser_free(maps);
 }
 
-static void load_module(const char *id, const char *path, const char *magisk_module_path) {
+static void LoadModule(const char *id, const char *path, const char *magisk_module_path) {
     char *name = strdup(id);
-
-    const int riruApiVersion = RIRU_API_VERSION;
-
-    void *handle;
 
     if (access(path, F_OK) != 0) {
         PLOGE("access %s", path);
         return;
     }
 
-    handle = dl_dlopen(path, 0);
+    auto handle = dl_dlopen(path, 0);
     if (!handle) {
         LOGE("dlopen %s failed: %s", path, dlerror());
         return;
@@ -101,62 +68,63 @@ static void load_module(const char *id, const char *path, const char *magisk_mod
     auto init = (RiruInit_t *) dlsym(handle, "init");
     if (!init) {
         LOGW("%s does not export init", path);
-        cleanup(handle, path);
+        Cleanup(handle, path);
         return;
     }
 
-    // 1. pass riru api version, return module's api version
-    auto apiVersion = (int *) init((void *) &riruApiVersion);
-    if (apiVersion == nullptr) {
-        LOGE("%s returns null on step 1", path);
-        cleanup(handle, path);
+    auto token = (uintptr_t) name;
+    auto riruApi = new RiruApi();
+    riruApi->token = token;
+    riruApi->getFunc = api::getFunc;
+    riruApi->setFunc = api::setFunc;
+    riruApi->getJNINativeMethodFunc = api::getNativeMethodFunc;
+    riruApi->setJNINativeMethodFunc = api::setNativeMethodFunc;
+    riruApi->getOriginalJNINativeMethodFunc = api::getOriginalNativeMethod;
+    riruApi->getGlobalValue = api::getGlobalValue;
+    riruApi->putGlobalValue = api::putGlobalValue;
+
+    auto riru = new Riru();
+    riru->riruApiVersion = RIRU_API_VERSION;
+    riru->riruApi = riruApi;
+    riru->magiskModulePath = magisk_module_path;
+
+    auto moduleInfo = init(riru);
+    if (moduleInfo == nullptr) {
+        LOGE("%s requires higher Riru version (or its broken)", path);
+        Cleanup(handle, path);
         return;
     }
 
-    if (*apiVersion < RIRU_MIN_API_VERSION || *apiVersion > RIRU_API_VERSION) {
-        LOGW("unsupported API %s: %d", name, *apiVersion);
-        cleanup(handle, path);
+    auto apiVersion = moduleInfo->moduleApiVersion;
+    if (apiVersion < RIRU_MIN_API_VERSION || apiVersion > RIRU_API_VERSION) {
+        LOGW("unsupported API %s: %d", name, apiVersion);
+        Cleanup(handle, path);
         return;
     }
 
-    // 2. create and pass Riru struct by module's api version
-    auto module = new RiruModule(name, strdup(path), strdup(magisk_module_path));
+    auto module = new RiruModule(name, strdup(path), strdup(magisk_module_path), token);
     module->handle = handle;
-    module->apiVersion = *apiVersion;
+    module->apiVersion = apiVersion;
 
-    switch (*apiVersion) {
-        case 11: {
-            auto info = init_module_v11(module->token, module->magisk_module_path, init);
-            if (info == nullptr) {
-                LOGE("%s returns null on step 2", path);
-                cleanup(handle, path);
-                return;
-            }
-            module->info(info);
-            break;
+    if (apiVersion >= 24) {
+        module->info(&moduleInfo->moduleInfo);
+    } else {
+        moduleInfo = init((Riru *) riruApi);
+        if (moduleInfo == nullptr) {
+            LOGE("%s returns null on step 2", path);
+            Cleanup(handle, path);
+            return;
         }
-        case 10:
-        case 9: {
-            auto info = init_module_v9(module->token, init);
-            if (info == nullptr) {
-                LOGE("%s returns null on step 2", path);
-                cleanup(handle, path);
-                return;
-            }
-            module->info(info);
-            break;
-        }
+        module->info((RiruModuleInfo *) moduleInfo);
+        init(nullptr);
     }
-
-    // 3. let the module to do some cleanup jobs
-    init(nullptr);
 
     get_modules()->push_back(module);
 
     LOGI("module loaded: %s (api %d)", module->id, module->apiVersion);
 }
 
-void load_modules() {
+void Modules::Load() {
     uint8_t *buffer;
     uint32_t buffer_size;
 
@@ -204,7 +172,7 @@ void load_modules() {
             // remove ".so"
             id[strlen(id) - 3] = '\0';
 
-            load_module(id, buf, path);
+            LoadModule(id, buf, path);
 
             *end = '\0';
         }
@@ -238,7 +206,7 @@ void load_modules() {
         snprintf(path, PATH_MAX, "/system/lib/libriru_%s.so", name);
 
 #endif
-        load_module(name, path, "");
+        LoadModule(name, path, "");
     }
 
     if (hide_enabled) {
