@@ -14,7 +14,7 @@ else
   abort "*********************************************************"
 fi
 
-ui_print "- Installing Riru $RIRU_VERSION_NAME ($RIRU_VERSION_CODE, API v$RIRU_API)"
+ui_print "- Installing Riru $RIRU_VERSION_NAME (Riru API $RIRU_API)"
 
 # check Magisk
 ui_print "- Magisk version: $MAGISK_VER ($MAGISK_VER_CODE)"

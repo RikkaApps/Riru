@@ -19,7 +19,7 @@ abort_for_old_module() {
 }
 
 check_riru_version() {
-  ui_print "- Riru: $RIRU_VERSION_NAME ($RIRU_VERSION_CODE, API $RIRU_API)"
+  ui_print "- Riru: $RIRU_VERSION_NAME (API $RIRU_API)"
   [ "$RIRU_MODULE_API_VERSION" -lt "$RIRU_MIN_COMPATIBLE_API" ] && abort_for_old_module
   [ "$RIRU_MODULE_MIN_API_VERSION" -gt "$RIRU_API" ] && abort_for_requires_new_version "$RIRU_MODULE_MIN_RIRU_VERSION_NAME"
 }

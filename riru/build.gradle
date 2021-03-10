@@ -7,15 +7,22 @@ plugins {
     id 'com.android.application'
 }
 
+def gitCommitId = 'git rev-parse --short HEAD'.execute([], project.rootDir).text.trim()
+def gitCommitCount = Integer.parseInt('git rev-list --count HEAD'.execute([], project.rootDir).text.trim())
+
+def versionNameShort = "v24.0"
+def versionName = "${versionNameShort}.r${gitCommitCount}.${gitCommitId}"
+def versionCode = gitCommitCount
+
 def apiVersion = rootProject.ext.riruApiVersion
 def minApiVersion = rootProject.ext.riruMinApiVersion
 def moduleProp = [
         id         : "riru-core",
         name       : "Riru",
-        version    : "v24.0",
-        versionCode: "60",
+        version    : "$versionName",
+        versionCode: "$versionCode",
         author     : "Rikka",
-        description: "Inject into zygote process. Required by all \"Riru\" modules."
+        description: "Inject into zygote and run codes from \"Riru\" modules in apps or the system server."
 ]
 
 android {
@@ -25,8 +32,8 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         externalNativeBuild {
             cmake {
-                arguments "-DRIRU_VERSION_NAME:STRING=${moduleProp['version']}",
-                        "-DRIRU_VERSION_CODE:STRING=${moduleProp['versionCode']}",
+                arguments "-DRIRU_VERSION_NAME:STRING=$versionNameShort",
+                        "-DRIRU_VERSION_CODE:STRING=$versionCode",
                         "-DRIRU_API_VERSION=$apiVersion",
                         "-DRIRU_MIN_API_VERSION=$minApiVersion"
             }
@@ -98,8 +105,8 @@ android.applicationVariants.all { variant ->
                 into magiskDir.path
                 filter { line ->
                     line.replaceAll('%%%RIRU_API%%%', apiVersion.toString())
-                            .replaceAll('%%%RIRU_VERSION_CODE%%%', moduleProp['versionCode'].toString())
-                            .replaceAll('%%%RIRU_VERSION_NAME%%%', moduleProp['version'].toString())
+                            .replaceAll('%%%RIRU_VERSION_CODE%%%', versionCode.toString())
+                            .replaceAll('%%%RIRU_VERSION_NAME%%%', versionName)
                 }
                 filter(FixCrLfFilter.class,
                         eol: FixCrLfFilter.CrLf.newInstance("lf"))
@@ -147,12 +154,12 @@ android.applicationVariants.all { variant ->
 
 task zipMagiskMoudleRelease(type: Zip) {
     from magiskDir
-    archiveName "riru-${moduleProp['version']}-release.zip"
+    archiveName "riru-${versionNameShort}-release.zip"
     destinationDir outDir
 }
 
 task zipMagiskMoudleDebug(type: Zip) {
     from magiskDir
-    archiveName "riru-${moduleProp['version']}-debug.zip"
+    archiveName "riru-${versionNameShort}-debug.zip"
     destinationDir outDir
 }
