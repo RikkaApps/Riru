@@ -10,7 +10,10 @@ plugins {
 def gitCommitId = 'git rev-parse --short HEAD'.execute([], project.rootDir).text.trim()
 def gitCommitCount = Integer.parseInt('git rev-list --count HEAD'.execute([], project.rootDir).text.trim())
 
-def versionNameShort = "v24.0"
+def versionNameMajor = 24
+def versionNameMinor = 0
+def versionNamePatch = 0
+def versionNameShort = "v${versionNameMajor}.${versionNameMinor}.${versionNamePatch}"
 def versionName = "${versionNameShort}.r${gitCommitCount}.${gitCommitId}"
 def versionCode = gitCommitCount
 
