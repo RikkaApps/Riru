@@ -52,6 +52,15 @@ namespace Magisk {
             strcat(buf, "/");
             strcat(buf, entry->d_name);
 
+            auto end = buf + strlen(buf);
+            strcat(buf, "/disable");
+            if (access(buf, F_OK) == 0) continue;
+            *end = '\0';
+
+            strcat(buf, "/remove");
+            if (access(buf, F_OK) == 0) continue;
+            *end = '\0';
+
             fn(buf);
         }
 
