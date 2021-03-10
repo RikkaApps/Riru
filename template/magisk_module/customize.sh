@@ -48,9 +48,13 @@ ui_print "- Extracting Magisk files"
 extract "$ZIPFILE" 'module.prop' "$MODPATH"
 extract "$ZIPFILE" 'post-fs-data.sh' "$MODPATH"
 extract "$ZIPFILE" 'service.sh' "$MODPATH"
-extract "$ZIPFILE" 'sepolicy.rule' "$MODPATH"
 extract "$ZIPFILE" 'system.prop' "$MODPATH"
 extract "$ZIPFILE" 'util_functions.sh' "$MODPATH"
+
+if [ "$API" -lt 29 ]; then
+  ui_print "- Before Android 10, hide requires an extra SELinux rule"
+  extract "$ZIPFILE" 'sepolicy.rule' "$MODPATH"
+fi
 
 mkdir "$MODPATH/lib"
 mkdir "$MODPATH/lib64"

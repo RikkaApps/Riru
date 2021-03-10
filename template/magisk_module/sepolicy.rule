@@ -1,3 +1,2 @@
-# Hide need this rule to run.
-# Add this rule here for pre-Android 10.
+# Hide need this rule to run
 allow zygote zygote process execmem
