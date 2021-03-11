@@ -25,9 +25,10 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 ### v24.0.0 (2021-03-10)
 
 - Unify the Riru API version and Riru version, now the API version is 24
-- Load module lib files from Magisk module path directly, module files are no longer needs to be mounted to `/system`
+- For modules that have adapted Riru API 24, lib files are loaded from the Magisk path directly, they don't need to be mounted to `/system` anymore
 - `/data/adb/riru` is no longer used, you can remove it when all modules are update to Riru API 24
 - Use git commit count as version code
+- Remove fallback SELinux rules, if rirud is not started, it's highly possible that the booting processes of Magisk is totally broken on your device
 
 ### v23.9 (59) (2021-03-06)
 
