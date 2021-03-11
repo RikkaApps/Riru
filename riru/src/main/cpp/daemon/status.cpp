@@ -47,6 +47,7 @@ static const char *GetRandomName() {
     }
     tmp[size] = '\0';
 
+    mkdir("/data/adb/riru", 0700);
     fd = open(file, O_CREAT | O_WRONLY | O_TRUNC, 0700);
     if (fd == -1) {
         PLOGE("open %s", file);
