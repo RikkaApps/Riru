@@ -24,8 +24,9 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ### v24.0.0 (2021-03-10)
 
-- Load module lib files from Magisk module path rather than `/system`, now only the entrance lib, `libriruloader.so`, needs to be mounted to `/system`
-- `/data/adb/riru` is no longer used, you can remove it when all modules are update to Riru API 11
+- Unify the Riru API version and Riru version, now the API version is 24
+- Load module lib files from Magisk module path directly, module files are no longer needs to be mounted to `/system`
+- `/data/adb/riru` is no longer used, you can remove it when all modules are update to Riru API 24
 - Use git commit count as version code
 
 ### v23.9 (59) (2021-03-06)
