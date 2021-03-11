@@ -25,7 +25,9 @@ def moduleProp = [
         version    : "$versionName",
         versionCode: "$versionCode",
         author     : "Rikka",
-        description: "Inject into zygote and run codes from \"Riru\" modules in apps or the system server."
+        description: "Inject into zygote and run codes from \"Riru\" modules in apps or the system server.",
+        riruApi    : "$apiVersion",
+        riruMinApi : "$minApiVersion"
 ]
 
 android {
