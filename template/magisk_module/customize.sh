@@ -39,17 +39,23 @@ if [ ! -f "$TMPDIR/verify.sh" ]; then
   ui_print "*********************************************************"
   ui_print "! Unable to extract verify.sh!"
   ui_print "! This zip may be corrupted, please try downloading again"
-  abort    "*********************************************************"
+  abort "*********************************************************"
 fi
 . $TMPDIR/verify.sh
 
 ui_print "- Extracting Magisk files"
 
+if [ "$MAGISK_VER_CODE" -ge 21000 ]; then
+  MAGISK_CURRENT_MODULE_PATH=$(magisk --path)/.magisk/modules/riru-core
+else
+  MAGISK_CURRENT_MODULE_PATH=/sbin/.magisk/modules/riru-core
+fi
+
 extract "$ZIPFILE" 'module.prop' "$MODPATH"
 extract "$ZIPFILE" 'post-fs-data.sh' "$MODPATH"
 extract "$ZIPFILE" 'service.sh' "$MODPATH"
 extract "$ZIPFILE" 'system.prop' "$MODPATH"
-extract "$ZIPFILE" 'util_functions.sh' "$MODPATH"
+extract "$ZIPFILE" 'util_functions.sh' "$MAGISK_CURRENT_MODULE_PATH"
 
 if [ "$API" -lt 29 ]; then
   ui_print "- Before Android 10, hide requires an extra SELinux rule"
@@ -108,19 +114,8 @@ rm "$MODPATH/rirud.dex.new"
 mv "$MODPATH/classes.dex" "$MODPATH/rirud.dex.new"
 set_perm "$MODPATH/rirud.dex.new" 0 0 0600
 
-# write api version to a persist file, only for the check process of the module installation
-ui_print "- Writing Riru files"
-echo -n "$RIRU_API" > "$MODPATH/api_version"
-set_perm "$MODPATH/api_version" 0 0 0600
-
 # Copy old config
-if [ "$MAGISK_VER_CODE" -ge 21000 ]; then
-  ENABLE_HIDE=$(magisk --path)/.magisk/modules/riru-core/enable_hide
-else
-  ENABLE_HIDE=/sbin/.magisk/modules/riru-core/enable_hide
-fi
-
-if [ -f $ENABLE_HIDE ] || [ -f /data/adb/riru/enable_hide ]; then
+if [ -f $MAGISK_CURRENT_MODULE_PATH/enable_hide ] || [ -f /data/adb/riru/enable_hide ]; then
   ui_print "- Hide is enabled"
   touch "$MODPATH"/enable_hide
   set_perm "$MODPATH/enable_hide" 0 0 0700
@@ -128,6 +123,18 @@ fi
 
 ui_print "- Removing old files"
 rm -rf /data/adb/riru/bin
+rm /data/adb/riru/native_bridge
+rm /data/adb/riru/api_version.new
+rm /data/adb/riru/version_code.new
+rm /data/adb/riru/version_name.new
 rm /data/misc/riru/api_version
 rm /data/misc/riru/version_code
 rm /data/misc/riru/version_name
+
+# Support for pre-v24 modules
+ui_print "- Writing files for pre-v24 modules"
+mkdir /data/adb/riru
+echo -n "$RIRU_API" >"/data/adb/riru/api_version"
+set_perm "/data/adb/riru/api_version" 0 0 0600
+extract "$ZIPFILE" 'util_functions.sh' "/data/adb/riru"
+set_perm "/data/adb/riru/util_functions.sh" 0 0 0600
