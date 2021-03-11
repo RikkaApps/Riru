@@ -107,41 +107,43 @@ extern RiruApi *riru_api;
 extern const char *riru_magisk_module_path;
 
 #if !defined(__cplusplus)
-#define inline attribute(inline)
+#define RIRU_INLINE __attribute__((always_inline))
+#else
+#define RIRU_INLINE inline
 #endif
 
-inline const char *riru_get_magisk_module_path() {
+RIRU_INLINE const char *riru_get_magisk_module_path() {
     if (riru_api_version >= 24) {
         return riru_magisk_module_path;
     }
     return NULL;
 }
 
-inline void *riru_get_func(const char *name) {
+RIRU_INLINE void *riru_get_func(const char *name) {
     return riru_api->getFunc(riru_api->token, name);
 }
 
-inline void *riru_get_native_method_func(const char *className, const char *name, const char *signature) {
+RIRU_INLINE void *riru_get_native_method_func(const char *className, const char *name, const char *signature) {
     return riru_api->getJNINativeMethodFunc(riru_api->token, className, name, signature);
 }
 
-inline const JNINativeMethod *riru_get_original_native_methods(const char *className, const char *name, const char *signature) {
+RIRU_INLINE const JNINativeMethod *riru_get_original_native_methods(const char *className, const char *name, const char *signature) {
     return riru_api->getOriginalJNINativeMethodFunc(className, name, signature);
 }
 
-inline void riru_set_func(const char *name, void *func) {
+RIRU_INLINE void riru_set_func(const char *name, void *func) {
     riru_api->setFunc(riru_api->token, name, func);
 }
 
-inline void riru_set_native_method_func(const char *className, const char *name, const char *signature, void *func) {
+RIRU_INLINE void riru_set_native_method_func(const char *className, const char *name, const char *signature, void *func) {
     riru_api->setJNINativeMethodFunc(riru_api->token, className, name, signature, func);
 }
 
-inline void *riru_get_global_value(const char *key) {
+RIRU_INLINE void *riru_get_global_value(const char *key) {
     return riru_api->getGlobalValue(key);
 }
 
-inline void riru_put_global_value(const char *key, void *value) {
+RIRU_INLINE void riru_put_global_value(const char *key, void *value) {
     riru_api->putGlobalValue(key, value);
 }
 
