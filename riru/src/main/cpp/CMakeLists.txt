@@ -26,7 +26,7 @@ add_definitions(-DRIRU_API_VERSION=${RIRU_API_VERSION})
 add_definitions(-DRIRU_MIN_API_VERSION=${RIRU_MIN_API_VERSION})
 
 set(LINKER_FLAGS "-ffixed-x18 -Wl,--hash-style=both")
-set(C_FLAGS "-Werror=format -fdata-sections -ffunction-sections -fno-exceptions -fno-rtti")
+set(C_FLAGS "-Werror=format -fdata-sections -ffunction-sections -fno-exceptions -fno-rtti -fno-threadsafe-statics")
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     set(C_FLAGS "${C_FLAGS} -O2 -fvisibility=hidden -fvisibility-inlines-hidden")
