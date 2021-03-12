@@ -1,4 +1,4 @@
-#include <xhook/xhook.h>
+#include <xhook.h>
 #include <sys/system_properties.h>
 #include <dlfcn.h>
 #include <plt.h>

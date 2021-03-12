@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <cstring>
 #include <jni.h>
-#include <xhook/xhook.h>
+#include <xhook.h>
 #include <cstdlib>
 
 #include "logging.h"
