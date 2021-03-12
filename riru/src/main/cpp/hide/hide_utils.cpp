@@ -1,6 +1,7 @@
 #include <sys/mman.h>
 #include <dlfcn.h>
 #include <dl.h>
+#include <link.h>
 #include <string>
 #include <magisk.h>
 #include "hide_utils.h"
@@ -9,7 +10,31 @@
 
 namespace hide {
 
+    struct hide_data {
+        const char **paths;
+        int paths_count;
+    };
+
+    static int callback(struct dl_phdr_info *info, size_t size, void *_data) {
+        auto data = (hide_data *) _data;
+
+        for (int i = 0; i < data->paths_count; i++) {
+            if (strcmp(data->paths[i], info->dlpi_name) == 0) {
+                memset((void *) info->dlpi_name, 0, strlen(data->paths[i]));
+                LOGD("hide %s from dl_iterate_phdr", data->paths[i]);
+                return 0;
+            }
+        }
+        return 0;
+    }
+
     void hide_modules(const char **paths, int paths_count) {
+        auto data = hide_data{
+                .paths = paths,
+                .paths_count = paths_count
+        };
+        dl_iterate_phdr(callback, &data);
+
         const char *hide_lib_path;
 #ifdef __LP64__
         hide_lib_path = Magisk::GetPathForSelf("lib64/libriruhide.so").c_str();
