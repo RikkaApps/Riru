@@ -15,17 +15,15 @@
 
 using namespace std;
 
-namespace{
-    bool hide_enabled;
-    std::vector<RiruModule *> modules{new RiruModule(strdup(MODULE_NAME_CORE), "", "")};
-}
+static bool hide_enabled;
 
 bool is_hide_enabled() {
     return hide_enabled;
 }
 
 std::vector<RiruModule *> *get_modules() {
-    return &modules;
+    static auto *modules = new std::vector<RiruModule *>({new RiruModule(strdup(MODULE_NAME_CORE), "", "")});
+    return modules;
 }
 
 static void Cleanup(void *handle, const char *path) {
