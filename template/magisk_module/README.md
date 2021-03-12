@@ -22,6 +22,10 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ## Changelog
 
+### v24.1.0 (2021-03-12)
+
+- Hide names from `dl_iterate_phdr`
+
 ### v24.0.1 (2021-03-11)
 
 - Fix pre-v24 modules installation
