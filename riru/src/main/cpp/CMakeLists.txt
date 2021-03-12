@@ -92,11 +92,11 @@ target_link_libraries(librirud.so log utils flatbuffers::flatbuffers)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     add_custom_command(TARGET riru POST_BUILD
-            COMMAND ${CMAKE_STRIP} --remove-section=.comment "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libriru.so")
+            COMMAND ${CMAKE_OBJCOPY} --remove-section=.comment "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libriru.so")
     add_custom_command(TARGET riruhide POST_BUILD
-            COMMAND ${CMAKE_STRIP} --remove-section=.comment "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libriruhide.so")
+            COMMAND ${CMAKE_OBJCOPY} --remove-section=.comment "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libriruhide.so")
     add_custom_command(TARGET riruloader POST_BUILD
-            COMMAND ${CMAKE_STRIP} --remove-section=.comment "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libriruloader.so")
+            COMMAND ${CMAKE_OBJCOPY} --remove-section=.comment "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libriruloader.so")
     add_custom_command(TARGET librirud.so POST_BUILD
-            COMMAND ${CMAKE_STRIP} --remove-section=.comment "librirud.so")
+            COMMAND ${CMAKE_OBJCOPY} --remove-section=.comment "librirud.so")
 endif ()
