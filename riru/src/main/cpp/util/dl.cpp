@@ -9,19 +9,19 @@
     using func##_t = ret(__VA_ARGS__); \
     static func##_t *func;
 
+#define FIND_FUNC(func) \
+    if (!func) \
+    func = (func##_t *) plt_dlsym(#func, nullptr);
+
 FUNC_DEF(void, android_get_LD_LIBRARY_PATH, char *buffer, size_t buffer_size);
 FUNC_DEF(void, android_update_LD_LIBRARY_PATH, const char *ld_library_path);
 
-
-void *dl_dlopen(const char *path, int flags) {
+void *dlopen_ext(const char *path, int flags) {
     auto h = dlopen(path, flags);
     if (h) return h;
 
-    if (!android_get_LD_LIBRARY_PATH)
-        android_get_LD_LIBRARY_PATH = (android_get_LD_LIBRARY_PATH_t *) plt_dlsym("android_get_LD_LIBRARY_PATH", nullptr);
-
-    if (!android_update_LD_LIBRARY_PATH)
-        android_update_LD_LIBRARY_PATH = (android_update_LD_LIBRARY_PATH_t *) plt_dlsym("android_update_LD_LIBRARY_PATH", nullptr);
+    FIND_FUNC(android_get_LD_LIBRARY_PATH)
+    FIND_FUNC(android_update_LD_LIBRARY_PATH)
 
     if (!android_get_LD_LIBRARY_PATH || !android_update_LD_LIBRARY_PATH) return h;
 

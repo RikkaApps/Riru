@@ -132,7 +132,7 @@ __used __attribute__((constructor)) void constructor() {
 #endif
     strcat(riru_path, "/libriru.so");
 
-    dl_dlopen(riru_path, 0);
+    dlopen_ext(riru_path, 0);
 
 #ifdef HAS_NATIVE_BRIDGE
 

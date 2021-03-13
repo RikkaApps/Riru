@@ -59,7 +59,7 @@ static void LoadModule(const char *id, const char *path, const char *magisk_modu
         return;
     }
 
-    auto handle = dl_dlopen(path, 0);
+    auto handle = dlopen_ext(path, 0);
     if (!handle) {
         LOGE("dlopen %s failed: %s", path, dlerror());
         return;

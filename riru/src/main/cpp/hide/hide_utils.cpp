@@ -44,7 +44,7 @@ namespace hide {
 
         // load riruhide.so and run the hide
         LOGD("dlopen libriruhide");
-        auto handle = dl_dlopen(hide_lib_path, 0);
+        auto handle = dlopen_ext(hide_lib_path, 0);
         if (!handle) {
             LOGE("dlopen %s failed: %s", hide_lib_path, dlerror());
             return;
