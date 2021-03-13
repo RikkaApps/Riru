@@ -1,6 +1,5 @@
 package riru;
 
-import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -9,10 +8,6 @@ import android.os.SystemProperties;
 import android.util.Log;
 
 import androidx.annotation.Keep;
-
-import java.io.File;
-
-import riru.core.BuildConfig;
 
 /**
  * A "daemon" that controls native bridge prop and "rirud" socket.
@@ -27,13 +22,11 @@ public class Daemon {
     private final Handler handler;
     private final String name;
     private final String originalNativeBridge;
-    private final boolean enableHide;
 
-    public Daemon(String name, String originalNativeBridge, boolean enableHide) {
+    public Daemon(String name, String originalNativeBridge) {
         this.handler = new Handler(Looper.myLooper());
         this.name = name;
         this.originalNativeBridge = originalNativeBridge;
-        this.enableHide = enableHide;
 
         handler.post(() -> startWait(true, true));
     }
@@ -63,12 +56,6 @@ public class Daemon {
             return;
         }
 
-        if (!enableHide) {
-            Log.i(TAG, "Exit because Riru is loaded and hide is disabled.");
-            System.exit(0);
-            return;
-        }
-
         Log.i(TAG, "Riru loaded, reset native bridge to " + originalNativeBridge + "...");
         DaemonUtils.resetNativeBridgeProp(originalNativeBridge);
 
@@ -95,9 +82,6 @@ public class Daemon {
 
     @Keep
     public static void main(String[] args) {
-        boolean enableHide = new File("/data/adb/riru/enable_hide").exists() || BuildConfig.DEBUG;
-        Log.i(TAG, enableHide ? "Hide is enabled" : "Hide is not enabled.");
-
         String originalNativeBridge = DaemonUtils.readOriginalNativeBridge();
         Log.i(TAG, "Original native bridge is " + originalNativeBridge);
 
@@ -106,7 +90,7 @@ public class Daemon {
         }
 
         Looper.prepare();
-        new Daemon(SERVICE_FOR_TEST, originalNativeBridge, enableHide);
+        new Daemon(SERVICE_FOR_TEST, originalNativeBridge);
         Looper.loop();
     }
 }

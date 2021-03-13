@@ -12,10 +12,6 @@ If you are use other modules that changes `ro.dalvik.vm.native.bridge`, Riru wil
 
 A typical example is, some "optimize" modules changes this property. Since changing this property is meaningless for "optimization", their quality is very questionable. In fact, changing properties for optimization is a joke.
 
-### Config
-
-* When the file `/data/adb/modules/riru-core/enable_hide` exists, the hide mechanism will be enabled
-
 ### Install from recovery is NOT supported
 
 Many TWRP has broken implementations, which will finally cause Riru and Riru modules "installed" but not working.
@@ -26,6 +22,8 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 - Hide is enabled by default and cannot be disabled
 - Hide works on pre-29 without extra SELinux rule
+
+Since v24 starts to load so files directly from the Magisk path (`/sbin` or `/dev`), it's highly possible to trigger anti-cheat from games, so hide is a must.
 
 ### v24.1.0 (2021-03-12)
 

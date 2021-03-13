@@ -32,10 +32,6 @@ Android 6.0+ devices rooted with [Magisk](https://github.com/topjohnwu/Magisk)
 
 A typical example is, some "optimize" modules change this property. Since changing this property is meaningless for "optimization", their quality is very questionable. In fact, changing properties for optimization is a joke.
 
-### Config
-
-* When the file `/data/adb/modules/riru-core/enable_hide` exists, the hidden mechanism will be enabled (also requires the support of the modules)
-
 ## How Riru works?
 
 * How to inject into the zygote process?

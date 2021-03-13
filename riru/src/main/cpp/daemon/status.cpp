@@ -204,7 +204,6 @@ void Status::WriteToFile(const FbStatus *status) {
 void Status::ReadFromFile(flatbuffers::FlatBufferBuilder &builder) {
     DIR *dir;
     struct dirent *entry;
-    auto hide_enabled = access(ENABLE_HIDE_FILE, F_OK) == 0;
 
     std::vector<flatbuffers::Offset<Module>> modules_vector;
 
@@ -220,7 +219,7 @@ void Status::ReadFromFile(flatbuffers::FlatBufferBuilder &builder) {
     closedir(dir);
 
     create_buffer:
-    auto core = CreateCoreDirect(builder, 0, 0, "", hide_enabled);
+    auto core = CreateCoreDirect(builder, 0, 0, "", false);
 
     auto modules = builder.CreateVector(modules_vector);
 

@@ -196,8 +196,6 @@ void Modules::Load() {
         goto clean;
     }
 
-    hide_enabled = access(Magisk::GetPathForSelf("enable_hide").c_str(), F_OK) == 0;
-
     for (auto it : *status->modules()) {
         char path[PATH_MAX];
         auto name = it->name()->c_str();
