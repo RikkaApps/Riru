@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-Please report bugs of Riru itself. Always **use the latest version of Riru**, and **make sure any other modules are disabled**.
+Please report bugs of Riru itself. Always use **the latest debug version** of Riru, and **make sure any other modules are disabled**.
 
 **Reports not meet the requirements will be immediately closed**.
 
