@@ -12,7 +12,7 @@ def gitCommitCount = Integer.parseInt('git rev-list --count HEAD'.execute([], pr
 
 def versionNameMajor = 24
 def versionNameMinor = 1
-def versionNamePatch = 0
+def versionNamePatch = 1
 def versionNameShort = "v${versionNameMajor}.${versionNameMinor}.${versionNamePatch}"
 def versionName = "${versionNameShort}.r${gitCommitCount}.${gitCommitId}"
 def versionCode = gitCommitCount

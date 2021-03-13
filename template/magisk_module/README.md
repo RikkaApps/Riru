@@ -22,6 +22,11 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ## Changelog
 
+### v24.1.1 (2021-03-13)
+
+- Hide is enabled by default and cannot be disabled
+- Hide works on pre-29 without extra SELinux rule
+
 ### v24.1.0 (2021-03-12)
 
 - Hide names from `dl_iterate_phdr`
