@@ -57,11 +57,6 @@ extract "$ZIPFILE" 'service.sh' "$MODPATH"
 extract "$ZIPFILE" 'system.prop' "$MODPATH"
 extract "$ZIPFILE" 'util_functions.sh' "$MAGISK_CURRENT_MODULE_PATH"
 
-if [ "$API" -lt 29 ]; then
-  ui_print "- Before Android 10, hide requires an extra SELinux rule"
-  extract "$ZIPFILE" 'sepolicy.rule' "$MODPATH"
-fi
-
 mkdir "$MODPATH/lib"
 mkdir "$MODPATH/lib64"
 mkdir "$MODPATH/system"
@@ -114,19 +109,13 @@ rm "$MODPATH/rirud.dex.new"
 mv "$MODPATH/classes.dex" "$MODPATH/rirud.dex.new"
 set_perm "$MODPATH/rirud.dex.new" 0 0 0600
 
-# Copy old config
-if [ -f $MAGISK_CURRENT_MODULE_PATH/enable_hide ] || [ -f /data/adb/riru/enable_hide ]; then
-  ui_print "- Hide is enabled"
-  touch "$MODPATH"/enable_hide
-  set_perm "$MODPATH/enable_hide" 0 0 0700
-fi
-
 ui_print "- Removing old files"
 rm -rf /data/adb/riru/bin
 rm /data/adb/riru/native_bridge
 rm /data/adb/riru/api_version.new
 rm /data/adb/riru/version_code.new
 rm /data/adb/riru/version_name.new
+rm /data/adb/riru/enable_hide
 rm /data/misc/riru/api_version
 rm /data/misc/riru/version_code
 rm /data/misc/riru/version_name

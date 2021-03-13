@@ -62,7 +62,7 @@ static void nativeForkAndSpecialize_pre(
 
 static void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, jint res) {
 
-    if (res == 0) restore_replaced_func(env);
+    if (res == 0) RestoreEnvironment(env);
 
     for (auto module : *get_modules()) {
         if (!module->hasForkAndSpecializePost())
@@ -114,7 +114,7 @@ static void nativeSpecializeAppProcess_pre(
 
 static void nativeSpecializeAppProcess_post(JNIEnv *env, jclass clazz) {
 
-    restore_replaced_func(env);
+    RestoreEnvironment(env);
 
     for (auto module : *get_modules()) {
         if (!module->hasSpecializeAppProcessPost())

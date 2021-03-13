@@ -7,8 +7,9 @@
 #include "hide_utils.h"
 #include "wrap.h"
 #include "logging.h"
+#include "module.h"
 
-namespace hide {
+namespace Hide {
 
     struct hide_data {
         const char **paths;
@@ -28,13 +29,15 @@ namespace hide {
         return 0;
     }
 
-    void hide_modules(const char **paths, int paths_count) {
+    static void HidePathsFromObjects(const char **paths, int paths_count) {
         auto data = hide_data{
                 .paths = paths,
                 .paths_count = paths_count
         };
         dl_iterate_phdr(callback, &data);
+    }
 
+    static void HidePathsFromMaps(const char **paths, int paths_count) {
         auto hide_lib_path = Magisk::GetPathForSelfLib("libriruhide.so");
 
         // load riruhide.so and run the hide
@@ -78,5 +81,26 @@ namespace hide {
             munmap((void *) start, size);
         }
         pmparser_free(maps);
+    }
+
+    void DoHide(bool objects, bool maps) {
+        auto self_path = Magisk::GetPathForSelfLib("libriru.so");
+        auto modules = get_modules();
+        auto names = (const char **) malloc(sizeof(char *) * modules->size());
+        int names_count = 0;
+        for (auto module : *get_modules()) {
+            if (strcmp(module->id, MODULE_NAME_CORE) == 0) {
+                names[names_count] = self_path.c_str();
+            } else if (module->supportHide) {
+                names[names_count] = module->path;
+            } else {
+                LOGI("module %s does not support hide", module->id);
+                continue;
+            }
+            names_count += 1;
+        }
+        if (objects) Hide::HidePathsFromObjects(names, names_count);
+        if (maps) Hide::HidePathsFromMaps(names, names_count);
+        free(names);
     }
 }

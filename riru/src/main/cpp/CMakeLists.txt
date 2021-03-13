@@ -65,7 +65,7 @@ add_library(riru SHARED
         jni_native_method.cpp
         api.cpp
         native_method.cpp
-        hide/hide_utils.cpp
+        hide_utils.cpp
         status.cpp
         module.cpp
         magisk.cpp

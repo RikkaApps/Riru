@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <dlfcn.h>
 #include <sys/mman.h>
+#include <android_prop.h>
 #include "module.h"
 #include "wrap.h"
 #include "logging.h"
@@ -209,28 +210,7 @@ void Modules::Load() {
         LoadModule(name, path, "");
     }
 
-    if (hide_enabled) {
-        LOGI("hide is enabled");
-        auto self_path = Magisk::GetPathForSelfLib("libriru.so");
-        auto modules = get_modules();
-        auto names = (const char **) malloc(sizeof(char *) * modules->size());
-        int names_count = 0;
-        for (auto module : *get_modules()) {
-            if (strcmp(module->id, MODULE_NAME_CORE) == 0) {
-                names[names_count] = self_path.c_str();
-            } else if (module->supportHide) {
-                names[names_count] = module->path;
-            } else {
-                LOGI("module %s does not support hide", module->id);
-                continue;
-            }
-            names_count += 1;
-        }
-        hide::hide_modules(names, names_count);
-        free(names);
-    } else {
-        LOGI("hide is not enabled");
-    }
+    Hide::DoHide(true, AndroidProp::GetApiLevel() >= 29);
 
     for (auto module : *get_modules()) {
         if (module->hasOnModuleLoaded()) {

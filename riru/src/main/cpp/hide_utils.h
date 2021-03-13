@@ -4,8 +4,8 @@
 #include <cinttypes>
 #include "pmparser.h"
 
-namespace hide {
+namespace Hide {
 
-    void hide_modules(const char **paths, int paths_count);
+    void DoHide(bool objects, bool maps);
 }
 #endif //RIRU_HIDE_UTILS_H

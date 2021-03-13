@@ -237,7 +237,9 @@ static int new_RegisterNative(JNIEnv *env, jclass cls, const JNINativeMethod *me
         delete JNI::_cls::method; \
     }
 
-void restore_replaced_func(JNIEnv *env) {
+void RestoreEnvironment(JNIEnv *env) {
+    Hide::DoHide(false, AndroidProp::GetApiLevel() < 29);
+
     if (useTableOverride) {
         setTableOverride(nullptr);
     } else {
