@@ -18,6 +18,10 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ## Changelog
 
+### v24.1.2 (2021-03-13)
+
+- Don't attempt to run hide for webview_zygote on pre-29
+
 ### v24.1.1 (2021-03-13)
 
 - Hide is enabled by default and cannot be disabled
