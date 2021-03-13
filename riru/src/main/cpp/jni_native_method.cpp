@@ -1,6 +1,7 @@
 #include <vector>
 #include <unistd.h>
 #include <mntent.h>
+#include <android_prop.h>
 
 #include "jni_native_method.h"
 #include "logging.h"
@@ -60,9 +61,10 @@ static void nativeForkAndSpecialize_pre(
     }
 }
 
-static void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, jint res) {
+static void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, jboolean is_child_zygote, jint res) {
 
-    if (res == 0) RestoreEnvironment(env);
+    // On pre-29, child zygote is always webview zygote, webview zygote does not have execmem permission
+    if (res == 0) RestoreEnvironment(env, AndroidProp::GetApiLevel() < 29 && !is_child_zygote);
 
     for (auto module : *get_modules()) {
         if (!module->hasForkAndSpecializePost())
@@ -114,7 +116,7 @@ static void nativeSpecializeAppProcess_pre(
 
 static void nativeSpecializeAppProcess_post(JNIEnv *env, jclass clazz) {
 
-    RestoreEnvironment(env);
+    RestoreEnvironment(env, false);
 
     for (auto module : *get_modules()) {
         if (!module->hasSpecializeAppProcessPost())
@@ -175,7 +177,7 @@ jint nativeForkAndSpecialize_marshmallow(
             env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external, se_info, se_name,
             fdsToClose, instructionSet, appDataDir);
 
-    nativeForkAndSpecialize_post(env, clazz, uid, res);
+    nativeForkAndSpecialize_post(env, clazz, uid, is_child_zygote, res);
     return res;
 }
 
@@ -200,7 +202,7 @@ jint nativeForkAndSpecialize_oreo(
             env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external, se_info, se_name,
             fdsToClose, fdsToIgnore, instructionSet, appDataDir);
 
-    nativeForkAndSpecialize_post(env, clazz, uid, res);
+    nativeForkAndSpecialize_post(env, clazz, uid, is_child_zygote, res);
     return res;
 }
 
@@ -225,7 +227,7 @@ jint nativeForkAndSpecialize_p(
             env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external, se_info, se_name,
             fdsToClose, fdsToIgnore, is_child_zygote, instructionSet, appDataDir);
 
-    nativeForkAndSpecialize_post(env, clazz, uid, res);
+    nativeForkAndSpecialize_post(env, clazz, uid, is_child_zygote, res);
     return res;
 }
 
@@ -249,7 +251,7 @@ jint nativeForkAndSpecialize_q_alternative(
             env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external, se_info, se_name,
             fdsToClose, fdsToIgnore, is_child_zygote, instructionSet, appDataDir, isTopApp);
 
-    nativeForkAndSpecialize_post(env, clazz, uid, res);
+    nativeForkAndSpecialize_post(env, clazz, uid, is_child_zygote, res);
     return res;
 }
 
@@ -270,7 +272,7 @@ jint nativeForkAndSpecialize_r(
             fdsToClose, fdsToIgnore, is_child_zygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList,
             whitelistedDataInfoList, bindMountAppDataDirs, bindMountAppStorageDirs);
 
-    nativeForkAndSpecialize_post(env, clazz, uid, res);
+    nativeForkAndSpecialize_post(env, clazz, uid, is_child_zygote, res);
     return res;
 }
 
@@ -294,7 +296,7 @@ jint nativeForkAndSpecialize_r_dp3(
             fdsToClose, fdsToIgnore, is_child_zygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList,
             bindMountAppStorageDirs);
 
-    nativeForkAndSpecialize_post(env, clazz, uid, res);
+    nativeForkAndSpecialize_post(env, clazz, uid, is_child_zygote, res);
     return res;
 }
 
@@ -317,7 +319,7 @@ jint nativeForkAndSpecialize_r_dp2(
             env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external, se_info, se_name,
             fdsToClose, fdsToIgnore, is_child_zygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList);
 
-    nativeForkAndSpecialize_post(env, clazz, uid, res);
+    nativeForkAndSpecialize_post(env, clazz, uid, is_child_zygote, res);
     return res;
 }
 
@@ -343,7 +345,7 @@ jint nativeForkAndSpecialize_samsung_p(
             accessInfo, se_name, fdsToClose, fdsToIgnore, is_child_zygote, instructionSet,
             appDataDir);
 
-    nativeForkAndSpecialize_post(env, clazz, uid, res);
+    nativeForkAndSpecialize_post(env, clazz, uid, is_child_zygote, res);
     return res;
 }
 
@@ -369,7 +371,7 @@ jint nativeForkAndSpecialize_samsung_o(
             env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external, se_info, category,
             accessInfo, se_name, fdsToClose, fdsToIgnore, instructionSet, appDataDir);
 
-    nativeForkAndSpecialize_post(env, clazz, uid, res);
+    nativeForkAndSpecialize_post(env, clazz, uid, is_child_zygote, res);
     return res;
 }
 
@@ -396,7 +398,7 @@ jint nativeForkAndSpecialize_samsung_n(
             env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external, se_info, category,
             accessInfo, se_name, fdsToClose, instructionSet, appDataDir, a1);
 
-    nativeForkAndSpecialize_post(env, clazz, uid, res);
+    nativeForkAndSpecialize_post(env, clazz, uid, is_child_zygote, res);
     return res;
 }
 
@@ -422,7 +424,7 @@ jint nativeForkAndSpecialize_samsung_m(
             env, clazz, uid, gid, gids, debug_flags, rlimits, mount_external, se_info, category,
             accessInfo, se_name, fdsToClose, instructionSet, appDataDir);
 
-    nativeForkAndSpecialize_post(env, clazz, uid, res);
+    nativeForkAndSpecialize_post(env, clazz, uid, is_child_zygote, res);
     return res;
 }
 
