@@ -35,18 +35,13 @@ namespace hide {
         };
         dl_iterate_phdr(callback, &data);
 
-        const char *hide_lib_path;
-#ifdef __LP64__
-        hide_lib_path = Magisk::GetPathForSelf("lib64/libriruhide.so").c_str();
-#else
-        hide_lib_path = Magisk::GetPathForSelf("lib/libriruhide.so").c_str();
-#endif
+        auto hide_lib_path = Magisk::GetPathForSelfLib("libriruhide.so");
 
         // load riruhide.so and run the hide
         LOGD("dlopen libriruhide");
-        auto handle = dlopen_ext(hide_lib_path, 0);
+        auto handle = dlopen_ext(hide_lib_path.c_str(), 0);
         if (!handle) {
-            LOGE("dlopen %s failed: %s", hide_lib_path, dlerror());
+            LOGE("dlopen %s failed: %s", hide_lib_path.c_str(), dlerror());
             return;
         }
         using riru_hide_t = int(const char **names, int names_count);

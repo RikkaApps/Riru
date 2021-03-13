@@ -211,16 +211,13 @@ void Modules::Load() {
 
     if (hide_enabled) {
         LOGI("hide is enabled");
+        auto self_path = Magisk::GetPathForSelfLib("libriru.so");
         auto modules = get_modules();
         auto names = (const char **) malloc(sizeof(char *) * modules->size());
         int names_count = 0;
         for (auto module : *get_modules()) {
             if (strcmp(module->id, MODULE_NAME_CORE) == 0) {
-#ifdef __LP64__
-                names[names_count] = strdup(Magisk::GetPathForSelf("lib64/libriru.so").c_str());
-#else
-                names[names_count] = strdup(Magisk::GetPathForSelf("lib/libriru.so").c_str());
-#endif
+                names[names_count] = self_path.c_str();
             } else if (module->supportHide) {
                 names[names_count] = module->path;
             } else {

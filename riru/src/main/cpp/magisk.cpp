@@ -30,6 +30,16 @@ namespace Magisk {
         return str;
     }
 
+    string GetPathForSelfLib(const char *name) {
+        string str;
+#ifdef __LP64__
+        str = string(GetPath()) + "/.magisk/modules/riru-core/lib64/"s + name;
+#else
+        str = string(GetPath()) + "/.magisk/modules/riru-core/lib/"s + name;
+#endif
+        return str;
+    }
+
     void ForEachModule(const function<void(const char *)> &fn) {
         auto root = GetPath();
         if (!root) return;
