@@ -33,14 +33,16 @@ private:
     void *_forkSystemServerPost;
     void *_specializeAppProcessPre;
     void *_specializeAppProcessPost;
+    std::unique_ptr<int> _allowUnload;
 
 public:
-    explicit RiruModule(const char *id, const char *path, const char *magisk_module_path, uint32_t token = 0) :
+    explicit RiruModule(const char *id, const char *path, const char *magisk_module_path, uint32_t token = 0, std::unique_ptr<int> allowUnload = nullptr) :
             id(id), path(path), magisk_module_path(magisk_module_path), token(token ? token : (uintptr_t) id) {
 
         funcs = new std::map<std::string, void *>();
         apiVersion = 0;
         handle = nullptr;
+        _allowUnload = std::move(allowUnload);
         _onModuleLoaded = nullptr;
         _shouldSkipUid = nullptr;
         _forkAndSpecializePre = nullptr;
@@ -63,6 +65,14 @@ public:
         _forkSystemServerPost = (void *) info->forkSystemServerPost;
         _specializeAppProcessPre = (void *) info->specializeAppProcessPre;
         _specializeAppProcessPost = (void *) info->specializeAppProcessPost;
+    }
+
+    bool allowUnload() {
+        return _allowUnload && *_allowUnload != 0;
+    }
+
+    void resetAllowUnload() {
+        if (_allowUnload) *_allowUnload = 0;
     }
 
     bool hasOnModuleLoaded() {

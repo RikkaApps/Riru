@@ -3,6 +3,7 @@
 #include <dlfcn.h>
 #include <plt.h>
 #include <android_prop.h>
+#include <pthread.h>
 #include "misc.h"
 #include "jni_native_method.h"
 #include "logging.h"
@@ -14,6 +15,9 @@
 #include "status.h"
 #include "config.h"
 #include "magisk.h"
+
+static void *self_handle;
+static pthread_mutex_t self_close_mutext = PTHREAD_MUTEX_INITIALIZER;
 
 static bool useTableOverride = false;
 
@@ -230,6 +234,18 @@ static int new_RegisterNative(JNIEnv *env, jclass cls, const JNINativeMethod *me
     return res;
 }
 
+void SelfUnload() {
+    LOGD("attempt to self unload");
+
+    pthread_mutex_lock(&self_close_mutext);
+
+    pthread_t thread;
+    pthread_create(&thread, nullptr, (void *(*)(void *)) &dlclose, self_handle);
+    pthread_detach(thread);
+
+    pthread_mutex_unlock(&self_close_mutext);
+}
+
 #define restoreMethod(_cls, method) \
     if (JNI::_cls::method != nullptr) { \
         if (old_jniRegisterNativeMethods) \
@@ -237,9 +253,7 @@ static int new_RegisterNative(JNIEnv *env, jclass cls, const JNINativeMethod *me
         delete JNI::_cls::method; \
     }
 
-void RestoreEnvironment(JNIEnv *env, jboolean hide_maps) {
-    Hide::DoHide(false, hide_maps);
-
+void RestoreHooks(JNIEnv *env) {
     if (useTableOverride) {
         setTableOverride(nullptr);
     } else {
@@ -258,9 +272,45 @@ void RestoreEnvironment(JNIEnv *env, jboolean hide_maps) {
     restoreMethod(SystemProperties, set)
 }
 
-extern "C" void constructor() __attribute__((constructor));
+void Unload(jboolean hide_maps) {
+    Hide::DoHide(false, hide_maps);
 
-void constructor() {
+    bool allowUnload = true;
+    for (auto module : *get_modules()) {
+        if (strcmp(module->id, MODULE_NAME_CORE) == 0) {
+            continue;
+        }
+
+        if (module->allowUnload() != 0) {
+            LOGV("unload module %s", module->id);
+            dlclose(module->handle);
+        } else {
+            if (module->apiVersion >= 25)
+                LOGV("unload is not allow by module %s", module->id);
+            else
+                LOGV("unload is not supported by module %s (API < 25)", module->id);
+
+            allowUnload = false;
+        }
+    }
+
+    if (!allowUnload) {
+        LOGV("don't unload self because at least one module does not allow unload");
+    } else {
+        SelfUnload();
+    }
+}
+
+extern "C" __attribute__((destructor)) void destructor() {
+    pthread_mutex_lock(&self_close_mutext);
+
+    LOGI("self unload successful");
+
+    timespec ts = {.tv_sec = 0, .tv_nsec = 1000000L};
+    nanosleep(&ts, nullptr);
+}
+
+extern "C" __attribute__((constructor)) void constructor() {
 #ifdef DEBUG_APP
     hide::hide_modules(nullptr, 0);
 #endif
@@ -282,7 +332,8 @@ void constructor() {
 
     LOGI("Riru %s (%d) in %s", RIRU_VERSION_NAME, RIRU_VERSION_CODE, cmdline);
     LOGI("Magisk tmpfs path is %s", Magisk::GetPath());
-    LOGI("Android %s (api %d, preview_api %d)", AndroidProp::GetRelease(), AndroidProp::GetApiLevel(), AndroidProp::GetPreviewApiLevel());
+    LOGI("Android %s (api %d, preview_api %d)", AndroidProp::GetRelease(), AndroidProp::GetApiLevel(),
+         AndroidProp::GetPreviewApiLevel());
 
     XHOOK_REGISTER(".*\\libandroid_runtime.so$", jniRegisterNativeMethods);
 
@@ -324,4 +375,8 @@ void constructor() {
     Modules::Load();
 
     Status::WriteSelfAndModules();
+}
+
+extern "C" __attribute__((visibility("default"))) __attribute__((used)) void init(void *handle) {
+    self_handle = handle;
 }

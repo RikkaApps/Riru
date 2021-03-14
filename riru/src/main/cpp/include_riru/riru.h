@@ -89,8 +89,9 @@ typedef struct {
 
 typedef struct {
     int riruApiVersion;
-    RiruApi *riruApi;
+    void *unused;
     const char *magiskModulePath;
+    int *allowUnload;
 } Riru;
 
 typedef RiruVersionedModuleInfo *(RiruInit_t)(Riru *);
@@ -101,51 +102,6 @@ typedef RiruVersionedModuleInfo *(RiruInit_t)(Riru *);
 #define RIRU_EXPORT __attribute__((visibility("default"))) __attribute__((used))
 
 RiruVersionedModuleInfo *init(Riru *riru) RIRU_EXPORT;
-
-extern int riru_api_version;
-extern RiruApi *riru_api;
-extern const char *riru_magisk_module_path;
-
-#if !defined(__cplusplus)
-#define RIRU_INLINE __attribute__((always_inline))
-#else
-#define RIRU_INLINE inline
-#endif
-
-RIRU_INLINE const char *riru_get_magisk_module_path() {
-    if (riru_api_version >= 24) {
-        return riru_magisk_module_path;
-    }
-    return NULL;
-}
-
-RIRU_INLINE void *riru_get_func(const char *name) {
-    return riru_api->getFunc(riru_api->token, name);
-}
-
-RIRU_INLINE void *riru_get_native_method_func(const char *className, const char *name, const char *signature) {
-    return riru_api->getJNINativeMethodFunc(riru_api->token, className, name, signature);
-}
-
-RIRU_INLINE const JNINativeMethod *riru_get_original_native_methods(const char *className, const char *name, const char *signature) {
-    return riru_api->getOriginalJNINativeMethodFunc(className, name, signature);
-}
-
-RIRU_INLINE void riru_set_func(const char *name, void *func) {
-    riru_api->setFunc(riru_api->token, name, func);
-}
-
-RIRU_INLINE void riru_set_native_method_func(const char *className, const char *name, const char *signature, void *func) {
-    riru_api->setJNINativeMethodFunc(riru_api->token, className, name, signature, func);
-}
-
-RIRU_INLINE void *riru_get_global_value(const char *key) {
-    return riru_api->getGlobalValue(key);
-}
-
-RIRU_INLINE void riru_put_global_value(const char *key, void *value) {
-    riru_api->putGlobalValue(key, value);
-}
 
 #endif
 

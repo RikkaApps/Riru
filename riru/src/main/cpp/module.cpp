@@ -3,6 +3,7 @@
 #include <dlfcn.h>
 #include <sys/mman.h>
 #include <android_prop.h>
+#include <memory>
 #include "module.h"
 #include "wrap.h"
 #include "logging.h"
@@ -74,20 +75,24 @@ static void LoadModule(const char *id, const char *path, const char *magisk_modu
     }
 
     auto token = (uintptr_t) name;
-    auto riruApi = new RiruApi();
-    riruApi->token = token;
-    riruApi->getFunc = api::getFunc;
-    riruApi->setFunc = api::setFunc;
-    riruApi->getJNINativeMethodFunc = api::getNativeMethodFunc;
-    riruApi->setJNINativeMethodFunc = api::setNativeMethodFunc;
-    riruApi->getOriginalJNINativeMethodFunc = api::getOriginalNativeMethod;
-    riruApi->getGlobalValue = api::getGlobalValue;
-    riruApi->putGlobalValue = api::putGlobalValue;
+    auto riruApi = new RiruApi{
+            .token = (uint32_t) token,
+            .getFunc = api::getFunc,
+            .getJNINativeMethodFunc = api::getNativeMethodFunc,
+            .setFunc = api::setFunc,
+            .setJNINativeMethodFunc = api::setNativeMethodFunc,
+            .getOriginalJNINativeMethodFunc = api::getOriginalNativeMethod,
+            .getGlobalValue = api::getGlobalValue,
+            .putGlobalValue = api::putGlobalValue
+    };
 
-    auto riru = new Riru();
-    riru->riruApiVersion = RIRU_API_VERSION;
-    riru->riruApi = riruApi;
-    riru->magiskModulePath = magisk_module_path;
+    auto allowUnload = std::make_unique<int>(0);
+    auto riru = new Riru{
+            .riruApiVersion = RIRU_API_VERSION,
+            .unused = (void *) riruApi,
+            .magiskModulePath = magisk_module_path,
+            .allowUnload = allowUnload.get()
+    };
 
     auto moduleInfo = init(riru);
     if (moduleInfo == nullptr) {
@@ -103,7 +108,7 @@ static void LoadModule(const char *id, const char *path, const char *magisk_modu
         return;
     }
 
-    auto module = new RiruModule(name, strdup(path), strdup(magisk_module_path), token);
+    auto module = new RiruModule(name, strdup(path), strdup(magisk_module_path), token, std::move(allowUnload));
     module->handle = handle;
     module->apiVersion = apiVersion;
 

@@ -132,7 +132,17 @@ __used __attribute__((constructor)) void constructor() {
 #endif
     strcat(riru_path, "/libriru.so");
 
-    dlopen_ext(riru_path, 0);
+    auto handle = dlopen_ext(riru_path, 0);
+    if (handle) {
+        auto init = (void(*)(void *)) dlsym(handle, "init");
+        if (init) {
+            init(handle);
+        } else {
+            LOGE("dlsym init %s", dlerror());
+        }
+    } else {
+        LOGE("dlopen riru.so %s", dlerror());
+    }
 
 #ifdef HAS_NATIVE_BRIDGE
 
