@@ -76,6 +76,29 @@ typedef RiruVersionedModuleInfo *(RiruInit_t)(Riru *);
 
 RiruVersionedModuleInfo *init(Riru *riru) RIRU_EXPORT;
 
+extern int riru_api_version;
+extern const char *riru_magisk_module_path;
+extern int *riru_allow_unload;
+
+#if !defined(__cplusplus)
+#define RIRU_INLINE __attribute__((always_inline))
+#else
+#define RIRU_INLINE inline
+#endif
+
+RIRU_INLINE const char *riru_get_magisk_module_path() {
+    if (riru_api_version >= 24) {
+        return riru_magisk_module_path;
+    }
+    return NULL;
+}
+
+RIRU_INLINE void riru_set_unload_allowed(int allowed) {
+    if (riru_api_version >= 25 && riru_allow_unload) {
+        *riru_allow_unload = allowed;
+    }
+}
+
 #endif
 
 #ifdef __cplusplus
