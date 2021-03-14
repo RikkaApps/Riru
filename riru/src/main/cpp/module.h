@@ -4,7 +4,7 @@
 #include <string>
 #include <map>
 #include <vector>
-#include "api.h"
+#include <riru.h>
 
 #define MODULE_NAME_CORE "core"
 

@@ -9,7 +9,6 @@
 #include "logging.h"
 #include "wrap.h"
 #include "module.h"
-#include "api.h"
 #include "native_method.h"
 #include "hide_utils.h"
 #include "status.h"
@@ -72,8 +71,6 @@ static JNINativeMethod *onRegisterZygote(const char *className, const JNINativeM
             auto replaced = newMethods[i].fnPtr != methods[i].fnPtr;
             if (replaced) {
                 LOGI("replaced com.android.internal.os.Zygote#nativeForkAndSpecialize");
-                LegacyApiStubs::setNativeMethodFunc(
-                        get_modules()->at(0)->token, className, newMethods[i].name, newMethods[i].signature, newMethods[i].fnPtr);
             }
             Status::WriteMethod(Status::Method::forkAndSpecialize, replaced, method.signature);
         } else if (strcmp(method.name, "nativeSpecializeAppProcess") == 0) {
@@ -100,8 +97,6 @@ static JNINativeMethod *onRegisterZygote(const char *className, const JNINativeM
             auto replaced = newMethods[i].fnPtr != methods[i].fnPtr;
             if (replaced) {
                 LOGI("replaced com.android.internal.os.Zygote#nativeSpecializeAppProcess");
-                LegacyApiStubs::setNativeMethodFunc(
-                        get_modules()->at(0)->token, className, newMethods[i].name, newMethods[i].signature, newMethods[i].fnPtr);
             }
             Status::WriteMethod(Status::Method::specializeAppProcess, replaced, method.signature);
         } else if (strcmp(method.name, "nativeForkSystemServer") == 0) {
@@ -117,8 +112,6 @@ static JNINativeMethod *onRegisterZygote(const char *className, const JNINativeM
             auto replaced = newMethods[i].fnPtr != methods[i].fnPtr;
             if (replaced) {
                 LOGI("replaced com.android.internal.os.Zygote#nativeForkSystemServer");
-                LegacyApiStubs::setNativeMethodFunc(
-                        get_modules()->at(0)->token, className, newMethods[i].name, newMethods[i].signature, newMethods[i].fnPtr);
             }
             Status::WriteMethod(Status::Method::forkSystemServer, replaced, method.signature);
         }
@@ -146,9 +139,6 @@ static JNINativeMethod *onRegisterSystemProperties(const char *className, const 
 
             if (newMethods[i].fnPtr != methods[i].fnPtr) {
                 LOGI("replaced android.os.SystemProperties#native_set");
-
-                LegacyApiStubs::setNativeMethodFunc(
-                        get_modules()->at(0)->token, className, newMethods[i].name, newMethods[i].signature, newMethods[i].fnPtr);
             }
         }
     }

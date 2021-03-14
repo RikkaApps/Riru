@@ -62,6 +62,37 @@ typedef struct {
     void *putGlobalValue;
 } LegacyApiStub;
 
+namespace LegacyApiStubs {
+
+    const JNINativeMethod *getOriginalNativeMethod(
+            const char *className, const char *name, const char *signature) {
+        return nullptr;
+    }
+
+    void *getFunc(uint32_t token, const char *name) {
+        return nullptr;
+    }
+
+    void *getNativeMethodFunc(
+            uint32_t token, const char *className, const char *name, const char *signature) {
+        return nullptr;
+    }
+
+    void setFunc(uint32_t token, const char *name, void *func) {
+    }
+
+    void setNativeMethodFunc(
+            uint32_t token, const char *className, const char *name, const char *signature, void *func) {
+    }
+
+    void putGlobalValue(const char *key, void *value) {
+    }
+
+    void *getGlobalValue(const char *key) {
+        return nullptr;
+    }
+}
+
 static void LoadModule(const char *id, const char *path, const char *magisk_module_path) {
     char *name = strdup(id);
 
