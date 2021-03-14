@@ -18,9 +18,14 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ## Changelog
 
+### v25.0.0 (2021-03-15)
+
+- Allow modules to declare if they can be unload
+- Support unload self (requires all modules are updated to Riru API 25)
+
 ### v24.1.2 (2021-03-13)
 
-- Don't attempt to run hide for webview_zygote on pre-29
+- Don't attempt to run hide for `webview_zygote` on pre-29m
 
 ### v24.1.1 (2021-03-13)
 
