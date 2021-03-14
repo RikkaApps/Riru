@@ -17,10 +17,8 @@
 
 using namespace std;
 
-static bool hide_enabled;
-
 bool is_hide_enabled() {
-    return hide_enabled;
+    return true;
 }
 
 std::vector<RiruModule *> *get_modules() {
@@ -53,6 +51,17 @@ static void Cleanup(void *handle, const char *path) {
     pmparser_free(maps);
 }
 
+typedef struct {
+    uint32_t token;
+    void *getFunc;
+    void *getJNINativeMethodFunc;
+    void *setFunc;
+    void *setJNINativeMethodFunc;
+    void *getOriginalJNINativeMethodFunc;
+    void *getGlobalValue;
+    void *putGlobalValue;
+} LegacyApiStub;
+
 static void LoadModule(const char *id, const char *path, const char *magisk_module_path) {
     char *name = strdup(id);
 
@@ -75,21 +84,21 @@ static void LoadModule(const char *id, const char *path, const char *magisk_modu
     }
 
     auto token = (uintptr_t) name;
-    auto riruApi = new RiruApi{
+    auto legacyApiStub = new LegacyApiStub{
             .token = (uint32_t) token,
-            .getFunc = api::getFunc,
-            .getJNINativeMethodFunc = api::getNativeMethodFunc,
-            .setFunc = api::setFunc,
-            .setJNINativeMethodFunc = api::setNativeMethodFunc,
-            .getOriginalJNINativeMethodFunc = api::getOriginalNativeMethod,
-            .getGlobalValue = api::getGlobalValue,
-            .putGlobalValue = api::putGlobalValue
+            .getFunc = (void *) LegacyApiStubs::getFunc,
+            .getJNINativeMethodFunc = (void *) LegacyApiStubs::getNativeMethodFunc,
+            .setFunc = (void *) LegacyApiStubs::setFunc,
+            .setJNINativeMethodFunc = (void *) LegacyApiStubs::setNativeMethodFunc,
+            .getOriginalJNINativeMethodFunc = (void *) LegacyApiStubs::getOriginalNativeMethod,
+            .getGlobalValue = (void *) LegacyApiStubs::getGlobalValue,
+            .putGlobalValue = (void *) LegacyApiStubs::putGlobalValue
     };
 
     auto allowUnload = std::make_unique<int>(0);
     auto riru = new Riru{
             .riruApiVersion = RIRU_API_VERSION,
-            .unused = (void *) riruApi,
+            .unused = (void *) legacyApiStub,
             .magiskModulePath = magisk_module_path,
             .allowUnload = allowUnload.get()
     };
@@ -115,7 +124,7 @@ static void LoadModule(const char *id, const char *path, const char *magisk_modu
     if (apiVersion >= 24) {
         module->info(&moduleInfo->moduleInfo);
     } else {
-        moduleInfo = init((Riru *) riruApi);
+        moduleInfo = init((Riru *) legacyApiStub);
         if (moduleInfo == nullptr) {
             LOGE("%s returns null on step 2", path);
             Cleanup(handle, path);

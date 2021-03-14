@@ -5,9 +5,7 @@
 
 #define KEEP __attribute__((visibility("hidden"))) __attribute__((used))
 
-namespace api {
-
-    void putNativeMethod(const char *className, const JNINativeMethod *methods, int numMethods);
+namespace LegacyApiStubs {
 
     void *getFunc(uint32_t token, const char *name) KEEP;
 

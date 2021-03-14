@@ -60,33 +60,6 @@ typedef struct {
 
 // ---------------------------------------------------------
 
-typedef void *(RiruGetFunc_v9)(uint32_t token, const char *name);
-
-typedef void (RiruSetFunc_v9)(uint32_t token, const char *name, void *func);
-
-typedef void *(RiruGetJNINativeMethodFunc_v9)(uint32_t token, const char *className, const char *name, const char *signature);
-
-typedef void (RiruSetJNINativeMethodFunc_v9)(uint32_t token, const char *className, const char *name, const char *signature,
-                                             void *func);
-
-typedef const JNINativeMethod *(RiruGetOriginalJNINativeMethodFunc_v9)(const char *className, const char *name,
-                                                                       const char *signature);
-
-typedef void *(RiruGetGlobalValue_v9)(const char *key);
-
-typedef void(RiruPutGlobalValue_v9)(const char *key, void *value);
-
-typedef struct {
-    uint32_t token;
-    RiruGetFunc_v9 *getFunc;
-    RiruGetJNINativeMethodFunc_v9 *getJNINativeMethodFunc;
-    RiruSetFunc_v9 *setFunc;
-    RiruSetJNINativeMethodFunc_v9 *setJNINativeMethodFunc;
-    RiruGetOriginalJNINativeMethodFunc_v9 *getOriginalJNINativeMethodFunc;
-    RiruGetGlobalValue_v9 *getGlobalValue;
-    RiruPutGlobalValue_v9 *putGlobalValue;
-} RiruApi;
-
 typedef struct {
     int riruApiVersion;
     void *unused;
