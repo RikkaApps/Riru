@@ -234,19 +234,7 @@ static int new_RegisterNative(JNIEnv *env, jclass cls, const JNINativeMethod *me
     return res;
 }
 
-void SelfUnload() {
-    LOGD("attempt to self unload");
-
-    pthread_mutex_lock(&self_close_mutext);
-
-    pthread_t thread;
-    pthread_create(&thread, nullptr, (void *(*)(void *)) &dlclose, self_handle);
-    pthread_detach(thread);
-
-    pthread_mutex_unlock(&self_close_mutext);
-}
-
-#define restoreMethod(_cls, method) \
+#define RestoreJNIMethod(_cls, method) \
     if (JNI::_cls::method != nullptr) { \
         if (old_jniRegisterNativeMethods) \
         old_jniRegisterNativeMethods(env, JNI::_cls::classname, JNI::_cls::method, 1); \
@@ -262,41 +250,52 @@ void RestoreHooks(JNIEnv *env) {
                        nullptr);
         if (xhook_refresh(0) == 0) {
             xhook_clear();
-            LOGD("hook removed");
         }
     }
 
-    restoreMethod(Zygote, nativeForkAndSpecialize)
-    restoreMethod(Zygote, nativeSpecializeAppProcess)
-    restoreMethod(Zygote, nativeForkSystemServer)
-    restoreMethod(SystemProperties, set)
+    RestoreJNIMethod(Zygote, nativeForkAndSpecialize)
+    RestoreJNIMethod(Zygote, nativeSpecializeAppProcess)
+    RestoreJNIMethod(Zygote, nativeForkSystemServer)
+    RestoreJNIMethod(SystemProperties, set)
+
+    LOGD("hooks restored");
+}
+
+void SelfUnload() {
+    LOGD("attempt to self unload");
+
+    pthread_mutex_lock(&self_close_mutext);
+
+    pthread_t thread;
+    pthread_create(&thread, nullptr, (void *(*)(void *)) &dlclose, self_handle);
+    pthread_detach(thread);
+
+    pthread_mutex_unlock(&self_close_mutext);
 }
 
 void Unload(jboolean hide_maps) {
     Hide::DoHide(false, hide_maps);
 
-    bool allowUnload = true;
+    bool selfUnload = true;
     for (auto module : *get_modules()) {
         if (strcmp(module->id, MODULE_NAME_CORE) == 0) {
             continue;
         }
 
         if (module->allowUnload() != 0) {
-            LOGV("unload module %s", module->id);
+            LOGD("unload %s", module->id);
             dlclose(module->handle);
         } else {
             if (module->apiVersion >= 25)
-                LOGV("unload is not allow by module %s", module->id);
-            else
-                LOGV("unload is not supported by module %s (API < 25)", module->id);
-
-            allowUnload = false;
+                LOGD("unload is not allow by module %s", module->id);
+            else {
+                LOGD("unload is not supported by module %s (API < 25), self unload is also disabled", module->id);
+                selfUnload = false;
+            }
         }
     }
 
-    if (!allowUnload) {
-        LOGV("don't unload self because at least one module does not allow unload");
-    } else {
+    if (selfUnload) {
         SelfUnload();
     }
 }
