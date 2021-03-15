@@ -11,6 +11,7 @@
 #include "entry.h"
 
 static void *self_handle;
+static bool self_unload_allowed;
 
 struct SelfUnloadGuard {
 
@@ -70,10 +71,13 @@ static void SelfUnload() {
     pthread_detach(thread);
 }
 
-void Entry::Unload(jboolean hide_maps) {
-    Hide::DoHide(false, hide_maps);
+bool Entry::isSelfUnloadAllowed() {
+    return self_unload_allowed;
+}
 
-    bool selfUnload = true;
+void Entry::Unload(jboolean hide_maps) {
+    self_unload_allowed = true;
+
     for (auto module : Modules::Get()) {
         if (strcmp(module->id, MODULE_NAME_CORE) == 0) {
             continue;
@@ -81,18 +85,20 @@ void Entry::Unload(jboolean hide_maps) {
 
         if (module->allowUnload() != 0) {
             LOGD("unload %s", module->id);
-            dlclose(module->handle);
+            module->unload();
         } else {
             if (module->apiVersion >= 25)
                 LOGD("unload is not allow by module %s", module->id);
             else {
                 LOGD("unload is not supported by module %s (API < 25), self unload is also disabled", module->id);
-                selfUnload = false;
+                self_unload_allowed = false;
             }
         }
     }
 
-    if (selfUnload) {
+    Hide::DoHide(true, hide_maps);
+
+    if (self_unload_allowed) {
         SelfUnload();
     }
 }

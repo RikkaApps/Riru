@@ -1,6 +1,7 @@
 #pragma once
 
 #include <jni.h>
+#include <dlfcn.h>
 #include <string>
 #include <vector>
 #include <riru.h>
@@ -62,6 +63,18 @@ public:
         _forkSystemServerPost = (void *) info->forkSystemServerPost;
         _specializeAppProcessPre = (void *) info->specializeAppProcessPre;
         _specializeAppProcessPost = (void *) info->specializeAppProcessPost;
+    }
+
+    void unload() {
+        if (!handle) return;
+
+        if (dlclose(handle) == 0) {
+            handle = nullptr;
+        }
+    }
+
+    bool isLoaded() {
+        return handle != nullptr;
     }
 
     bool allowUnload() {

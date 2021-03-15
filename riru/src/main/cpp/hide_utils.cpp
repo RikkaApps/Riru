@@ -90,8 +90,16 @@ namespace Hide {
         int names_count = 0;
         for (auto module : Modules::Get()) {
             if (strcmp(module->id, MODULE_NAME_CORE) == 0) {
+                if (Entry::isSelfUnloadAllowed()) {
+                    LOGI("don't hide self since it will be unloaded");
+                    continue;
+                }
                 names[names_count] = self_path.c_str();
             } else if (module->supportHide) {
+                if (!module->isLoaded()) {
+                    LOGI("%s is unloaded", module->id);
+                    continue;
+                }
                 names[names_count] = module->path;
             } else {
                 LOGI("module %s does not support hide", module->id);
