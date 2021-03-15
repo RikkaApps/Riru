@@ -15,8 +15,6 @@ namespace Status {
 
     void WriteSelfAndModules();
 
-    void WriteMethod(Method method, bool replaced, const char *sig);
-
     bool ReadFile(const char *path, int target_fd);
 
     void ReadMagiskTmpfsPath(char *&buffer, int32_t &buffer_size);

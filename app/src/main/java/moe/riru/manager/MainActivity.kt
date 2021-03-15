@@ -76,25 +76,6 @@ class MainActivity : AppActivity() {
 
         // --------------------------------------------
 
-        message.appendLine("\nNative methods:")
-
-        Riru.methodNames.forEach { methodName ->
-            SuFile.open("$root/methods/$methodName").let {
-                message.append(methodName).append(": ")
-
-                val method = it.readTextOrNull()?.split('\n')
-                if (method != null && method.size >= 2) {
-                    message.appendLine(if (method[0] == "true") "ok" else "!!! not replaced")
-                } else {
-                    message.appendLine("(unknown)")
-                }
-
-                detail.appendLine("$methodName: ${method?.joinToString("\n")}")
-            }
-        }
-
-        // --------------------------------------------
-
         message.appendLine("\nLoaded modules:")
 
         val moduleFiles = SuFile.open("$root/modules").listFiles()

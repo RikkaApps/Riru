@@ -72,7 +72,6 @@ static JNINativeMethod *onRegisterZygote(const char *className, const JNINativeM
             if (replaced) {
                 LOGI("replaced com.android.internal.os.Zygote#nativeForkAndSpecialize");
             }
-            Status::WriteMethod(Status::Method::forkAndSpecialize, replaced, method.signature);
         } else if (strcmp(method.name, "nativeSpecializeAppProcess") == 0) {
             JNI::Zygote::nativeSpecializeAppProcess = new JNINativeMethod{method.name, method.signature, method.fnPtr};
 
@@ -98,7 +97,6 @@ static JNINativeMethod *onRegisterZygote(const char *className, const JNINativeM
             if (replaced) {
                 LOGI("replaced com.android.internal.os.Zygote#nativeSpecializeAppProcess");
             }
-            Status::WriteMethod(Status::Method::specializeAppProcess, replaced, method.signature);
         } else if (strcmp(method.name, "nativeForkSystemServer") == 0) {
             JNI::Zygote::nativeForkSystemServer = new JNINativeMethod{method.name, method.signature, method.fnPtr};
 
@@ -113,7 +111,6 @@ static JNINativeMethod *onRegisterZygote(const char *className, const JNINativeM
             if (replaced) {
                 LOGI("replaced com.android.internal.os.Zygote#nativeForkSystemServer");
             }
-            Status::WriteMethod(Status::Method::forkSystemServer, replaced, method.signature);
         }
     }
 

@@ -104,32 +104,6 @@ void Status::WriteSelfAndModules() {
     WriteToSocket(builder);
 }
 
-void Status::WriteMethod(Method method, bool replaced, const char *sig) {
-#ifdef __LP64__
-    bool is64bit = true;
-#else
-    bool is64bit = false;
-#endif
-
-    static const char *method_name[Method::COUNT] = {
-            "nativeForkAndSpecialize",
-            "nativeForkSystemServer",
-            "nativeSpecializeAppProcess"
-    };
-
-    flatbuffers::FlatBufferBuilder builder;
-
-    flatbuffers::Offset<JNIMethod> method_data[] = {CreateJNIMethodDirect(builder, method_name[method], sig, replaced)};
-    auto methods = builder.CreateVector(method_data, 1);
-
-    FbStatusBuilder status_builder(builder);
-    status_builder.add_is_64bit(is64bit);
-    status_builder.add_jni_methods(methods);
-    FinishFbStatusBuffer(builder, status_builder.Finish());
-
-    WriteToSocket(builder);
-}
-
 static uint8_t ReadModulesFromSocket(uint8_t *&buffer, uint32_t &buffer_size) {
     struct sockaddr_un addr{};
     int fd;
