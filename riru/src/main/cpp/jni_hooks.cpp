@@ -404,7 +404,7 @@ static void nativeForkSystemServer_post(JNIEnv *env, jclass clazz, jint res) {
         module->forkSystemServerPost(env, clazz, res);
     }
 
-    Entry::Unload(false);
+    if (res == 0) Entry::Unload(false);
 }
 
 // -----------------------------------------------------------------

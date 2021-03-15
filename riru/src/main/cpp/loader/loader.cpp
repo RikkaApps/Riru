@@ -105,6 +105,8 @@ __used __attribute__((constructor)) void constructor() {
         return;
     }
 
+    LOGI("Riru %s (%d) in %s", RIRU_VERSION_NAME, RIRU_VERSION_CODE, cmdline);
+
     char magisk_path[PATH_MAX]{0};
     int32_t buf_size = -1;
     int retry = 10;
