@@ -29,7 +29,7 @@ void Entry::Unload(jboolean hide_maps) {
     Hide::DoHide(false, hide_maps);
 
     bool selfUnload = true;
-    for (auto module : *get_modules()) {
+    for (auto module : Modules::Get()) {
         if (strcmp(module->id, MODULE_NAME_CORE) == 0) {
             continue;
         }

@@ -79,10 +79,10 @@ void Status::WriteSelfAndModules() {
             RIRU_API_VERSION,
             RIRU_VERSION_CODE,
             RIRU_VERSION_NAME,
-            is_hide_enabled());
+            true);
 
     std::vector<flatbuffers::Offset<Module>> modules_vector;
-    for (auto module : *get_modules()) {
+    for (auto module : Modules::Get()) {
         if (strcmp(module->id, MODULE_NAME_CORE) == 0) continue;
         modules_vector.emplace_back(CreateModuleDirect(
                 builder,

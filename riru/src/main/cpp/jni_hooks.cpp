@@ -270,7 +270,7 @@ static void nativeForkAndSpecialize_pre(
         jstring &instructionSet, jstring &appDataDir, jboolean &isTopApp, jobjectArray &pkgDataInfoList,
         jobjectArray &whitelistedDataInfoList, jboolean &bindMountAppDataDirs, jboolean &bindMountAppStorageDirs) {
 
-    for (auto module : *get_modules()) {
+    for (auto module : Modules::Get()) {
         if (!module->hasForkAndSpecializePre())
             continue;
 
@@ -294,7 +294,7 @@ static void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, jb
 
     if (res == 0) JNI::RestoreHooks(env);
 
-    for (auto module : *get_modules()) {
+    for (auto module : Modules::Get()) {
         if (!module->hasForkAndSpecializePost())
             continue;
 
@@ -334,7 +334,7 @@ static void nativeSpecializeAppProcess_pre(
         jboolean &isTopApp, jobjectArray &pkgDataInfoList, jobjectArray &whitelistedDataInfoList,
         jboolean &bindMountAppDataDirs, jboolean &bindMountAppStorageDirs) {
 
-    for (auto module : *get_modules()) {
+    for (auto module : Modules::Get()) {
         if (!module->hasSpecializeAppProcessPre())
             continue;
 
@@ -357,7 +357,7 @@ static void nativeSpecializeAppProcess_post(JNIEnv *env, jclass clazz, jint uid)
 
     JNI::RestoreHooks(env);
 
-    for (auto module : *get_modules()) {
+    for (auto module : Modules::Get()) {
         if (!module->hasSpecializeAppProcessPost())
             continue;
 
@@ -380,7 +380,7 @@ static void nativeForkSystemServer_pre(
         JNIEnv *env, jclass clazz, uid_t &uid, gid_t &gid, jintArray &gids, jint &debug_flags,
         jobjectArray &rlimits, jlong &permittedCapabilities, jlong &effectiveCapabilities) {
 
-    for (auto module : *get_modules()) {
+    for (auto module : Modules::Get()) {
         if (!module->hasForkSystemServerPre())
             continue;
 
@@ -396,7 +396,7 @@ static void nativeForkSystemServer_post(JNIEnv *env, jclass clazz, jint res) {
 
     if (res == 0) JNI::RestoreHooks(env);
 
-    for (auto module : *get_modules()) {
+    for (auto module : Modules::Get()) {
         if (!module->hasForkSystemServerPost())
             continue;
 

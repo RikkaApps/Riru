@@ -17,38 +17,16 @@
 
 using namespace std;
 
-bool is_hide_enabled() {
-    return true;
-}
-
-std::vector<RiruModule *> *get_modules() {
-    static auto *modules = new std::vector<RiruModule *>({new RiruModule(strdup(MODULE_NAME_CORE), "", "")});
+std::vector<RiruModule *> &Modules::Get() {
+    static auto modules = std::vector<RiruModule *>({new RiruModule(strdup(MODULE_NAME_CORE), "", "")});
     return modules;
 }
 
-static void Cleanup(void *handle, const char *path) {
+static void Cleanup(void *handle) {
     if (dlclose(handle) != 0) {
         LOGE("dlclose failed: %s", dlerror());
         return;
     }
-
-    procmaps_iterator *maps = pmparser_parse(-1);
-    if (maps == nullptr) {
-        LOGE("cannot parse the memory map");
-        return;
-    }
-
-    procmaps_struct *maps_tmp;
-    while ((maps_tmp = pmparser_next(maps)) != nullptr) {
-        if (strcmp(maps_tmp->pathname, path) != 0) continue;
-
-        auto start = (uintptr_t) maps_tmp->addr_start;
-        auto end = (uintptr_t) maps_tmp->addr_end;
-        auto size = end - start;
-        LOGD("%" PRIxPTR"-%" PRIxPTR" %s %ld %s", start, end, maps_tmp->perm, maps_tmp->offset, maps_tmp->pathname);
-        munmap((void *) start, size);
-    }
-    pmparser_free(maps);
 }
 
 typedef struct {
@@ -110,7 +88,7 @@ static void LoadModule(const char *id, const char *path, const char *magisk_modu
     auto init = (RiruInit_t *) dlsym(handle, "init");
     if (!init) {
         LOGW("%s does not export init", path);
-        Cleanup(handle, path);
+        Cleanup(handle);
         return;
     }
 
@@ -137,14 +115,14 @@ static void LoadModule(const char *id, const char *path, const char *magisk_modu
     auto moduleInfo = init(riru);
     if (moduleInfo == nullptr) {
         LOGE("%s requires higher Riru version (or its broken)", path);
-        Cleanup(handle, path);
+        Cleanup(handle);
         return;
     }
 
     auto apiVersion = moduleInfo->moduleApiVersion;
     if (apiVersion < RIRU_MIN_API_VERSION || apiVersion > RIRU_API_VERSION) {
         LOGW("unsupported API %s: %d", name, apiVersion);
-        Cleanup(handle, path);
+        Cleanup(handle);
         return;
     }
 
@@ -158,14 +136,14 @@ static void LoadModule(const char *id, const char *path, const char *magisk_modu
         moduleInfo = init((Riru *) legacyApiStub);
         if (moduleInfo == nullptr) {
             LOGE("%s returns null on step 2", path);
-            Cleanup(handle, path);
+            Cleanup(handle);
             return;
         }
         module->info((RiruModuleInfo *) moduleInfo);
         init(nullptr);
     }
 
-    get_modules()->push_back(module);
+    Modules::Get().push_back(module);
 
     LOGI("module loaded: %s (api %d)", module->id, module->apiVersion);
 }
@@ -255,7 +233,7 @@ void Modules::Load() {
 
     Hide::DoHide(true, AndroidProp::GetApiLevel() >= 29);
 
-    for (auto module : *get_modules()) {
+    for (auto module : Modules::Get()) {
         if (module->hasOnModuleLoaded()) {
             LOGV("%s: onModuleLoaded", module->id);
 

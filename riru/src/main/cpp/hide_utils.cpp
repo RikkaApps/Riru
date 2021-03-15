@@ -85,10 +85,10 @@ namespace Hide {
 
     void DoHide(bool objects, bool maps) {
         auto self_path = Magisk::GetPathForSelfLib("libriru.so");
-        auto modules = get_modules();
-        auto names = (const char **) malloc(sizeof(char *) * modules->size());
+        auto modules = Modules::Get();
+        auto names = (const char **) malloc(sizeof(char *) * modules.size());
         int names_count = 0;
-        for (auto module : *get_modules()) {
+        for (auto module : Modules::Get()) {
             if (strcmp(module->id, MODULE_NAME_CORE) == 0) {
                 names[names_count] = self_path.c_str();
             } else if (module->supportHide) {

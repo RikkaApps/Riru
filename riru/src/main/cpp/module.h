@@ -2,7 +2,6 @@
 
 #include <jni.h>
 #include <string>
-#include <map>
 #include <vector>
 #include <riru.h>
 
@@ -18,7 +17,6 @@ public:
     uint32_t token;
 
     void *handle{};
-    std::map<std::string, void *> *funcs;
 
     int supportHide;
     int version;
@@ -39,7 +37,6 @@ public:
     explicit RiruModule(const char *id, const char *path, const char *magisk_module_path, uint32_t token = 0, std::unique_ptr<int> allowUnload = nullptr) :
             id(id), path(path), magisk_module_path(magisk_module_path), token(token ? token : (uintptr_t) id) {
 
-        funcs = new std::map<std::string, void *>();
         apiVersion = 0;
         handle = nullptr;
         _allowUnload = std::move(allowUnload);
@@ -167,10 +164,9 @@ public:
     }
 };
 
-std::vector<RiruModule *> *get_modules();
-
 namespace Modules {
+
+    std::vector<RiruModule *> &Get();
+
     void Load();
 }
-
-bool is_hide_enabled();
