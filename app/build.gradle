@@ -1,10 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
-def gitCommitId = 'git rev-parse --short HEAD'.execute([], project.rootDir).text.trim()
-def gitCommitCount = Integer.parseInt('git rev-list --count HEAD'.execute([], project.rootDir).text.trim())
-def baseVersionName = '23.6'
-
 android {
     compileSdkVersion rootProject.ext.targetSdkVersion
     defaultConfig {
@@ -12,7 +8,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode gitCommitCount
-        versionName "${baseVersionName}.r${gitCommitCount}.${gitCommitId}"
+        versionName "v${riruApiVersion}.${versionNameMinor}.${versionNamePatch}"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildFeatures {

@@ -42,6 +42,12 @@ ext {
 
     riruApiVersion = 25
     riruMinApiVersion = 9
+
+    gitCommitId = 'git rev-parse --short HEAD'.execute([], project.rootDir).text.trim()
+    gitCommitCount = Integer.parseInt('git rev-list --count HEAD'.execute([], project.rootDir).text.trim())
+
+    versionNameMinor = 0
+    versionNamePatch = 0
 }
 
 def aarVersion = "${riruApiVersion}.0.0"

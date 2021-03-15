@@ -7,13 +7,7 @@ plugins {
     id 'com.android.application'
 }
 
-def gitCommitId = 'git rev-parse --short HEAD'.execute([], project.rootDir).text.trim()
-def gitCommitCount = Integer.parseInt('git rev-list --count HEAD'.execute([], project.rootDir).text.trim())
-
-def versionNameMajor = rootProject.ext.riruApiVersion
-def versionNameMinor = 0
-def versionNamePatch = 0
-def versionNameShort = "v${versionNameMajor}.${versionNameMinor}.${versionNamePatch}"
+def versionNameShort = "v${riruApiVersion}.${versionNameMinor}.${versionNamePatch}"
 def versionName = "${versionNameShort}.r${gitCommitCount}.${gitCommitId}"
 def versionCode = gitCommitCount
 
