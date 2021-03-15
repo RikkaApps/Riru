@@ -1,6 +1,7 @@
 #include <dlfcn.h>
 #include <android_prop.h>
 #include <pthread.h>
+#include <locker.h>
 #include "misc.h"
 #include "jni_hooks.h"
 #include "logging.h"
@@ -11,18 +12,16 @@
 #include "entry.h"
 
 static void *self_handle;
-static pthread_mutex_t self_close_mutext = PTHREAD_MUTEX_INITIALIZER;
+static Locker locker = Locker{};
 
 static void SelfUnload() {
     LOGD("attempt to self unload");
 
-    pthread_mutex_lock(&self_close_mutext);
+    locker.hold();
 
     pthread_t thread;
     pthread_create(&thread, nullptr, (void *(*)(void *)) &dlclose, self_handle);
     pthread_detach(thread);
-
-    pthread_mutex_unlock(&self_close_mutext);
 }
 
 void Entry::Unload(jboolean hide_maps) {
@@ -53,7 +52,7 @@ void Entry::Unload(jboolean hide_maps) {
 }
 
 extern "C" __attribute__((destructor)) void destructor() {
-    pthread_mutex_lock(&self_close_mutext);
+    locker.hold();
 
     LOGI("self unload successful");
 
