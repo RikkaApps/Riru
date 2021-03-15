@@ -13,11 +13,6 @@ namespace JNI {
         extern JNINativeMethod *nativeForkSystemServer;
     }
 
-    namespace SystemProperties {
-        extern const char* classname;
-        extern JNINativeMethod *set;
-    }
-
     void InstallHooks();
 
     void RestoreHooks(JNIEnv *env);
@@ -247,11 +242,5 @@ jint nativeForkSystemServer_samsung_q(
         JNIEnv *env, jclass, uid_t uid, gid_t gid, jintArray gids, jint runtimeFlags,
         jint space, jint accessInfo, jobjectArray rlimits, jlong permittedCapabilities,
         jlong effectiveCapabilities);
-
-// -----------------------------------------------------------------
-
-using SystemProperties_set_t = jint(JNIEnv *, jobject, jstring, jstring);
-
-void SystemProperties_set(JNIEnv *env, jobject clazz, jstring keyJ, jstring valJ);
 
 #endif // _JNI_NATIVE_METHOD_H

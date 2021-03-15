@@ -20,11 +20,6 @@ namespace JNI {
         JNINativeMethod *nativeSpecializeAppProcess = nullptr;
         JNINativeMethod *nativeForkSystemServer = nullptr;
     }
-
-    namespace SystemProperties {
-        const char* classname = "android/os/SystemProperties";
-        JNINativeMethod *set = nullptr;
-    }
 }
 
 static int shouldSkipUid(int uid) {
@@ -137,38 +132,9 @@ static JNINativeMethod *onRegisterZygote(const char *className, const JNINativeM
     return newMethods;
 }
 
-static JNINativeMethod *onRegisterSystemProperties(const char *className, const JNINativeMethod *methods, int numMethods) {
-
-    auto *newMethods = new JNINativeMethod[numMethods];
-    memcpy(newMethods, methods, sizeof(JNINativeMethod) * numMethods);
-
-    JNINativeMethod method;
-    for (int i = 0; i < numMethods; ++i) {
-        method = methods[i];
-
-        if (strcmp(method.name, "native_set") == 0) {
-            JNI::SystemProperties::set = new JNINativeMethod{method.name, method.signature, method.fnPtr};
-
-            if (strcmp("(Ljava/lang/String;Ljava/lang/String;)V", method.signature) == 0)
-                newMethods[i].fnPtr = (void *) SystemProperties_set;
-            else
-                LOGW("found native_set but signature %s mismatch", method.signature);
-
-            if (newMethods[i].fnPtr != methods[i].fnPtr) {
-                LOGI("replaced android.os.SystemProperties#native_set");
-            }
-        }
-    }
-    return newMethods;
-}
-
 static JNINativeMethod *handleRegisterNative(const char *className, const JNINativeMethod *methods, int numMethods) {
     if (strcmp("com/android/internal/os/Zygote", className) == 0) {
         return onRegisterZygote(className, methods, numMethods);
-    } else if (strcmp("android/os/SystemProperties", className) == 0) {
-        // hook android.os.SystemProperties#native_set to prevent a critical problem on Android 9
-        // see comment of SystemProperties_set in jni_native_method.cpp for detail
-        return onRegisterSystemProperties(className, methods, numMethods);
     } else {
         return nullptr;
     }
@@ -197,7 +163,6 @@ NEW_FUNC_DEF(int, jniRegisterNativeMethods, JNIEnv *env, const char *className,
 }
 
 static jclass zygoteClass;
-static jclass systemPropertiesClass;
 
 static void prepareClassesForRegisterNativeHook(JNIEnv *env) {
     static bool called = false;
@@ -205,14 +170,11 @@ static void prepareClassesForRegisterNativeHook(JNIEnv *env) {
     called = true;
 
     auto _zygoteClass = env->FindClass("com/android/internal/os/Zygote");
-    auto _systemPropertiesClass = env->FindClass("android/os/SystemProperties");
 
     // There are checks that enforces no local refs exists during Runtime::Start, make them global ref
     zygoteClass = (jclass) env->NewGlobalRef(_zygoteClass);
-    systemPropertiesClass = (jclass) env->NewGlobalRef(_systemPropertiesClass);
 
     env->DeleteLocalRef(_zygoteClass);
-    env->DeleteLocalRef(_systemPropertiesClass);
 }
 
 static int new_RegisterNative(JNIEnv *env, jclass cls, const JNINativeMethod *methods, jint numMethods) {
@@ -224,11 +186,6 @@ static int new_RegisterNative(JNIEnv *env, jclass cls, const JNINativeMethod *me
         LOGD("RegisterNative %s", className);
         env->DeleteGlobalRef(zygoteClass);
         zygoteClass = nullptr;
-    } else if (systemPropertiesClass != nullptr && env->IsSameObject(systemPropertiesClass, cls)) {
-        className = "android/os/SystemProperties";
-        LOGD("RegisterNative %s", className);
-        env->DeleteGlobalRef(systemPropertiesClass);
-        systemPropertiesClass = nullptr;
     } else {
         className = "";
     }
@@ -261,7 +218,6 @@ void JNI::RestoreHooks(JNIEnv *env) {
     RestoreJNIMethod(Zygote, nativeForkAndSpecialize)
     RestoreJNIMethod(Zygote, nativeSpecializeAppProcess)
     RestoreJNIMethod(Zygote, nativeForkSystemServer)
-    RestoreJNIMethod(SystemProperties, set)
 
     LOGD("hooks restored");
 }
@@ -888,36 +844,4 @@ jint nativeForkSystemServer_samsung_q(
 
     nativeForkSystemServer_post(env, cls, res);
     return res;
-}
-
-/*
- * On Android 9+, in very rare cases, SystemProperties.set("sys.user." + userId + ".ce_available", "true")
- * will throw an exception (we don't known if this is caused by Riru) and user data will be wiped.
- * So we hook it and clear the exception to prevent this problem from happening.
- *
- * log:
- * UserDataPreparer: Setting property: sys.user.0.ce_available=true
- * PackageManager: Destroying user 0 on volume null because we failed to prepare: java.lang.RuntimeException: failed to set system property
- *
- * http://androidxref.com/9.0.0_r3/xref/frameworks/base/services/core/java/com/android/server/pm/UserDataPreparer.java#107
- * -> http://androidxref.com/9.0.0_r3/xref/frameworks/base/services/core/java/com/android/server/pm/UserDataPreparer.java#112
- * -> http://androidxref.com/9.0.0_r3/xref/system/vold/VoldNativeService.cpp#751
- * -> http://androidxref.com/9.0.0_r3/xref/system/vold/Ext4Crypt.cpp#743
- * -> http://androidxref.com/9.0.0_r3/xref/system/vold/Ext4Crypt.cpp#221
- */
-void SystemProperties_set(JNIEnv *env, jobject clazz, jstring keyJ, jstring valJ) {
-    const char *key = env->GetStringUTFChars(keyJ, JNI_FALSE);
-    char user[16];
-    int no_throw = sscanf(key, "sys.user.%[^.].ce_available", user) == 1;
-    env->ReleaseStringUTFChars(keyJ, key);
-
-    ((SystemProperties_set_t *) JNI::SystemProperties::set->fnPtr)(env, clazz, keyJ, valJ);
-
-    jthrowable exception = env->ExceptionOccurred();
-    if (exception && no_throw) {
-        LOGW("prevented data destroy");
-
-        env->ExceptionDescribe();
-        env->ExceptionClear();
-    }
 }
