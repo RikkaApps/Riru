@@ -63,7 +63,7 @@ private:
 static void SelfUnload() {
     LOGD("attempt to self unload");
 
-    self_unload_guard.hold();
+    [[maybe_unused]] auto holder = self_unload_guard.hold();
 
     pthread_t thread;
     pthread_create(&thread, nullptr, (void *(*)(void *)) &dlclose, self_handle);
