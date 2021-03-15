@@ -384,6 +384,8 @@ static void nativeForkSystemServer_pre(
         if (!module->hasForkSystemServerPre())
             continue;
 
+        module->resetAllowUnload();
+
         module->forkSystemServerPre(
                 env, clazz, &uid, &gid, &gids, &debug_flags, &rlimits, &permittedCapabilities,
                 &effectiveCapabilities);
@@ -391,6 +393,9 @@ static void nativeForkSystemServer_pre(
 }
 
 static void nativeForkSystemServer_post(JNIEnv *env, jclass clazz, jint res) {
+
+    if (res == 0) JNI::RestoreHooks(env);
+
     for (auto module : *get_modules()) {
         if (!module->hasForkSystemServerPost())
             continue;
@@ -398,6 +403,8 @@ static void nativeForkSystemServer_post(JNIEnv *env, jclass clazz, jint res) {
         if (res == 0) LOGD("%s: forkSystemServerPost", module->id);
         module->forkSystemServerPost(env, clazz, res);
     }
+
+    Entry::Unload(false);
 }
 
 // -----------------------------------------------------------------
