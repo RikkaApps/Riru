@@ -17,6 +17,10 @@ namespace JNI {
         extern const char* classname;
         extern JNINativeMethod *set;
     }
+
+    void InstallHooks();
+
+    void RestoreHooks(JNIEnv *env);
 }
 
 const static char *nativeForkAndSpecialize_marshmallow_sig = "(II[II[[IILjava/lang/String;Ljava/lang/String;[ILjava/lang/String;Ljava/lang/String;)I";

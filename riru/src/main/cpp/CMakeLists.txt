@@ -61,8 +61,8 @@ add_library(utils STATIC
         util/dl.cpp)
 
 add_library(riru SHARED
-        main.cpp
-        jni_native_method.cpp
+        entry.cpp
+        jni_hooks.cpp
         native_method.cpp
         hide_utils.cpp
         status.cpp
