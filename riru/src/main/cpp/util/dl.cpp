@@ -4,6 +4,8 @@
 #include <libgen.h>
 #include <cstring>
 #include <logging.h>
+#include <android/dlext.h>
+#include <android_prop.h>
 
 #define FUNC_DEF(ret, func, ...) \
     using func##_t = ret(__VA_ARGS__); \
@@ -13,35 +15,40 @@
     if (!func) \
     func = (func##_t *) plt_dlsym(#func, nullptr);
 
-FUNC_DEF(void, android_get_LD_LIBRARY_PATH, char *buffer, size_t buffer_size);
-FUNC_DEF(void, android_update_LD_LIBRARY_PATH, const char *ld_library_path);
+FUNC_DEF(void, android_get_LD_LIBRARY_PATH, char *buffer, size_t buffer_size)
+FUNC_DEF(void, android_update_LD_LIBRARY_PATH, const char *ld_library_path)
+
+FUNC_DEF(android_namespace_t*, android_create_namespace,
+         const char *name,
+         const char *ld_library_path,
+         const char *default_library_path,
+         uint64_t type,
+         const char *permitted_when_isolated_path,
+         android_namespace_t *parent)
 
 void *dlopen_ext(const char *path, int flags) {
-    auto h = dlopen(path, flags);
-    if (h) return h;
+    if (AndroidProp::GetApiLevel() >= 24) {
+        FIND_FUNC(android_create_namespace)
+    }
 
-    FIND_FUNC(android_get_LD_LIBRARY_PATH)
-    FIND_FUNC(android_update_LD_LIBRARY_PATH)
+    auto info = android_dlextinfo{};
 
-    if (!android_get_LD_LIBRARY_PATH || !android_update_LD_LIBRARY_PATH) return h;
+    if (android_create_namespace) {
+        auto dir = dirname(path);
 
-    char ld_path[4096];
-    android_get_LD_LIBRARY_PATH(ld_path, sizeof(ld_path));
-    LOGD("LD_LIBRARY_PATH is %s", ld_path);
+        auto ns = android_create_namespace(path, dir, nullptr, 2/*ANDROID_NAMESPACE_TYPE_SHARED*/, nullptr, nullptr);
+        if (ns) {
+            info.flags = ANDROID_DLEXT_USE_NAMESPACE;
+            info.library_namespace = ns;
 
-    auto len = strlen(ld_path);
-    ld_path[len] = ':';
+            LOGD("open %s with namespace %p", path, ns);
+        } else {
+            LOGD("cannot create namespace for %s", path);
+        }
+    } else {
+        LOGD("cannot find android_create_namespace");
+        info.flags = 0u;
+    }
 
-    auto dir = dirname(path);
-    strcpy(ld_path + len + 1, dir);
-    LOGD("new LD_LIBRARY_PATH is %s", ld_path);
-    android_update_LD_LIBRARY_PATH(ld_path);
-
-    h = dlopen(path, flags);
-
-    ld_path[len] = '\0';
-    LOGD("restore LD_LIBRARY_PATH to %s", ld_path);
-    android_update_LD_LIBRARY_PATH(ld_path);
-
-    return h;
+    return android_dlopen_ext(path, flags, &info);
 }
