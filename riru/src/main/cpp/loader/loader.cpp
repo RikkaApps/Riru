@@ -158,6 +158,10 @@ __used __attribute__((constructor)) void constructor() {
 
     LOGI("original native bridge: %s", native_bridge);
 
+    if (native_bridge[0] == '0' && native_bridge[1] == '\0') {
+        return;
+    }
+
     original_bridge = dlopen(native_bridge, RTLD_NOW);
     if (original_bridge == nullptr) {
         LOGE("dlopen failed: %s", dlerror());
