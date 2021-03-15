@@ -9,6 +9,7 @@
 #include <socket.h>
 #include <malloc.h>
 #include <dl.h>
+#include <android_prop.h>
 #include "config.h"
 #include "logging.h"
 #include "misc.h"
@@ -106,6 +107,8 @@ __used __attribute__((constructor)) void constructor() {
     }
 
     LOGI("Riru %s (%d) in %s", RIRU_VERSION_NAME, RIRU_VERSION_CODE, cmdline);
+    LOGI("Android %s (api %d, preview_api %d)", AndroidProp::GetRelease(), AndroidProp::GetApiLevel(),
+         AndroidProp::GetPreviewApiLevel());
 
     char magisk_path[PATH_MAX]{0};
     int32_t buf_size = -1;

@@ -231,7 +231,7 @@ void Modules::Load() {
         LoadModule(name, path, "");
     }
 
-    Hide::DoHide(true, AndroidProp::GetApiLevel() >= 29);
+    //Hide::DoHide(false, AndroidProp::GetApiLevel() >= 29);
 
     for (auto module : Modules::Get()) {
         if (module->hasOnModuleLoaded()) {

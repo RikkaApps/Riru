@@ -27,28 +27,32 @@ FUNC_DEF(android_namespace_t*, android_create_namespace,
          android_namespace_t *parent)
 
 void *dlopen_ext(const char *path, int flags) {
-    if (AndroidProp::GetApiLevel() >= 24) {
-        FIND_FUNC(android_create_namespace)
-    }
-
     auto info = android_dlextinfo{};
 
-    if (android_create_namespace) {
-        auto dir = dirname(path);
+    if (AndroidProp::GetApiLevel() >= 28) {
+        FIND_FUNC(android_create_namespace)
 
-        auto ns = android_create_namespace(path, dir, nullptr, 2/*ANDROID_NAMESPACE_TYPE_SHARED*/, nullptr, nullptr);
-        if (ns) {
-            info.flags = ANDROID_DLEXT_USE_NAMESPACE;
-            info.library_namespace = ns;
+        if (android_create_namespace) {
+            auto dir = dirname(path);
+            auto ns = android_create_namespace(path, dir, nullptr, 2/*ANDROID_NAMESPACE_TYPE_SHARED*/, nullptr, nullptr);
+            if (ns) {
+                info.flags = ANDROID_DLEXT_USE_NAMESPACE;
+                info.library_namespace = ns;
 
-            LOGD("open %s with namespace %p", path, ns);
+                LOGD("open %s with namespace %p", path, ns);
+            } else {
+                LOGD("cannot create namespace for %s", path);
+            }
         } else {
-            LOGD("cannot create namespace for %s", path);
+            LOGD("cannot find android_create_namespace");
         }
-    } else {
-        LOGD("cannot find android_create_namespace");
-        info.flags = 0u;
     }
 
-    return android_dlopen_ext(path, flags, &info);
+    auto handle = android_dlopen_ext(path, flags, &info);
+    if (handle) {
+        LOGD("dloepn %s: %p", path, handle);
+    } else {
+        LOGE("dlopen %s: %s", path, dlerror());
+    }
+    return handle;
 }

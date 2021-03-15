@@ -44,6 +44,7 @@ set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LINKER_FLAGS}")
 
 find_package(xhook REQUIRED CONFIG)
 find_package(flatbuffers REQUIRED CONFIG)
+#find_package(dobby REQUIRED CONFIG)
 
 include_directories(include)
 include_directories(include_generated)
@@ -69,7 +70,7 @@ add_library(riru SHARED
         magisk.cpp
         daemon/status.cpp)
 target_include_directories(riru PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(riru log utils xhook::xhook flatbuffers::flatbuffers)
+target_link_libraries(riru log utils xhook::xhook flatbuffers::flatbuffers) #dobby::dobby)
 
 add_library(riruhide SHARED hide/hide.cpp)
 target_include_directories(riruhide PRIVATE ${CMAKE_SOURCE_DIR})

@@ -84,13 +84,13 @@ void Entry::Unload(jboolean hide_maps) {
         }
 
         if (module->allowUnload() != 0) {
-            LOGD("unload %s", module->id);
+            LOGD("%s: unload", module->id);
             module->unload();
         } else {
             if (module->apiVersion >= 25)
-                LOGD("unload is not allow by module %s", module->id);
+                LOGD("%s: unload is not allow for this process", module->id);
             else {
-                LOGD("unload is not supported by module %s (API < 25), self unload is also disabled", module->id);
+                LOGD("%s: unload is not supported by module (API < 25), self unload is also disabled", module->id);
                 self_unload_allowed = false;
             }
         }
@@ -106,13 +106,7 @@ void Entry::Unload(jboolean hide_maps) {
 extern "C" __attribute__((visibility("default"))) __attribute__((used)) void init(void *handle) {
     self_handle = handle;
 
-    LOGI("Magisk tmpfs path is %s", Magisk::GetPath());
-    LOGI("Android %s (api %d, preview_api %d)", AndroidProp::GetRelease(), AndroidProp::GetApiLevel(),
-         AndroidProp::GetPreviewApiLevel());
-
     JNI::InstallHooks();
-
     Modules::Load();
-
     Status::WriteSelfAndModules();
 }

@@ -6,6 +6,6 @@
 
 namespace Hide {
 
-    void DoHide(bool objects, bool maps);
+    void DoHide(bool solist, bool maps);
 }
 #endif //RIRU_HIDE_UTILS_H

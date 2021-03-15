@@ -321,8 +321,7 @@ static void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, jb
         module->forkAndSpecializePost(env, clazz, res);
     }
 
-    // On pre-29, child zygote is always webview zygote, webview zygote does not have execmem permission
-    if (res == 0) Entry::Unload(AndroidProp::GetApiLevel() < 29 && !is_child_zygote);
+    if (res == 0) Entry::Unload(!is_child_zygote);
 }
 
 // -----------------------------------------------------------------
@@ -353,7 +352,7 @@ static void nativeSpecializeAppProcess_pre(
     }
 }
 
-static void nativeSpecializeAppProcess_post(JNIEnv *env, jclass clazz, jint uid) {
+static void nativeSpecializeAppProcess_post(JNIEnv *env, jclass clazz, jint uid, jboolean is_child_zygote) {
 
     JNI::RestoreHooks(env);
 
@@ -371,7 +370,7 @@ static void nativeSpecializeAppProcess_post(JNIEnv *env, jclass clazz, jint uid)
         module->specializeAppProcessPost(env, clazz);
     }
 
-    Entry::Unload(false);
+    Entry::Unload(!is_child_zygote);
 }
 
 // -----------------------------------------------------------------
@@ -704,7 +703,7 @@ void nativeSpecializeAppProcess_q(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
             startChildZygote, instructionSet, appDataDir);
 
-    nativeSpecializeAppProcess_post(env, clazz, uid);
+    nativeSpecializeAppProcess_post(env, clazz, uid, startChildZygote);
 }
 
 void nativeSpecializeAppProcess_q_alternative(
@@ -727,7 +726,7 @@ void nativeSpecializeAppProcess_q_alternative(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
             startChildZygote, instructionSet, appDataDir, isTopApp);
 
-    nativeSpecializeAppProcess_post(env, clazz, uid);
+    nativeSpecializeAppProcess_post(env, clazz, uid, startChildZygote);
 }
 
 void nativeSpecializeAppProcess_r(
@@ -747,7 +746,7 @@ void nativeSpecializeAppProcess_r(
             startChildZygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList,
             whitelistedDataInfoList, bindMountAppDataDirs, bindMountAppStorageDirs);
 
-    nativeSpecializeAppProcess_post(env, clazz, uid);
+    nativeSpecializeAppProcess_post(env, clazz, uid, startChildZygote);
 }
 
 void nativeSpecializeAppProcess_r_dp3(
@@ -769,7 +768,7 @@ void nativeSpecializeAppProcess_r_dp3(
             startChildZygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList,
             bindMountAppStorageDirs);
 
-    nativeSpecializeAppProcess_post(env, clazz, uid);
+    nativeSpecializeAppProcess_post(env, clazz, uid, startChildZygote);
 }
 
 void nativeSpecializeAppProcess_r_dp2(
@@ -791,7 +790,7 @@ void nativeSpecializeAppProcess_r_dp2(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
             startChildZygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList);
 
-    nativeSpecializeAppProcess_post(env, clazz, uid);
+    nativeSpecializeAppProcess_post(env, clazz, uid, startChildZygote);
 }
 
 
@@ -815,7 +814,7 @@ void nativeSpecializeAppProcess_samsung_q(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, space,
             accessInfo, niceName, startChildZygote, instructionSet, appDataDir);
 
-    nativeSpecializeAppProcess_post(env, clazz, uid);
+    nativeSpecializeAppProcess_post(env, clazz, uid, startChildZygote);
 }
 
 // -----------------------------------------------------------------

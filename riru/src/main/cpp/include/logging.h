@@ -6,7 +6,11 @@
 #include "android/log.h"
 
 #ifndef LOG_TAG
+#ifdef __LP64__
+#define LOG_TAG    "Riru64"
+#else
 #define LOG_TAG    "Riru"
+#endif
 #endif
 
 #ifdef DEBUG
