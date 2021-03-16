@@ -21,7 +21,7 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 ### v25.0.0 (2021-03-16)
 
 - Support unload self and modules, leaving no trace for unrelated processes (requires module changes)
-- Support remove self and modules from `dl_iterate_phdr`
+- Support remove self and modules from `dl_iterate_phdr` (requires Android 8.0+)
 - Use a new way to bypass `dlopen` path limitation
 
 ### v24.1.2 (2021-03-13)
