@@ -155,7 +155,7 @@ namespace Hide {
         int names_count = 0;
         for (auto module : Modules::Get()) {
             if (strcmp(module->id, MODULE_NAME_CORE) == 0) {
-                if (Entry::isSelfUnloadAllowed()) {
+                if (Entry::IsSelfUnloadAllowed()) {
                     LOGD("don't hide self since it will be unloaded");
                     continue;
                 }

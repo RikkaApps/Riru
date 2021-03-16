@@ -71,7 +71,7 @@ static void SelfUnload() {
     pthread_detach(thread);
 }
 
-bool Entry::isSelfUnloadAllowed() {
+bool Entry::IsSelfUnloadAllowed() {
     return self_unload_allowed;
 }
 

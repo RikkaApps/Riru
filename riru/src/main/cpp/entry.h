@@ -5,7 +5,7 @@ namespace Entry {
 
     void Unload(jboolean hide_maps);
 
-    bool isSelfUnloadAllowed();
+    bool IsSelfUnloadAllowed();
 
 }
 #endif // _MAIN_H
