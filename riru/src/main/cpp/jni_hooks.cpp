@@ -395,8 +395,6 @@ static void nativeForkSystemServer_post(JNIEnv *env, jclass clazz, jint res) {
         if (res == 0) LOGD("%s: forkSystemServerPost", module->id);
         module->forkSystemServerPost(env, clazz, res);
     }
-
-    if (res == 0) Entry::Unload(false);
 }
 
 // -----------------------------------------------------------------
