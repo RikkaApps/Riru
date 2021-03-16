@@ -75,7 +75,7 @@ bool Entry::IsSelfUnloadAllowed() {
     return self_unload_allowed;
 }
 
-void Entry::Unload(jboolean hide_maps) {
+void Entry::Unload(jboolean is_child_zygote) {
     self_unload_allowed = true;
 
     for (auto module : Modules::Get()) {
@@ -96,7 +96,12 @@ void Entry::Unload(jboolean hide_maps) {
         }
     }
 
-    Hide::DoHide(true, hide_maps);
+    Hide::HideFromSoList();
+
+    // Child zygote (webview zyote or app zygote) has no "execmem" permission
+    if (AndroidProp::GetApiLevel() < 29 && !is_child_zygote) {
+        Hide::HideFromMaps();
+    }
 
     if (self_unload_allowed) {
         SelfUnload();
@@ -106,6 +111,7 @@ void Entry::Unload(jboolean hide_maps) {
 extern "C" __attribute__((visibility("default"))) __attribute__((used)) void init(void *handle) {
     self_handle = handle;
 
+    Hide::PrepareMapsHideLibrary();
     JNI::InstallHooks();
     Modules::Load();
     Status::WriteSelfAndModules();

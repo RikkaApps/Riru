@@ -128,7 +128,7 @@ namespace Hide {
             return linker_solist;
         }
 
-        void HidePathsFromSolist(const std::vector<const char *> &names) {
+        void RemovePathsFromSolist(const std::vector<const char *> &names) {
             if (!initialized) {
                 LOGW("not initialized");
                 return;
@@ -149,67 +149,76 @@ namespace Hide {
             }
         }
 
-        void HidePathsFromMaps(const std::vector<const char *> &names) {
-            auto hide_lib_path = Magisk::GetPathForSelfLib("libriruhide.so");
+        using riru_hide_t = int(const char *const *names, int names_count);
 
-            // load riruhide.so and run the hide
-            LOGD("dlopen libriruhide");
-            auto handle = dlopen_ext(hide_lib_path.c_str(), 0);
-            if (!handle) {
-                LOGE("dlopen %s failed: %s", hide_lib_path.c_str(), dlerror());
-                return;
-            }
-            using riru_hide_t = int(const char *const *names, int names_count);
-            auto *riru_hide = (riru_hide_t *) dlsym(handle, "riru_hide");
-            if (!riru_hide) {
-                LOGE("dlsym failed: %s", dlerror());
-                return;
-            }
+        void *riru_hide_handle;
+        riru_hide_t *riru_hide_func;
+
+        void HidePathsFromMaps(const std::vector<const char *> &names) {
+            if (!riru_hide_func) return;
 
             LOGD("do hide");
-            riru_hide(&names[0], names.size());
+            riru_hide_func(&names[0], names.size());
 
             // cleanup riruhide.so
             LOGD("dlclose");
-            if (dlclose(handle) != 0) {
+            if (dlclose(riru_hide_handle) != 0) {
                 LOGE("dlclose failed: %s", dlerror());
                 return;
             }
-
-            procmaps_iterator *maps = pmparser_parse(-1);
-            if (maps == nullptr) {
-                LOGE("cannot parse the memory map");
-                return;
-            }
-
-            procmaps_struct *maps_tmp;
-            while ((maps_tmp = pmparser_next(maps)) != nullptr) {
-                if (!strstr(maps_tmp->pathname, "/libriruhide.so")) continue;
-
-                auto start = (uintptr_t) maps_tmp->addr_start;
-                auto end = (uintptr_t) maps_tmp->addr_end;
-                auto size = end - start;
-                LOGV("%" PRIxPTR"-%" PRIxPTR" %s %ld %s", start, end, maps_tmp->perm,
-                     maps_tmp->offset,
-                     maps_tmp->pathname);
-                munmap((void *) start, size);
-            }
-            pmparser_free(maps);
         }
     }
 
-    void DoHide(bool solist, bool maps) {
+    void HideFromMaps() {
         auto self_path = Magisk::GetPathForSelfLib("libriru.so");
         auto modules = Modules::Get();
-        std::vector<const char *> map_to_remove{};
-        std::vector<const char *> so_to_remove{};
+        std::vector<const char *> names{};
+        for (auto module : Modules::Get()) {
+            if (strcmp(module->id, MODULE_NAME_CORE) == 0) {
+                names.push_back(self_path.c_str());
+            } else if (module->supportHide) {
+                if (!module->isLoaded()) {
+                    LOGD("%s is unloaded", module->id);
+                } else {
+                    names.push_back(module->path);
+                }
+            } else {
+                LOGD("module %s does not support hide", module->id);
+            }
+        }
+        if (!names.empty()) Hide::HidePathsFromMaps(names);
+    }
+
+    static void RemoveFromSoList(const std::vector<const char *> &names) {
+        Hide::RemovePathsFromSolist(names);
+    }
+
+    static void HideFromSoList(const std::vector<const char *> &names) {
+        auto callback = [](struct dl_phdr_info *info, size_t size, void *data) {
+            auto names = *((std::vector<const char *> *) data);
+
+            for (const auto &path : names) {
+                if (strcmp(path, info->dlpi_name) == 0) {
+                    memset((void *) info->dlpi_name, 0, strlen(path));
+                    LOGD("hide %s from dl_iterate_phdr", path);
+                    break;
+                }
+            }
+            return 0;
+        };
+        dl_iterate_phdr(callback, (void *) &names);
+    }
+
+    void HideFromSoList() {
+        auto self_path = Magisk::GetPathForSelfLib("libriru.so");
+        auto modules = Modules::Get();
+        std::vector<const char *> names{};
         for (auto module : Modules::Get()) {
             if (strcmp(module->id, MODULE_NAME_CORE) == 0) {
                 if (Entry::IsSelfUnloadAllowed()) {
                     LOGD("don't hide self since it will be unloaded");
                 } else {
-                    map_to_remove.push_back(self_path.c_str());
-                    so_to_remove.push_back(self_path.c_str());
+                    names.push_back(self_path.c_str());
                 }
             } else if (module->supportHide) {
                 if (!module->isLoaded()) {
@@ -218,15 +227,36 @@ namespace Hide {
                     if (module->apiVersion <= 24) {
                         LOGW("%s is too old to hide so", module->id);
                     } else {
-                        so_to_remove.push_back(self_path.c_str());
+                        names.push_back(module->path);
                     }
-                    map_to_remove.push_back(module->path);
                 }
             } else {
                 LOGD("module %s does not support hide", module->id);
             }
         }
-        if (!so_to_remove.empty() && solist) Hide::HidePathsFromSolist(so_to_remove);
-        if (!map_to_remove.empty() && maps) Hide::HidePathsFromMaps(map_to_remove);
+
+        if (AndroidProp::GetApiLevel() >= 26) {
+            RemoveFromSoList(names);
+        } else {
+            HideFromSoList(names);
+        }
+    }
+
+    void PrepareMapsHideLibrary() {
+        auto hide_lib_path = Magisk::GetPathForSelfLib("libriruhide.so");
+
+        // load riruhide.so and run the hide
+        LOGD("dlopen libriruhide");
+        riru_hide_handle = dlopen_ext(hide_lib_path.c_str(), 0);
+        if (!riru_hide_handle) {
+            LOGE("dlopen %s failed: %s", hide_lib_path.c_str(), dlerror());
+            return;
+        }
+        riru_hide_func = (riru_hide_t *) dlsym(riru_hide_handle, "riru_hide");
+        if (!riru_hide_func) {
+            LOGE("dlsym failed: %s", dlerror());
+            dlclose(riru_hide_handle);
+            return;
+        }
     }
 }

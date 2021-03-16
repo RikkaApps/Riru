@@ -231,7 +231,10 @@ void Modules::Load() {
         LoadModule(name, path, "");
     }
 
-    //Hide::DoHide(false, AndroidProp::GetApiLevel() >= 29);
+    // On Android 10+, zygote has "execmem" permission, we can use "riru hide" here
+    if (AndroidProp::GetApiLevel() >= 29) {
+        Hide::HideFromMaps();
+    }
 
     for (auto module : Modules::Get()) {
         if (module->hasOnModuleLoaded()) {

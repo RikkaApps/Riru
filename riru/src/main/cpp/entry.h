@@ -3,7 +3,7 @@
 
 namespace Entry {
 
-    void Unload(jboolean hide_maps);
+    void Unload(jboolean is_child_zygote);
 
     bool IsSelfUnloadAllowed();
 

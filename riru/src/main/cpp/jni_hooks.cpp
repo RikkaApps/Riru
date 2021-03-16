@@ -310,7 +310,7 @@ static void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, jb
         module->forkAndSpecializePost(env, clazz, res);
     }
 
-    if (res == 0) Entry::Unload(!is_child_zygote);
+    if (res == 0) Entry::Unload(is_child_zygote);
 }
 
 // -----------------------------------------------------------------
@@ -363,7 +363,7 @@ static void nativeSpecializeAppProcess_post(JNIEnv *env, jclass clazz, jint uid,
         module->specializeAppProcessPost(env, clazz);
     }
 
-    Entry::Unload(!is_child_zygote);
+    Entry::Unload(is_child_zygote);
 }
 
 // -----------------------------------------------------------------

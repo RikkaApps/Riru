@@ -6,6 +6,10 @@
 
 namespace Hide {
 
-    void DoHide(bool solist, bool maps);
+    void PrepareMapsHideLibrary();
+
+    void HideFromMaps();
+
+    void HideFromSoList();
 }
 #endif //RIRU_HIDE_UTILS_H
