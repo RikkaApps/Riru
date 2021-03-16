@@ -13,7 +13,9 @@ extern "C" {
 
 typedef void(onModuleLoaded_v9)();
 
+#ifndef RIRU_MODULE
 typedef int(shouldSkipUid_v9)(int uid);
+#endif
 
 typedef void(nativeForkAndSpecializePre_v9)(
         JNIEnv *env, jclass cls, jint *uid, jint *gid, jintArray *gids, jint *runtimeFlags,
@@ -44,7 +46,11 @@ typedef struct {
     int version;
     const char *versionName;
     onModuleLoaded_v9 *onModuleLoaded;
+#ifndef RIRU_MODULE
     shouldSkipUid_v9 *shouldSkipUid;
+#else
+    void *unused;
+#endif
     nativeForkAndSpecializePre_v9 *forkAndSpecializePre;
     nativeForkAndSpecializePost_v9 *forkAndSpecializePost;
     nativeForkSystemServerPre_v9 *forkSystemServerPre;

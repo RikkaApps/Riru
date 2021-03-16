@@ -22,6 +22,7 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 - Allow modules to declare if they can be unload
 - Support unload self (requires all modules are updated to Riru API 25)
+- Use a new way to bypass dlopen path limitation
 
 ### v24.1.2 (2021-03-13)
 

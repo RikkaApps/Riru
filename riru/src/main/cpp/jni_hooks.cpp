@@ -24,9 +24,6 @@ namespace JNI {
 
 static int shouldSkipUid(int uid) {
     int appId = uid % 100000;
-
-    // limit only regular app, or strange situation will happen, such as zygote process not start (dead for no reason and leave no clues?)
-    // https://android.googlesource.com/platform/frameworks/base/+/android-9.0.0_r8/core/java/android/os/UserHandle.java#151
     if (appId >= 10000 && appId <= 19999) return 0;
     return 1;
 }
@@ -276,11 +273,13 @@ static void nativeForkAndSpecialize_pre(
 
         module->resetAllowUnload();
 
-        if (module->hasShouldSkipUid() && module->shouldSkipUid(uid))
-            continue;
+        if (module->apiVersion < 25) {
+            if (module->hasShouldSkipUid() && module->shouldSkipUid(uid))
+                continue;
 
-        if (!module->hasShouldSkipUid() && shouldSkipUid(uid))
-            continue;
+            if (!module->hasShouldSkipUid() && shouldSkipUid(uid))
+                continue;
+        }
 
         module->forkAndSpecializePre(
                 env, clazz, &uid, &gid, &gids, &runtime_flags, &rlimits, &mount_external,
@@ -298,24 +297,14 @@ static void nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, jb
         if (!module->hasForkAndSpecializePost())
             continue;
 
-        if (module->hasShouldSkipUid() && module->shouldSkipUid(uid))
-            continue;
+        if (module->apiVersion < 25) {
+            if (module->hasShouldSkipUid() && module->shouldSkipUid(uid))
+                continue;
 
-        if (!module->hasShouldSkipUid() && shouldSkipUid(uid))
-            continue;
+            if (!module->hasShouldSkipUid() && shouldSkipUid(uid))
+                continue;
+        }
 
-        /*
-         * Magic problem:
-         * There is very low change that zygote process stop working and some processes forked from zygote
-         * become zombie process.
-         * When the problem happens:
-         * The following log (%s: forkAndSpecializePost) is not printed
-         * strace zygote: futex(0x6265a70698, FUTEX_WAIT_BITSET_PRIVATE, 2, NULL, 0xffffffff
-         * zygote maps: 6265a70000-6265a71000 rw-p 00020000 103:04 1160  /system/lib64/liblog.so
-         * 6265a70698-6265a70000+20000 is nothing in liblog
-         *
-         * Don't known why, so we just don't print log in zygote and see what will happen
-         */
         if (res == 0) LOGD("%s: forkAndSpecializePost", module->id);
 
         module->forkAndSpecializePost(env, clazz, res);
@@ -339,11 +328,13 @@ static void nativeSpecializeAppProcess_pre(
 
         module->resetAllowUnload();
 
-        if (module->hasShouldSkipUid() && module->shouldSkipUid(uid))
-            continue;
+        if (module->apiVersion < 25) {
+            if (module->hasShouldSkipUid() && module->shouldSkipUid(uid))
+                continue;
 
-        if (!module->hasShouldSkipUid() && shouldSkipUid(uid))
-            continue;
+            if (!module->hasShouldSkipUid() && shouldSkipUid(uid))
+                continue;
+        }
 
         module->specializeAppProcessPre(
                 env, clazz, &uid, &gid, &gids, &runtimeFlags, &rlimits, &mountExternal, &seInfo,
@@ -360,11 +351,13 @@ static void nativeSpecializeAppProcess_post(JNIEnv *env, jclass clazz, jint uid,
         if (!module->hasSpecializeAppProcessPost())
             continue;
 
-        if (module->hasShouldSkipUid() && module->shouldSkipUid(uid))
-            continue;
+        if (module->apiVersion < 25) {
+            if (module->hasShouldSkipUid() && module->shouldSkipUid(uid))
+                continue;
 
-        if (!module->hasShouldSkipUid() && shouldSkipUid(uid))
-            continue;
+            if (!module->hasShouldSkipUid() && shouldSkipUid(uid))
+                continue;
+        }
 
         LOGD("%s: specializeAppProcessPost", module->id);
         module->specializeAppProcessPost(env, clazz);
