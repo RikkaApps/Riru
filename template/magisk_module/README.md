@@ -18,15 +18,15 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ## Changelog
 
-### v25.0.0 (2021-03-15)
+### v25.0.0 (2021-03-16)
 
-- Allow modules to declare if they can be unload
-- Support unload self (requires all modules are updated to Riru API 25)
-- Use a new way to bypass dlopen path limitation
+- Support unload self and modules, leaving no trace for unrelated processes (requires module changes)
+- Support remove self and modules from `dl_iterate_phdr`
+- Use a new way to bypass `dlopen` path limitation
 
 ### v24.1.2 (2021-03-13)
 
-- Don't attempt to run hide for `webview_zygote` on pre-29m
+- Don't attempt to run hide for `webview_zygote` on pre-29
 
 ### v24.1.1 (2021-03-13)
 
