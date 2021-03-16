@@ -52,7 +52,23 @@ From v22.0, Riru provides a hidden mechanism (idea from [Haruue Icymoon](https:/
 
 ## Build
 
-Run gradle task `:riru:assembleRelease` task from Android Studio or the terminal, zip will be saved to `out`.
+Gradle tasks:
+
+* `:riru:assembleDebug/Release`
+   
+   Generate Magisk module zip to `out`.
+
+* `:riru:pushDebug/Release`
+   
+   Push the zip with adb to `/data/local/tmp`.
+
+* `:riru:flashDebug/Release`
+   
+   Flash the zip with `adb shell su -c magisk --install-module`.
+
+* `:riru:flashAndRebootDebug/Release`
+
+   Flash the zip and reboot the device.
 
 ## Module template
 
