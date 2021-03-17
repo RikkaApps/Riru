@@ -10,6 +10,7 @@
 #include <malloc.h>
 #include <dl.h>
 #include <android_prop.h>
+#include <rirud.h>
 #include "config.h"
 #include "logging.h"
 #include "misc.h"
@@ -139,9 +140,9 @@ __used __attribute__((constructor)) void constructor() {
 
     auto handle = dlopen_ext(riru_path, 0);
     if (handle) {
-        auto init = (void(*)(void *)) dlsym(handle, "init");
+        auto init = (void(*)(void *, const char*)) dlsym(handle, "init");
         if (init) {
-            init(handle);
+            init(handle, magisk_path);
         } else {
             LOGE("dlsym init %s", dlerror());
         }

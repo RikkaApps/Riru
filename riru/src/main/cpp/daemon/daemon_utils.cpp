@@ -10,7 +10,9 @@
 #include <cstdlib>
 #include <cstring>
 #include <dirent.h>
-#include "status.h"
+#include <vector>
+#include <rirud.h>
+#include "daemon_utils.h"
 #include "logging.h"
 #include "misc.h"
 #include "config.h"
@@ -60,7 +62,7 @@ static const char *GetRandomName() {
     return name;
 }
 
-void Status::GenerateRandomName() {
+void Daemon::GenerateRandomName() {
     GetRandomName();
 }
 
@@ -118,118 +120,54 @@ static int OpenFile(bool is_64bit, const char *name, ...) {
     return fd;
 }
 
-#define OpenFile(...) OpenFile(status->is_64bit(), __VA_ARGS__, nullptr)
+#define OpenFile(...) OpenFile(is_64bit, __VA_ARGS__, nullptr)
 
-static void WriteCore(const Status::FbStatus *status) {
-    auto core = status->core();
-    if (!core) return;
-
+void Daemon::WriteToFile(bool is_64bit, uint32_t count, const rirud::Module* modules) {
     char buf[1024];
     int fd;
 
     if ((fd = OpenFile("api")) != -1) {
-        write_full(fd, buf, sprintf(buf, "%d", core->api()));
+        write_full(fd, buf, sprintf(buf, "%d", RIRU_API_VERSION));
         close(fd);
     }
 
     if ((fd = OpenFile("version")) != -1) {
-        write_full(fd, buf, sprintf(buf, "%d", core->version()));
+        write_full(fd, buf, sprintf(buf, "%d", RIRU_VERSION_CODE));
         close(fd);
     }
 
     if ((fd = OpenFile("version_name")) != -1) {
-        write_full(fd, buf, sprintf(buf, "%s", core->version_name()->c_str()));
+        write_full(fd, buf, sprintf(buf, "%s", RIRU_VERSION_NAME));
         close(fd);
     }
 
-    if ((fd = OpenFile("hide")) != -1) {
-        write_full(fd, buf, sprintf(buf, "%s", core->hide() ? "true" : "false"));
-        close(fd);
-    }
-}
-
-static void WriteModules(const Status::FbStatus *status) {
-    auto modules = status->modules();
-    if (!modules) return;
-
-    char buf[1024];
-    int fd;
-
-    for (auto module : *modules) {
-        auto name = module->name()->c_str();
+    for (int i = 0; i < count; ++i) {
+        auto module = modules[i];
+        auto name = module.id;
 
         if ((fd = OpenFile("modules", name, "hide")) != -1) {
-            write_full(fd, buf, sprintf(buf, "%s", module->hide() ? "true" : "false"));
+            write_full(fd, buf, sprintf(buf, "%s", module.supportHide ? "true" : "false"));
             close(fd);
         }
 
         if ((fd = OpenFile("modules", name, "api")) != -1) {
-            write_full(fd, buf, sprintf(buf, "%d", module->api()));
+            write_full(fd, buf, sprintf(buf, "%d", module.apiVersion));
             close(fd);
         }
 
         if ((fd = OpenFile("modules", name, "version")) != -1) {
-            write_full(fd, buf, sprintf(buf, "%d", module->version()));
+            write_full(fd, buf, sprintf(buf, "%d", module.version));
             close(fd);
         }
 
         if ((fd = OpenFile("modules", name, "version_name")) != -1) {
-            write_full(fd, buf, sprintf(buf, "%s", module->version_name()->c_str()));
+            write_full(fd, buf, sprintf(buf, "%s", module.versionName));
             close(fd);
         }
     }
 }
 
-static void WriteJNIMethods(const Status::FbStatus *status) {
-    auto methods = status->jni_methods();
-    if (!methods) return;
-
-    char buf[1024];
-    int fd;
-
-    for (auto method : *methods) {
-        if ((fd = OpenFile("methods", method->name()->c_str())) != -1) {
-            write_full(fd, buf, sprintf(buf, "%s\n%s", method->replaced() ? "true" : "false", method->signature()->c_str()));
-            close(fd);
-        }
-    }
-}
-
-void Status::WriteToFile(const FbStatus *status) {
-    WriteCore(status);
-    WriteModules(status);
-    WriteJNIMethods(status);
-}
-
-void Status::ReadFromFile(flatbuffers::FlatBufferBuilder &builder) {
-    DIR *dir;
-    struct dirent *entry;
-
-    std::vector<flatbuffers::Offset<Module>> modules_vector;
-
-    if (!(dir = opendir("/data/adb/riru/modules"))) goto create_buffer;
-    while ((entry = readdir(dir))) {
-        if (entry->d_type != DT_DIR) continue;
-
-        auto name = entry->d_name;
-        if (name[0] == '.') continue;
-
-        modules_vector.emplace_back(CreateModuleDirect(builder, name, 0, 0, "", false));
-    }
-    closedir(dir);
-
-    create_buffer:
-    auto core = CreateCoreDirect(builder, 0, 0, "", false);
-
-    auto modules = builder.CreateVector(modules_vector);
-
-    FbStatusBuilder status_builder(builder);
-    status_builder.add_core(core);
-    status_builder.add_modules(modules);
-    FinishFbStatusBuffer(builder, status_builder.Finish());
-}
-
-int Status::GetMagiskVersion() {
+int Daemon::GetMagiskVersion() {
     static int version = -1;
     if (version != -1) return version;
 
@@ -254,7 +192,7 @@ int Status::GetMagiskVersion() {
     return version;
 }
 
-const char *Status::GetMagiskTmpfsPath() {
+const char *Daemon::GetMagiskTmpfsPath() {
     // "magisk --path" added from v21.0, always "/sbin" in older versions
     if (GetMagiskVersion() < 21000) return "/sbin";
 

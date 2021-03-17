@@ -11,14 +11,13 @@
 #include <config.h>
 #include <socket.h>
 #include <misc.h>
-#include <flatbuffers/flatbuffers.h>
 #include <selinux.h>
 #include <cinttypes>
 #include <wait.h>
 #include <dirent.h>
 #include <sys/system_properties.h>
-#include "status.h"
-#include "status_generated.h"
+#include <rirud.h>
+#include "daemon_utils.h"
 #include "setproctitle.h"
 
 #define WORKER_PROCESS "rirud_worker"
@@ -28,41 +27,33 @@ static char original_native_bridge[PROP_VALUE_MAX] = {'0', '\0'};
 static int server_socket_fd = -1;
 static std::vector<pid_t> child_pids;
 
-static bool handle_ping(int sockfd) {
-    return write_full(sockfd, &Status::CODE_OK, sizeof(Status::CODE_OK)) == 0;
-}
-
-static bool handle_read_status(int sockfd) {
-    flatbuffers::FlatBufferBuilder builder;
-    Status::ReadFromFile(builder);
-
-    auto buf = builder.GetBufferPointer();
-    auto size = (uint32_t) builder.GetSize();
-
-    return write_full(sockfd, &Status::CODE_OK, sizeof(Status::CODE_OK)) == 0
-           && write_full(sockfd, &size, sizeof(size)) == 0
-           && write_full(sockfd, buf, size) == 0;
-}
-
 static bool handle_read_original_native_bridge(int sockfd) {
     int32_t size = strlen(original_native_bridge);
     return write_full(sockfd, &size, sizeof(size)) == 0 && (size <= 0 || write_full(sockfd, original_native_bridge, size) == 0);
 }
 
 static bool handle_read_magisk_tmpfs_path(int sockfd) {
-    auto path = Status::GetMagiskTmpfsPath();
+    auto path = Daemon::GetMagiskTmpfsPath();
     int32_t size = strlen(path);
     return write_full(sockfd, &size, sizeof(size)) == 0 && (size <= 0 || write_full(sockfd, path, size) == 0);
 }
 
 static bool handle_write_status(int sockfd) {
     uint8_t *buf;
-    uint32_t size;
+    uint8_t is64bit;
+    uint32_t count, size;
 
-    if (read_full(sockfd, &size, sizeof(size)) == -1) {
+    if (read_full(sockfd, &is64bit, sizeof(is64bit)) == -1) {
         PLOGE("read");
         return false;
     }
+
+    if (read_full(sockfd, &count, sizeof(count)) == -1) {
+        PLOGE("read");
+        return false;
+    }
+
+    size = count * sizeof(rirud::Module);
 
     buf = (uint8_t *) malloc(size);
     if (read_full(sockfd, buf, size) == -1) {
@@ -71,15 +62,8 @@ static bool handle_write_status(int sockfd) {
         return false;
     }
 
-    flatbuffers::Verifier verifier = flatbuffers::Verifier(buf, (size_t) size);
-    if (!Status::VerifyFbStatusBuffer(verifier)) {
-        LOGW("invalid data");
-        free(buf);
-        return false;
-    }
-
-    Status::WriteToFile(Status::GetFbStatus(buf));
-    write_full(sockfd, &Status::CODE_OK, sizeof(Status::CODE_OK));
+    Daemon::WriteToFile(is64bit != 0, count, (const rirud::Module *) buf);
+    write_full(sockfd, &rirud::CODE_OK, sizeof(rirud::CODE_OK));
     free(buf);
     return true;
 }
@@ -241,37 +225,27 @@ static bool handle_read_dir(int sockfd) {
 
 static void handle_socket(int sockfd, uint32_t action) {
     switch (action) {
-        case Status::ACTION_PING: {
-            LOGI("action: ping");
-            handle_ping(sockfd);
-            break;
-        }
-        case Status::ACTION_READ_STATUS: {
-            LOGI("action: read status");
-            handle_read_status(sockfd);
-            break;
-        }
-        case Status::ACTION_READ_NATIVE_BRIDGE: {
+        case rirud::ACTION_READ_NATIVE_BRIDGE: {
             LOGI("action: read original native bridge");
             handle_read_original_native_bridge(sockfd);
             break;
         }
-        case Status::ACTION_READ_MAGISK_TMPFS_PATH: {
+        case rirud::ACTION_READ_MAGISK_TMPFS_PATH: {
             LOGI("action: read Magisk tmpfs path");
             handle_read_magisk_tmpfs_path(sockfd);
             break;
         }
-        case Status::ACTION_WRITE_STATUS: {
+        case rirud::ACTION_WRITE_STATUS: {
             LOGI("action: write status");
             handle_write_status(sockfd);
             break;
         }
-        case Status::ACTION_READ_FILE: {
+        case rirud::ACTION_READ_FILE: {
             LOGI("action: read file");
             handle_read_file(sockfd);
             break;
         }
-        case Status::ACTION_READ_DIR: {
+        case rirud::ACTION_READ_DIR: {
             LOGI("action: read dir");
             handle_read_dir(sockfd);
             break;
@@ -414,7 +388,7 @@ static void sig_handler(int sig) {
 
     setproctitle("rirud");
 
-    Status::GenerateRandomName();
+    Daemon::GenerateRandomName();
 
     act.sa_handler = SIG_IGN;
     sigaction(SIGPIPE, &act, nullptr);
@@ -444,8 +418,8 @@ int main(int argc, char **argv) {
         PLOGE("getprop ro.dalvik.vm.native.bridge");
     }
 
-    LOGI("Magisk version is %d", Status::GetMagiskVersion());
-    LOGI("Magisk tmpfs path is %s", Status::GetMagiskTmpfsPath());
+    LOGI("Magisk version is %d", Daemon::GetMagiskVersion());
+    LOGI("Magisk tmpfs path is %s", Daemon::GetMagiskTmpfsPath());
 
     switch (daemon(0, 0)) {
         case -1:

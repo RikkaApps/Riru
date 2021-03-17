@@ -70,7 +70,6 @@ repositories {
 
 dependencies {
     implementation 'dev.rikka.ndk.thirdparty:xhook:1.2.0'
-    implementation 'rikka.ndk.thirdparty:flatbuffers:1.12.0'
     implementation 'androidx.annotation:annotation:1.1.0'
     compileOnly project(':stub')
 }

@@ -6,6 +6,8 @@ namespace Magisk {
 
     const char* GetPath();
 
+    void SetPath(const char *path);
+
     std::string GetPathForSelf(const char *name);
 
     std::string GetPathForSelfLib(const char *name);

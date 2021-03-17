@@ -1,12 +1,12 @@
 #include <dlfcn.h>
 #include <android_prop.h>
 #include <pthread.h>
+#include <rirud.h>
 #include "misc.h"
 #include "jni_hooks.h"
 #include "logging.h"
 #include "module.h"
 #include "hide_utils.h"
-#include "status.h"
 #include "magisk.h"
 #include "entry.h"
 
@@ -108,11 +108,30 @@ void Entry::Unload(jboolean is_child_zygote) {
     }
 }
 
-extern "C" __attribute__((visibility("default"))) __attribute__((used)) void init(void *handle) {
+extern "C" __attribute__((visibility("default"))) __attribute__((used)) void init(void *handle, const char* magisk_path) {
     self_handle = handle;
 
+    Magisk::SetPath(magisk_path);
     Hide::PrepareMapsHideLibrary();
     JNI::InstallHooks();
     Modules::Load();
-    Status::WriteSelfAndModules();
+
+    std::vector<rirud::Module> modules;
+    for (auto it : Modules::Get()) {
+        if (strcmp(it->id, MODULE_NAME_CORE) == 0) {
+            continue;
+        }
+
+        auto module = rirud::Module{};
+
+        strncpy(module.id, it->id, sizeof(module.id));
+        module.apiVersion = it->apiVersion;
+        module.version = it->version;
+        strncpy(module.versionName, it->versionName, sizeof(module.versionName));
+        module.supportHide = it->supportHide;
+
+        modules.emplace_back(module);
+    }
+    rirud::WriteModules(modules);
+    rirud::CloseSocket();
 }

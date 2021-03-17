@@ -4,14 +4,13 @@
 #include <sys/mman.h>
 #include <android_prop.h>
 #include <memory>
+#include <rirud.h>
 #include "module.h"
 #include "wrap.h"
 #include "logging.h"
 #include "misc.h"
 #include "config.h"
-#include "status.h"
 #include "hide_utils.h"
-#include "status_generated.h"
 #include "magisk.h"
 #include "dl.h"
 
@@ -149,9 +148,6 @@ static void LoadModule(const char *id, const char *path, const char *magisk_modu
 }
 
 void Modules::Load() {
-    uint8_t *buffer;
-    uint32_t buffer_size;
-
     Magisk::ForEachModule([](const char *path) {
         auto magisk_module_name = basename(path);
         char buf[PATH_MAX];
@@ -204,31 +200,19 @@ void Modules::Load() {
         closedir(dir);
     });
 
-    if (!Status::ReadModules(buffer, buffer_size)) {
-        return;
-    }
-
-    auto status = Status::GetFbStatus(buffer);
-
-    if (!status->core()) {
-        LOGW("core is null");
-        goto clean;
-    }
-    if (!status->modules()) {
-        LOGW("modules is null");
-        goto clean;
-    }
-
-    for (auto it : *status->modules()) {
-        char path[PATH_MAX];
-        auto name = it->name()->c_str();
+    std::vector<std::string> dirs;
+    if (rirud::ReadDir("/data/adb/riru/modules", dirs)) {
+        for (const auto &it : dirs) {
+            char path[PATH_MAX];
+            auto name = it.c_str();
 #ifdef __LP64__
-        snprintf(path, PATH_MAX, "/system/lib64/libriru_%s.so", name);
+            snprintf(path, PATH_MAX, "/system/lib64/libriru_%s.so", name);
 #else
-        snprintf(path, PATH_MAX, "/system/lib/libriru_%s.so", name);
+            snprintf(path, PATH_MAX, "/system/lib/libriru_%s.so", name);
 
 #endif
-        LoadModule(name, path, "");
+            LoadModule(name, path, "");
+        }
     }
 
     // On Android 10+, zygote has "execmem" permission, we can use "riru hide" here
@@ -243,7 +227,4 @@ void Modules::Load() {
             module->onModuleLoaded();
         }
     }
-
-    clean:
-    free(buffer);
 }

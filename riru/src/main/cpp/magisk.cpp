@@ -9,19 +9,21 @@
 #include <misc.h>
 #include <logging.h>
 #include <config.h>
-#include "status.h"
+#include <rirud.h>
 
 using namespace std;
 using namespace std::string_literals;
 
 namespace Magisk {
 
+    static const char *path_;
+
     const char *GetPath() {
-        static char *path = nullptr;
-        if (path) return path;
-        int32_t size;
-        Status::ReadMagiskTmpfsPath(path, size);
-        return path;
+        return path_;
+    }
+
+    void SetPath(const char *path) {
+        if (path) path_ = strdup(path);
     }
 
     string GetPathForSelf(const char *name) {

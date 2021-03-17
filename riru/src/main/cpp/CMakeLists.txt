@@ -43,10 +43,8 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LINKER_FLAGS}")
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LINKER_FLAGS}")
 
 find_package(xhook REQUIRED CONFIG)
-find_package(flatbuffers REQUIRED CONFIG)
 
 include_directories(include)
-include_directories(include_generated)
 include_directories(include_riru)
 
 add_library(utils STATIC
@@ -59,18 +57,18 @@ add_library(utils STATIC
         util/tinynew.cpp
         util/plt.c
         util/elf_util.cpp
-        util/dl.cpp)
+        util/dl.cpp
+        util/rirud.cpp)
 
 add_library(riru SHARED
         entry.cpp
         jni_hooks.cpp
         hide_utils.cpp
-        status.cpp
         module.cpp
         magisk.cpp
-        daemon/status.cpp)
+        daemon/daemon_utils.cpp)
 target_include_directories(riru PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(riru log utils xhook::xhook flatbuffers::flatbuffers)
+target_link_libraries(riru log utils xhook::xhook)
 
 add_library(riruhide SHARED hide/hide.cpp)
 target_include_directories(riruhide PRIVATE ${CMAKE_SOURCE_DIR})
@@ -86,8 +84,8 @@ target_link_libraries(riruloader log utils)
 add_executable(librirud.so
         daemon/daemon.cpp
         daemon/setproctitle.c
-        daemon/status.cpp)
-target_link_libraries(librirud.so log utils flatbuffers::flatbuffers)
+        daemon/daemon_utils.cpp)
+target_link_libraries(librirud.so log utils)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     add_custom_command(TARGET riru POST_BUILD
