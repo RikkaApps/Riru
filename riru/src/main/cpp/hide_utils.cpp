@@ -212,33 +212,39 @@ namespace Hide {
     void HideFromSoList() {
         auto self_path = Magisk::GetPathForSelfLib("libriru.so");
         auto modules = Modules::Get();
-        std::vector<const char *> names{};
+        std::vector<const char *> names_to_remove{};
+        std::vector<const char *> names_to_wipe{};
         for (auto module : Modules::Get()) {
             if (strcmp(module->id, MODULE_NAME_CORE) == 0) {
                 if (Entry::IsSelfUnloadAllowed()) {
                     LOGD("don't hide self since it will be unloaded");
                 } else {
-                    names.push_back(self_path.c_str());
+                    names_to_remove.push_back(self_path.c_str());
                 }
+                names_to_wipe.push_back(self_path.c_str());
             } else if (module->supportHide) {
                 if (!module->isLoaded()) {
                     LOGD("%s is unloaded", module->id);
-                } else {
-                    if (module->apiVersion <= 24) {
-                        LOGW("%s is too old to hide so", module->id);
-                    } else {
-                        names.push_back(module->path);
-                    }
+                    continue;
                 }
+                if (module->apiVersion <= 24) {
+                    LOGW("%s is too old to hide so", module->id);
+                } else {
+                    names_to_remove.push_back(module->path);
+                }
+                names_to_wipe.push_back(module->path);
             } else {
                 LOGD("module %s does not support hide", module->id);
+                names_to_wipe.push_back(module->path);
             }
         }
 
-        if (AndroidProp::GetApiLevel() >= 26) {
-            RemoveFromSoList(names);
-        } else {
-            HideFromSoList(names);
+        if (AndroidProp::GetApiLevel() >= 26 && !names_to_remove.empty()) {
+            RemoveFromSoList(names_to_remove);
+        }
+
+        if (!names_to_wipe.empty()) {
+            HideFromSoList(names_to_wipe);
         }
     }
 
