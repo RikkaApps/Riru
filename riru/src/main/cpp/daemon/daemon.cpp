@@ -28,6 +28,7 @@ static int server_socket_fd = -1;
 static std::vector<pid_t> child_pids;
 
 static bool handle_read_original_native_bridge(int sockfd) {
+    LOGD("handle_read_original_native_bridge %s", original_native_bridge);
     int32_t size = strlen(original_native_bridge);
     return write_full(sockfd, &size, sizeof(size)) == 0 && (size <= 0 || write_full(sockfd, original_native_bridge, size) == 0);
 }

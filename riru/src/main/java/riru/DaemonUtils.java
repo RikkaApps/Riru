@@ -1,5 +1,7 @@
 package riru;
 
+import android.net.LocalSocket;
+import android.net.LocalSocketAddress;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.ServiceManager;
@@ -9,10 +11,14 @@ import android.system.OsConstants;
 import android.text.TextUtils;
 import android.util.Log;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Objects;
 
 public class DaemonUtils {
@@ -34,14 +40,53 @@ public class DaemonUtils {
     }
 
     public static String readOriginalNativeBridge() {
-        try (BufferedReader br = new BufferedReader(new FileReader(new File("/data/adb/riru/native_bridge")))) {
-            char[] buf = new char[4096];
-            int size;
-            if ((size = br.read(buf)) > 0) {
-                return new String(buf, 0, size);
+        LocalSocket socket = new LocalSocket();
+        InputStream is = null;
+        OutputStream os = null;
+        try {
+            socket.connect(new LocalSocketAddress("rirud"));
+            is = new BufferedInputStream(socket.getInputStream());
+            os = new BufferedOutputStream(socket.getOutputStream());
+
+            byte[] buf = new byte[4096];
+            buf[0] = 3; // uint32 ACTION_READ_NATIVE_BRIDGE = 3
+            os.write(buf, 0, 4);
+            os.flush();
+
+            // int32 size
+            if (is.read(buf, 0, 4) != 4) {
+                throw new IOException("read size");
             }
-        } catch (IOException e) {
+            int size = buf[0] + (buf[1] << 8) + (buf[2] << 16) + (buf[3] << 24);
+            Log.d(Daemon.TAG, "read native_bridge size " + size);
+            if (size < 0 || size > 4096) {
+                throw new IOException("bad size");
+            }
+
+            // char[size]
+            if (is.read(buf, 0, size) != size) {
+                throw new IOException("read buf");
+            }
+            return new String(buf, 0, size);
+        } catch (Throwable e) {
             Log.w(Daemon.TAG, "Can't read native_bridge.", e);
+        } finally {
+            try {
+                socket.close();
+            } catch (IOException ignored) {
+            }
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException ignored) {
+                }
+            }
+            if (os != null) {
+                try {
+                    os.close();
+                } catch (IOException ignored) {
+                }
+            }
         }
         return null;
     }
@@ -157,16 +202,14 @@ public class DaemonUtils {
 
             try (BufferedReader br = new BufferedReader(new FileReader(new File(String.format("/proc/%s/cmdline", name))))) {
                 String[] args = br.readLine().split("\0");
-                if (args != null && args.length >= 1
-                        && (Objects.equals("rirud", args[0]) || Objects.equals("/data/adb/riru/bin/rirud", args[0]))) {
+                if (args.length >= 1 && (Objects.equals("rirud", args[0]) || args[0].endsWith("riru-core/rirud"))) {
                     Log.i(Daemon.TAG, "Found rirud " + name);
                     return Integer.parseInt(name);
                 }
             } catch (Throwable ignored) {
                 try (BufferedReader br = new BufferedReader(new FileReader(new File(String.format("/proc/%s/comm", name))))) {
                     String[] args = br.readLine().split("\0");
-                    if (args != null && args.length >= 1
-                            && (Objects.equals("rirud", args[0]) || Objects.equals("/data/adb/riru/bin/rirud", args[0]))) {
+                    if (args.length >= 1 && (Objects.equals("rirud", args[0]) || args[0].endsWith("riru-core/rirud"))) {
                         Log.i(Daemon.TAG, "Found rirud " + name);
                         return Integer.parseInt(name);
                     }

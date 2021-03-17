@@ -5,6 +5,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.RemoteException;
 import android.os.SystemProperties;
+import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.annotation.Keep;
@@ -85,7 +86,7 @@ public class Daemon {
         String originalNativeBridge = DaemonUtils.readOriginalNativeBridge();
         Log.i(TAG, "Original native bridge is " + originalNativeBridge);
 
-        if (originalNativeBridge == null) {
+        if (TextUtils.isEmpty(originalNativeBridge)) {
             originalNativeBridge = "0";
         }
 
