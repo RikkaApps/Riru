@@ -18,10 +18,11 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ## Changelog
 
-### v25.1.0 (2021-03-17)
+### v25.2.0 (2021-03-17)
 
+- Always clear name from `dl_iterate_phdr`
 - Fix reset native bridge is broken since v24.0.0
-- Continue reduce the file size (down to less than 200K now)
+- Continue to reduce the file size (down to less than 200K now)
 
 ### v25.0.0 (2021-03-16)
 
