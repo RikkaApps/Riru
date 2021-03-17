@@ -46,7 +46,7 @@ ext {
     gitCommitId = 'git rev-parse --short HEAD'.execute([], project.rootDir).text.trim()
     gitCommitCount = Integer.parseInt('git rev-list --count HEAD'.execute([], project.rootDir).text.trim())
 
-    versionNameMinor = 0
+    versionNameMinor = 1
     versionNamePatch = 0
 }
 

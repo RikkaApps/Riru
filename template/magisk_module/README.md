@@ -18,6 +18,11 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ## Changelog
 
+### v25.1.0 (2021-03-17)
+
+- Fix reset native bridge is broken since v24.0.0
+- Continue reduce the file size (down to less than 200K now)
+
 ### v25.0.0 (2021-03-16)
 
 - Support unload self and modules, leaving no trace for unrelated processes (requires module changes)
