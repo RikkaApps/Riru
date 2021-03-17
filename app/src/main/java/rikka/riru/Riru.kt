@@ -1,4 +1,4 @@
-package moe.riru.manager
+package rikka.riru
 
 import android.os.Build
 

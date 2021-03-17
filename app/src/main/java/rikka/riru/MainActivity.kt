@@ -1,6 +1,7 @@
-package moe.riru.manager
+package rikka.riru
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.os.Build
 import android.os.Bundle
 import android.os.SystemProperties
@@ -9,14 +10,13 @@ import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.io.SuFile
 import com.topjohnwu.superuser.io.SuFileInputStream
 import kotlinx.coroutines.*
-import moe.riru.manager.app.AppActivity
 import moe.riru.manager.databinding.MainActivityBinding
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
 
 @SuppressLint("SetTextI18n")
-class MainActivity : AppActivity() {
+class MainActivity : Activity() {
 
     private lateinit var binding: MainActivityBinding
     private var job: Job? = null
@@ -62,15 +62,12 @@ class MainActivity : AppActivity() {
         val versionFile = SuFile.open("$root/version")
         val versionNameFile = SuFile.open("$root/version_name")
         val api = apiFile.readTextOrNull()
-        val hide = hideFile.readTextOrNull()
         val version = versionFile.readTextOrNull()
         val versionName = versionNameFile.readTextOrNull()
 
         message.appendLine("Riru $versionName ($version, API v$api) is in use.")
-        message.appendLine("Hide is ${if (hide == "true") "enabled" else "disabled"}.")
 
         detail.appendLine("$apiFile: $api")
-        detail.appendLine("$hideFile: $hide")
         detail.appendLine("$versionFile: $version")
         detail.appendLine("$versionNameFile: $versionName")
 
