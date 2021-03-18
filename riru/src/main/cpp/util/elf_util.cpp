@@ -110,7 +110,7 @@ Elf_Addr ElfImg::getSymbOffset(const char *name) const {
         for (k = 0; k < dynsym_count; k++, sym++)
             if (strcmp(strings + sym->st_name, name) == 0) {
                 _offset = sym->st_value;
-                LOGD("find %s: %p", elf, reinterpret_cast<void*>(_offset));
+                LOGD("find %s: %p", elf, reinterpret_cast<void *>(_offset));
                 return _offset;
             }
     }
@@ -121,10 +121,10 @@ Elf_Addr ElfImg::getSymbOffset(const char *name) const {
             unsigned int st_type = ELF_ST_TYPE(symtab_start[i].st_info);
             char *st_name = reinterpret_cast<char *>(((size_t) header) + symstr_offset_for_symtab +
                                                      symtab_start[i].st_name);
-            if (st_type == STT_FUNC && symtab_start[i].st_size) {
+            if ((st_type == STT_FUNC || st_type == STT_OBJECT)&& symtab_start[i].st_size) {
                 if (strcmp(st_name, name) == 0) {
                     _offset = symtab_start[i].st_value;
-                    LOGD("find %s: %p", elf, reinterpret_cast<void*>(_offset));
+                    LOGD("find %s: %p", elf, reinterpret_cast<void *>(_offset));
                     return _offset;
                 }
             }
