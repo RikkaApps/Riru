@@ -198,6 +198,7 @@ namespace Hide {
             auto names = *((std::vector<const char *> *) data);
 
             for (const auto &path : names) {
+                if (!info->dlpi_name) continue;
                 if (strcmp(path, info->dlpi_name) == 0) {
                     memset((void *) info->dlpi_name, 0, strlen(path));
                     LOGD("hide %s from dl_iterate_phdr", path);
