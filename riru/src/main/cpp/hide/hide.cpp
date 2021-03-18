@@ -1,5 +1,7 @@
 #include <cinttypes>
 #include <sys/mman.h>
+#include <unordered_set>
+#include <string_view>
 #include "pmparser.h"
 #include "logging.h"
 #include "wrap.h"
@@ -57,8 +59,10 @@ static int do_hide(hide_struct *data) {
 
     // backup
     data->backup_address = (uintptr_t) FAILURE_RETURN(
-            mmap(nullptr, length, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0), MAP_FAILED);
-    LOGD("%" PRIxPTR"-%" PRIxPTR" %s %ld %s is backup to %" PRIxPTR, start, end, procstruct->perm, procstruct->offset,
+            mmap(nullptr, length, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0),
+            MAP_FAILED);
+    LOGD("%" PRIxPTR"-%" PRIxPTR" %s %ld %s is backup to %" PRIxPTR, start, end, procstruct->perm,
+         procstruct->offset,
          procstruct->pathname, data->backup_address);
 
     if (!procstruct->is_r) {
@@ -74,7 +78,8 @@ static int do_hide(hide_struct *data) {
 
     // restore
     LOGD("mmap original");
-    FAILURE_RETURN(mmap((void *) start, length, prot, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0), MAP_FAILED);
+    FAILURE_RETURN(mmap((void *) start, length, prot, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0),
+                   MAP_FAILED);
     LOGD("mprotect +w");
     FAILURE_RETURN(mprotect((void *) start, length, prot | PROT_WRITE), -1);
     LOGD("memcpy -> original");
@@ -86,7 +91,7 @@ static int do_hide(hide_struct *data) {
     return 0;
 }
 
-int riru_hide(const char **paths, int paths_count) {
+int riru_hide(const std::unordered_set<std::string_view> &names) {
     procmaps_iterator *maps = pmparser_parse(-1);
     if (maps == nullptr) {
         LOGE("cannot parse the memory map");
@@ -102,12 +107,7 @@ int riru_hide(const char **paths, int paths_count) {
 #ifdef DEBUG_APP
         matched = strstr(maps_tmp->pathname, "libriru.so");
 #endif
-        for (int i = 0; i < paths_count; ++i) {
-            if (strcmp(maps_tmp->pathname, paths[i]) == 0) {
-                matched = true;
-                break;
-            }
-        }
+        matched = names.count(maps_tmp->pathname);
 
         if (!matched) continue;
 
@@ -122,7 +122,8 @@ int riru_hide(const char **paths, int paths_count) {
             data[data_count].original = maps_tmp;
             data_count += 1;
         }
-        LOGD("%" PRIxPTR"-%" PRIxPTR" %s %ld %s", start, end, maps_tmp->perm, maps_tmp->offset, maps_tmp->pathname);
+        LOGD("%" PRIxPTR"-%" PRIxPTR" %s %ld %s", start, end, maps_tmp->perm, maps_tmp->offset,
+             maps_tmp->pathname);
     }
 
     for (int i = 0; i < data_count; ++i) {

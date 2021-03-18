@@ -12,6 +12,7 @@
 #include "entry.h"
 #include <iostream>
 #include <elf_util.h>
+#include <unordered_set>
 
 namespace Hide {
     namespace {
@@ -79,30 +80,49 @@ namespace Hide {
         ProtectedDataGuard::FuncType ProtectedDataGuard::ctor = nullptr;
         ProtectedDataGuard::FuncType ProtectedDataGuard::dtor = nullptr;
 
+        struct link_map {
+            [[maybe_unused]] ElfW(Addr) l_addr;
+            char *l_name;
+            [[maybe_unused]] ElfW(Dyn) *l_ld;
+            [[maybe_unused]] struct link_map *l_next;
+            [[maybe_unused]] struct link_map *l_prev;
+        };
+
         struct soinfo {
             soinfo *next() {
-                return *(soinfo **) ((uintptr_t) this + solist_next_offset);
+                return *(soinfo **) ((uintptr_t) this + solist_next_offset +
+                                     (pre_oreo ? addr_diff : 0));
             }
 
             void next(soinfo *si) {
-                *(soinfo **) ((uintptr_t) this + solist_next_offset) = si;
+                *(soinfo **) ((uintptr_t) this + solist_next_offset +
+                              (pre_oreo ? addr_diff : 0)) = si;
             }
 
             const char *get_realpath() {
-                return get_realpath_sym ? get_realpath_sym(this) : nullptr;
+                return ((link_map *) ((uintptr_t) this + solist_linkmap_offset +
+                                      (pre_oreo ? addr_diff : 0)))->l_name;
             }
 
 #ifdef __LP64__
             constexpr static size_t solist_next_offset = 0x28;
+            constexpr static size_t solist_linkmap_offset = 0xd0;
+            constexpr static size_t addr_diff = sizeof(void *);
 #else
             constexpr static size_t solist_next_offset = 0xa4;
+            constexpr static size_t solist_linkmap_offset = 0xfc;
+            constexpr static size_t addr_diff = 0;
 #endif
 
-            // since Android 6
+            static bool pre_oreo;
+
+            // since Android 8
             static const char *(*get_realpath_sym)(soinfo *);
         };
 
         const char *(*soinfo::get_realpath_sym)(soinfo *) = nullptr;
+
+        bool soinfo::pre_oreo = AndroidProp::GetApiLevel() < 25;
 
         soinfo *solist = nullptr;
         soinfo *sonext = nullptr;
@@ -148,13 +168,13 @@ namespace Hide {
 
         std::vector<soinfo *> linker_get_solist() {
             std::vector<soinfo *> linker_solist{};
-            for(auto *iter = solist; iter; iter = iter->next()) {
+            for (auto *iter = solist; iter; iter = iter->next()) {
                 linker_solist.push_back(iter);
             }
             return linker_solist;
         }
 
-        void RemovePathsFromSolist(const std::vector<const char *> &names) {
+        void RemovePathsFromSolist(const std::unordered_set<std::string_view> &names) {
             if (!initialized) {
                 LOGW("not initialized");
                 return;
@@ -162,28 +182,23 @@ namespace Hide {
             ProtectedDataGuard g;
             auto list = linker_get_solist();
             for (const auto &soinfo : linker_get_solist()) {
-                const char *real_path = soinfo->get_realpath();
-                if (real_path != nullptr) {
-                    for (const auto &path : names) {
-                        if (strcmp(path, real_path) == 0) {
-                            solist_remove_soinfo(soinfo);
-                            break;
-                        }
-                    }
+                const auto &real_path = soinfo->get_realpath();
+                if (names.count(real_path)) {
+                    solist_remove_soinfo(soinfo);
                 }
             }
         }
 
-        using riru_hide_t = int(const char *const *names, int names_count);
+        using riru_hide_t = int(const std::unordered_set<std::string_view> &names);
 
         void *riru_hide_handle;
         riru_hide_t *riru_hide_func;
 
-        void HidePathsFromMaps(const std::vector<const char *> &names) {
+        void HidePathsFromMaps(const std::unordered_set<std::string_view> &names) {
             if (!riru_hide_func) return;
 
             LOGD("do hide");
-            riru_hide_func(&names[0], names.size());
+            riru_hide_func(names);
 
             // cleanup riruhide.so
             LOGD("dlclose");
@@ -197,15 +212,15 @@ namespace Hide {
     void HideFromMaps() {
         auto self_path = Magisk::GetPathForSelfLib("libriru.so");
         auto modules = Modules::Get();
-        std::vector<const char *> names{};
+        std::unordered_set<std::string_view> names{};
         for (auto module : Modules::Get()) {
             if (strcmp(module->id, MODULE_NAME_CORE) == 0) {
-                names.push_back(self_path.c_str());
+                names.emplace(self_path);
             } else if (module->supportHide) {
                 if (!module->isLoaded()) {
                     LOGD("%s is unloaded", module->id);
                 } else {
-                    names.push_back(module->path);
+                    names.emplace(module->path);
                 }
             } else {
                 LOGD("module %s does not support hide", module->id);
@@ -214,21 +229,16 @@ namespace Hide {
         if (!names.empty()) Hide::HidePathsFromMaps(names);
     }
 
-    static void RemoveFromSoList(const std::vector<const char *> &names) {
+    static void RemoveFromSoList(const std::unordered_set<std::string_view> &names) {
         Hide::RemovePathsFromSolist(names);
     }
 
-    static void HideFromSoList(const std::vector<const char *> &names) {
+    static void HideFromSoList(const std::unordered_set<std::string_view> &names) {
         auto callback = [](struct dl_phdr_info *info, size_t size, void *data) {
-            auto names = *((std::vector<const char *> *) data);
-
-            for (const auto &path : names) {
-                if (!info->dlpi_name) continue;
-                if (strcmp(path, info->dlpi_name) == 0) {
-                    memset((void *) info->dlpi_name, 0, strlen(path));
-                    LOGD("hide %s from dl_iterate_phdr", path);
-                    break;
-                }
+            const auto &names = *((const std::unordered_set<std::string_view> *) data);
+            if (names.count(info->dlpi_name)) {
+                memset((void *) info->dlpi_name, 0, strlen(info->dlpi_name));
+                LOGD("hide %s from dl_iterate_phdr", info->dlpi_name);
             }
             return 0;
         };
@@ -238,16 +248,16 @@ namespace Hide {
     void HideFromSoList() {
         auto self_path = Magisk::GetPathForSelfLib("libriru.so");
         auto modules = Modules::Get();
-        std::vector<const char *> names_to_remove{};
-        std::vector<const char *> names_to_wipe{};
+        std::unordered_set<std::string_view> names_to_remove{};
+        std::unordered_set<std::string_view> names_to_wipe{};
         for (auto module : Modules::Get()) {
             if (strcmp(module->id, MODULE_NAME_CORE) == 0) {
                 if (Entry::IsSelfUnloadAllowed()) {
                     LOGD("don't hide self since it will be unloaded");
                 } else {
-                    names_to_remove.push_back(self_path.c_str());
+                    names_to_remove.emplace(self_path);
                 }
-                names_to_wipe.push_back(self_path.c_str());
+                names_to_wipe.emplace(self_path);
             } else if (module->supportHide) {
                 if (!module->isLoaded()) {
                     LOGD("%s is unloaded", module->id);
@@ -256,12 +266,12 @@ namespace Hide {
                 if (module->apiVersion <= 24) {
                     LOGW("%s is too old to hide so", module->id);
                 } else {
-                    names_to_remove.push_back(module->path);
+                    names_to_remove.emplace(module->path);
                 }
-                names_to_wipe.push_back(module->path);
+                names_to_wipe.emplace(module->path);
             } else {
                 LOGD("module %s does not support hide", module->id);
-                names_to_wipe.push_back(module->path);
+                names_to_wipe.emplace(module->path);
             }
         }
 
