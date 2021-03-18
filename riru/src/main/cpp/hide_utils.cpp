@@ -79,52 +79,78 @@ namespace Hide {
         ProtectedDataGuard::FuncType ProtectedDataGuard::ctor = nullptr;
         ProtectedDataGuard::FuncType ProtectedDataGuard::dtor = nullptr;
 
-        void *(*solist_get_head)() = nullptr;
-
-        void *(*solist_get_somain)() = nullptr;
-
-        bool (*solist_remove_soinfo)(void *) = nullptr;
-
-        const char *(*soinfo_get_realpath)(void *) = nullptr;
-
-        uintptr_t *solist_head = nullptr;
-        uintptr_t somain = 0;
-        size_t solist_next_offset = 0;
-
-        bool init_solist() {
-            solist_head = static_cast<uintptr_t *>(solist_get_head());
-            somain = reinterpret_cast<uintptr_t>(solist_get_somain());
-            for (size_t i = 0; i < 1024 / sizeof(void *); i++) {
-                if (*(uintptr_t *) ((uintptr_t) solist_head + i * sizeof(void *)) == somain) {
-                    solist_next_offset = i * sizeof(void *);
-                    return true;
-                }
+        struct soinfo {
+            soinfo *next() {
+                return *(soinfo **) ((uintptr_t) this + solist_next_offset);
             }
-            return false;
+
+            void next(soinfo *si) {
+                *(soinfo **) ((uintptr_t) this + solist_next_offset) = si;
+            }
+
+            const char *get_realpath() {
+                return get_realpath_sym ? get_realpath_sym(this) : nullptr;
+            }
+
+#ifdef __LP64__
+            constexpr static size_t solist_next_offset = 0x28;
+#else
+            constexpr static size_t solist_next_offset = 0xa4;
+#endif
+
+            // since Android 6
+            static const char *(*get_realpath_sym)(soinfo *);
+        };
+
+        const char *(*soinfo::get_realpath_sym)(soinfo *) = nullptr;
+
+        soinfo *solist = nullptr;
+        soinfo *sonext = nullptr;
+
+
+        bool solist_remove_soinfo(soinfo *si) {
+            soinfo *prev = nullptr, *trav;
+            for (trav = solist; trav != nullptr; trav = trav->next()) {
+                if (trav == si) {
+                    break;
+                }
+                prev = trav;
+            }
+
+            if (trav == nullptr) {
+                // si was not in solist
+                LOGE("name \"%s\"@%p is not in solist!", si->get_realpath(), si);
+                return false;
+            }
+
+            // prev will never be null, because the first entry in solist is
+            // always the static libdl_info.
+            prev->next(si->next());
+            if (si == sonext) {
+                sonext = prev;
+            }
+
+            LOGD("removed soinfo: %s", si->get_realpath());
+
+            return true;
         }
 
         const auto initialized = []() {
             SandHook::ElfImg linker(GetLinkerPath());
             return ProtectedDataGuard::setup(linker) &&
-                   (solist_get_head = reinterpret_cast<decltype(solist_get_head)>(linker.getSymbAddress(
-                           "__dl__Z15solist_get_headv"))) != nullptr &&
-                   (solist_get_somain = reinterpret_cast<decltype(solist_get_somain)>(linker.getSymbAddress(
-                           "__dl__Z17solist_get_somainv"))) != nullptr &&
-                   (soinfo_get_realpath = reinterpret_cast<decltype(soinfo_get_realpath)>(linker.getSymbAddress(
-                           "__dl__ZNK6soinfo12get_realpathEv"))) != nullptr &&
-                   (solist_remove_soinfo = reinterpret_cast<decltype(solist_remove_soinfo)>(linker.getSymbAddress(
-                           "__dl__Z20solist_remove_soinfoP6soinfo"))) != nullptr && init_solist();
+                   (solist = *reinterpret_cast<soinfo **>(linker.getSymbAddress(
+                           "__dl__ZL6solist"))) != nullptr &&
+                   (sonext = *reinterpret_cast<soinfo **>(linker.getSymbAddress(
+                           "__dl__ZL6sonext"))) != nullptr &&
+                   (soinfo::get_realpath_sym = reinterpret_cast<decltype(soinfo::get_realpath_sym)>(linker.getSymbAddress(
+                           "__dl__ZNK6soinfo12get_realpathEv"))) != nullptr;
         }();
 
-        std::vector<void *> linker_get_solist() {
-            std::vector<void *> linker_solist{solist_head};
-
-            uintptr_t sonext = *(uintptr_t *) ((uintptr_t) solist_head + solist_next_offset);
-            while (sonext) {
-                linker_solist.push_back((void *) sonext);
-                sonext = *(uintptr_t *) ((uintptr_t) sonext + solist_next_offset);
+        std::vector<soinfo *> linker_get_solist() {
+            std::vector<soinfo *> linker_solist{};
+            for(auto *iter = solist; iter; iter = iter->next()) {
+                linker_solist.push_back(iter);
             }
-
             return linker_solist;
         }
 
@@ -136,11 +162,10 @@ namespace Hide {
             ProtectedDataGuard g;
             auto list = linker_get_solist();
             for (const auto &soinfo : linker_get_solist()) {
-                const char *real_path = soinfo_get_realpath(soinfo);
+                const char *real_path = soinfo->get_realpath();
                 if (real_path != nullptr) {
                     for (const auto &path : names) {
                         if (strcmp(path, real_path) == 0) {
-                            LOGD("remove soinfo %s", real_path);
                             solist_remove_soinfo(soinfo);
                             break;
                         }
@@ -240,7 +265,7 @@ namespace Hide {
             }
         }
 
-        if (AndroidProp::GetApiLevel() >= 26 && !names_to_remove.empty()) {
+        if (AndroidProp::GetApiLevel() >= 23 && !names_to_remove.empty()) {
             RemoveFromSoList(names_to_remove);
         }
 
