@@ -55,9 +55,11 @@ extract "$ZIPFILE" 'module.prop' "$MODPATH"
 extract "$ZIPFILE" 'post-fs-data.sh' "$MODPATH"
 extract "$ZIPFILE" 'service.sh' "$MODPATH"
 extract "$ZIPFILE" 'system.prop' "$MODPATH"
+extract "$ZIPFILE" 'util_functions.sh' "$MODPATH"
 
 mkdir $MAGISK_CURRENT_MODULE_PATH
-extract "$ZIPFILE" 'util_functions.sh' "$MAGISK_CURRENT_MODULE_PATH"
+rm "$MAGISK_CURRENT_MODULE_PATH"/util_functions.sh
+cp "$MODPATH"/util_functions.sh "$MAGISK_CURRENT_MODULE_PATH"/util_functions.sh
 
 mkdir "$MODPATH/lib"
 mkdir "$MODPATH/lib64"
