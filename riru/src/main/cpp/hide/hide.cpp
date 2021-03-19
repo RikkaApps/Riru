@@ -13,7 +13,7 @@
 #define EXPORT __attribute__((visibility("default"))) __attribute__((used))
 
 extern "C" {
-int riru_hide(const char **paths, int paths_count) EXPORT;
+int riru_hide(const std::unordered_set<std::string_view> &) EXPORT;
 }
 
 #ifdef __LP64__
