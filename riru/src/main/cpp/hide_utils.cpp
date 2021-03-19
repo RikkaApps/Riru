@@ -88,45 +88,59 @@ namespace Hide {
             [[maybe_unused]] struct link_map *l_prev;
         };
 
+        struct soinfo;
+
+        soinfo *solist = nullptr;
+        soinfo *sonext = nullptr;
+        soinfo *somain = nullptr;
+
         struct soinfo {
             soinfo *next() {
-                return *(soinfo **) ((uintptr_t) this + solist_next_offset +
-                                     (pre_oreo ? addr_diff : 0));
+                return *(soinfo **) ((uintptr_t) this + solist_next_offset);
             }
 
             void next(soinfo *si) {
-                *(soinfo **) ((uintptr_t) this + solist_next_offset +
-                              (pre_oreo ? addr_diff : 0)) = si;
+                *(soinfo **) ((uintptr_t) this + solist_next_offset) = si;
             }
 
             const char *get_realpath() {
-                return ((link_map *) ((uintptr_t) this + solist_linkmap_offset +
-                                      (pre_oreo ? addr_diff : 0)))->l_name;
+                return get_realpath_sym ? get_realpath_sym(this) : ((link_map *) ((uintptr_t) this +
+                                                                                  solist_linkmap_offset))->l_name;
             }
 
-#ifdef __LP64__
-            constexpr static size_t solist_next_offset = 0x28;
-            constexpr static size_t solist_linkmap_offset = 0xd0;
-            constexpr static size_t addr_diff = sizeof(void *);
-#else
-            constexpr static size_t solist_next_offset = 0xa4;
-            constexpr static size_t solist_linkmap_offset = 0xfc;
-            constexpr static size_t addr_diff = 0;
-#endif
+            static bool setup(const SandHook::ElfImg &linker) {
+                get_realpath_sym = reinterpret_cast<decltype(get_realpath_sym)>(linker.getSymbAddress(
+                        "__dl__ZNK6soinfo12get_realpathEv"));
+                for (size_t i = 0; i < 1024 / sizeof(void *); i++) {
+                    if (*(void **) ((uintptr_t) solist + i * sizeof(void *)) == somain) {
+                        solist_next_offset = i * sizeof(void *);
+                        return AndroidProp::GetApiLevel() < 26 || get_realpath_sym != nullptr;
+                    }
+                }
+                LOGW("failed to search next offset");
+                // shortcut
+                return AndroidProp::GetApiLevel() < 26 || get_realpath_sym != nullptr;
+            }
 
-            static bool pre_oreo;
+            static size_t solist_next_offset;
+#ifdef __LP64__
+            constexpr static size_t solist_linkmap_offset = 0xd0;
+#else
+            constexpr static size_t solist_linkmap_offset = 0xfc;
+#endif
 
             // since Android 8
             static const char *(*get_realpath_sym)(soinfo *);
         };
 
+#ifdef __LP64__
+        size_t soinfo::solist_next_offset = 0x30;
+#else
+        size_t soinfo::solist_next_offset = 0xa4;
+#endif
+
+        // since Android 8
         const char *(*soinfo::get_realpath_sym)(soinfo *) = nullptr;
-
-        bool soinfo::pre_oreo = AndroidProp::GetApiLevel() < 25;
-
-        soinfo *solist = nullptr;
-        soinfo *sonext = nullptr;
-
 
         bool solist_remove_soinfo(soinfo *si) {
             soinfo *prev = nullptr, *trav;
@@ -162,8 +176,9 @@ namespace Hide {
                            "__dl__ZL6solist"))) != nullptr &&
                    (sonext = *reinterpret_cast<soinfo **>(linker.getSymbAddress(
                            "__dl__ZL6sonext"))) != nullptr &&
-                   (soinfo::get_realpath_sym = reinterpret_cast<decltype(soinfo::get_realpath_sym)>(linker.getSymbAddress(
-                           "__dl__ZNK6soinfo12get_realpathEv"))) != nullptr;
+                   (somain = *reinterpret_cast<soinfo **>(linker.getSymbAddress(
+                           "__dl__ZL6somain"))) != nullptr &&
+                   soinfo::setup(linker);
         }();
 
         std::vector<soinfo *> linker_get_solist() {
@@ -238,7 +253,6 @@ namespace Hide {
             const auto &names = *((const std::unordered_set<std::string_view> *) data);
             if (names.count(info->dlpi_name)) {
                 memset((void *) info->dlpi_name, 0, strlen(info->dlpi_name));
-                LOGD("hide %s from dl_iterate_phdr", info->dlpi_name);
             }
             return 0;
         };
