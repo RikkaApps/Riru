@@ -198,7 +198,7 @@ namespace Hide {
             auto list = linker_get_solist();
             for (const auto &soinfo : linker_get_solist()) {
                 const auto &real_path = soinfo->get_realpath();
-                if (names.count(real_path)) {
+                if (real_path && names.count(real_path)) {
                     solist_remove_soinfo(soinfo);
                 }
             }
@@ -251,7 +251,7 @@ namespace Hide {
     static void HideFromSoList(const std::unordered_set<std::string_view> &names) {
         auto callback = [](struct dl_phdr_info *info, size_t size, void *data) {
             const auto &names = *((const std::unordered_set<std::string_view> *) data);
-            if (names.count(info->dlpi_name)) {
+            if (info->dlpi_name && names.count(info->dlpi_name)) {
                 memset((void *) info->dlpi_name, 0, strlen(info->dlpi_name));
             }
             return 0;
