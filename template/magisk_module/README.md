@@ -18,6 +18,10 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ## Changelog
 
+### v25.3.1 (2021-03-20)
+
+- Fix crash on Android 8
+
 ### v25.3.0 (2021-03-20)
 
 - Support remove self and modules from `dl_iterate_phdr` now works for all Android versions
