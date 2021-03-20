@@ -1,6 +1,6 @@
 #include <cinttypes>
 #include <sys/mman.h>
-#include <unordered_set>
+#include <set>
 #include <string_view>
 #include "pmparser.h"
 #include "logging.h"
@@ -13,7 +13,7 @@
 #define EXPORT __attribute__((visibility("default"))) __attribute__((used))
 
 extern "C" {
-int riru_hide(const std::unordered_set<std::string_view> &) EXPORT;
+int riru_hide(const std::set<std::string_view> &) EXPORT;
 }
 
 #ifdef __LP64__
@@ -91,7 +91,7 @@ static int do_hide(hide_struct *data) {
     return 0;
 }
 
-int riru_hide(const std::unordered_set<std::string_view> &names) {
+int riru_hide(const std::set<std::string_view> &names) {
     procmaps_iterator *maps = pmparser_parse(-1);
     if (maps == nullptr) {
         LOGE("cannot parse the memory map");

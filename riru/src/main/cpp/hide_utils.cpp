@@ -12,7 +12,7 @@
 #include "entry.h"
 #include <iostream>
 #include <elf_util.h>
-#include <unordered_set>
+#include <set>
 
 namespace Hide {
     namespace {
@@ -189,7 +189,7 @@ namespace Hide {
             return linker_solist;
         }
 
-        void RemovePathsFromSolist(const std::unordered_set<std::string_view> &names) {
+        void RemovePathsFromSolist(const std::set<std::string_view> &names) {
             if (!initialized) {
                 LOGW("not initialized");
                 return;
@@ -204,12 +204,12 @@ namespace Hide {
             }
         }
 
-        using riru_hide_t = int(const std::unordered_set<std::string_view> &names);
+        using riru_hide_t = int(const std::set<std::string_view> &names);
 
         void *riru_hide_handle;
         riru_hide_t *riru_hide_func;
 
-        void HidePathsFromMaps(const std::unordered_set<std::string_view> &names) {
+        void HidePathsFromMaps(const std::set<std::string_view> &names) {
             if (!riru_hide_func) return;
 
             LOGD("do hide");
@@ -227,7 +227,7 @@ namespace Hide {
     void HideFromMaps() {
         auto self_path = Magisk::GetPathForSelfLib("libriru.so");
         auto modules = Modules::Get();
-        std::unordered_set<std::string_view> names{};
+        std::set<std::string_view> names{};
         for (auto module : Modules::Get()) {
             if (strcmp(module->id, MODULE_NAME_CORE) == 0) {
                 names.emplace(self_path);
@@ -244,13 +244,13 @@ namespace Hide {
         if (!names.empty()) Hide::HidePathsFromMaps(names);
     }
 
-    static void RemoveFromSoList(const std::unordered_set<std::string_view> &names) {
+    static void RemoveFromSoList(const std::set<std::string_view> &names) {
         Hide::RemovePathsFromSolist(names);
     }
 
-    static void HideFromSoList(const std::unordered_set<std::string_view> &names) {
+    static void HideFromSoList(const std::set<std::string_view> &names) {
         auto callback = [](struct dl_phdr_info *info, size_t size, void *data) {
-            const auto &names = *((const std::unordered_set<std::string_view> *) data);
+            const auto &names = *((const std::set<std::string_view> *) data);
             if (info->dlpi_name && names.count(info->dlpi_name)) {
                 memset((void *) info->dlpi_name, 0, strlen(info->dlpi_name));
             }
@@ -262,8 +262,8 @@ namespace Hide {
     void HideFromSoList() {
         auto self_path = Magisk::GetPathForSelfLib("libriru.so");
         auto modules = Modules::Get();
-        std::unordered_set<std::string_view> names_to_remove{};
-        std::unordered_set<std::string_view> names_to_wipe{};
+        std::set<std::string_view> names_to_remove{};
+        std::set<std::string_view> names_to_wipe{};
         for (auto module : Modules::Get()) {
             if (strcmp(module->id, MODULE_NAME_CORE) == 0) {
                 if (Entry::IsSelfUnloadAllowed()) {
