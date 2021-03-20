@@ -26,7 +26,7 @@ Android 6.0+ devices rooted with [Magisk](https://github.com/topjohnwu/Magisk)
 
 * "Riru" app (show Riru status)
 
-  [Download](https://github.com/RikkaApps/Riru/releases/download/v23.6/riru-v23.6.r279.f990471.apk)
+  [Download](https://github.com/RikkaApps/Riru/releases/download/v25.2.0/riru-v25.2.0.apk)
 
 **If you are using other modules that change `ro.dalvik.vm.native.bridge`, Riru will not work.** (Riru will automatically set it back)
 
