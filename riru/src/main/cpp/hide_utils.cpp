@@ -180,7 +180,6 @@ namespace Hide {
                 return;
             }
             ProtectedDataGuard g;
-            auto list = linker_get_solist();
             for (const auto &soinfo : linker_get_solist()) {
                 const auto &real_path = soinfo->get_realpath();
                 if (real_path && names.count(real_path)) {
