@@ -86,6 +86,12 @@ namespace Hide {
         soinfo *sonext = nullptr;
         soinfo *somain = nullptr;
 
+        template<typename T>
+        inline T *getStaticVariable(const SandHook::ElfImg &linker, std::string_view name) {
+            auto *addr = reinterpret_cast<T **>(linker.getSymbAddress(name.data()));
+            return addr == nullptr ? nullptr : *addr;
+        }
+
         struct soinfo {
             soinfo *next() {
                 return *(soinfo **) ((uintptr_t) this + solist_next_offset);
@@ -104,7 +110,7 @@ namespace Hide {
             static bool setup(const SandHook::ElfImg &linker) {
                 get_realpath_sym = reinterpret_cast<decltype(get_realpath_sym)>(linker.getSymbAddress(
                         "__dl__ZNK6soinfo12get_realpathEv"));
-                auto vsdo = *reinterpret_cast<soinfo **>(linker.getSymbAddress("__dl__ZL4vdso"));
+                auto vsdo = getStaticVariable<soinfo>(linker, "__dl__ZL4vdso");
                 for (size_t i = 0; i < 1024 / sizeof(void *); i++) {
                     auto *possible_next = *(void **) ((uintptr_t) solist + i * sizeof(void *));
                     if (possible_next == somain || (vsdo != nullptr && possible_next == vsdo)) {
@@ -159,12 +165,9 @@ namespace Hide {
         const auto initialized = []() {
             SandHook::ElfImg linker(GetLinkerPath());
             return ProtectedDataGuard::setup(linker) &&
-                   (solist = *reinterpret_cast<soinfo **>(linker.getSymbAddress(
-                           "__dl__ZL6solist"))) != nullptr &&
-                   (sonext = *reinterpret_cast<soinfo **>(linker.getSymbAddress(
-                           "__dl__ZL6sonext"))) != nullptr &&
-                   (somain = *reinterpret_cast<soinfo **>(linker.getSymbAddress(
-                           "__dl__ZL6somain"))) != nullptr &&
+                   (solist = getStaticVariable<soinfo>(linker, "__dl__ZL6solist")) != nullptr &&
+                   (sonext = getStaticVariable<soinfo>(linker, "__dl__ZL6sonext")) != nullptr &&
+                   (somain = getStaticVariable<soinfo>(linker, "__dl__ZL6somain")) != nullptr &&
                    soinfo::setup(linker);
         }();
 
