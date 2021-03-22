@@ -18,6 +18,10 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ## Changelog
 
+### v25.3.3 (2021-03-22)
+
+- Fix crash on Android 8.0 again
+
 ### Important changes from the last stable version (v23.9)
     
 - Unify the Riru API version and Riru version, Riru 25 stands for API version 25
