@@ -80,14 +80,6 @@ namespace Hide {
         ProtectedDataGuard::FuncType ProtectedDataGuard::ctor = nullptr;
         ProtectedDataGuard::FuncType ProtectedDataGuard::dtor = nullptr;
 
-        struct link_map {
-            [[maybe_unused]] ElfW(Addr) l_addr;
-            char *l_name;
-            [[maybe_unused]] ElfW(Dyn) *l_ld;
-            [[maybe_unused]] struct link_map *l_next;
-            [[maybe_unused]] struct link_map *l_prev;
-        };
-
         struct soinfo;
 
         soinfo *solist = nullptr;
@@ -104,8 +96,9 @@ namespace Hide {
             }
 
             const char *get_realpath() {
-                return get_realpath_sym ? get_realpath_sym(this) : ((link_map *) ((uintptr_t) this +
-                                                                                  solist_linkmap_offset))->l_name;
+                return get_realpath_sym ? get_realpath_sym(this) : ((std::string *) (
+                        (uintptr_t) this + solist_realpath_offset))->c_str();
+
             }
 
             static bool setup(const SandHook::ElfImg &linker) {
@@ -122,25 +115,17 @@ namespace Hide {
                 return AndroidProp::GetApiLevel() < 26 || get_realpath_sym != nullptr;
             }
 
-            static size_t solist_next_offset;
 #ifdef __LP64__
-            constexpr static size_t solist_linkmap_offset = 0xd0;
+            constexpr static size_t solist_realpath_offset = 0x1a8;
+            inline static size_t solist_next_offset = 0x30;
 #else
-            constexpr static size_t solist_linkmap_offset = 0xfc;
+            constexpr static size_t solist_realpath_offset = 0x174;
+            inline static size_t solist_next_offset = 0xa4;
 #endif
 
             // since Android 8
-            static const char *(*get_realpath_sym)(soinfo *);
+            inline static const char *(*get_realpath_sym)(soinfo *);
         };
-
-#ifdef __LP64__
-        size_t soinfo::solist_next_offset = 0x30;
-#else
-        size_t soinfo::solist_next_offset = 0xa4;
-#endif
-
-        // since Android 8
-        const char *(*soinfo::get_realpath_sym)(soinfo *) = nullptr;
 
         bool solist_remove_soinfo(soinfo *si) {
             soinfo *prev = nullptr, *trav;
@@ -248,22 +233,10 @@ namespace Hide {
         Hide::RemovePathsFromSolist(names);
     }
 
-    static void HideFromSoList(const std::set<std::string_view> &names) {
-        auto callback = [](struct dl_phdr_info *info, size_t size, void *data) {
-            const auto &names = *((const std::set<std::string_view> *) data);
-            if (info->dlpi_name && names.count(info->dlpi_name)) {
-                memset((void *) info->dlpi_name, 0, strlen(info->dlpi_name));
-            }
-            return 0;
-        };
-        dl_iterate_phdr(callback, (void *) &names);
-    }
-
     void HideFromSoList() {
         auto self_path = Magisk::GetPathForSelfLib("libriru.so");
         auto modules = Modules::Get();
         std::set<std::string_view> names_to_remove{};
-        std::set<std::string_view> names_to_wipe{};
         for (auto module : Modules::Get()) {
             if (strcmp(module->id, MODULE_NAME_CORE) == 0) {
                 if (Entry::IsSelfUnloadAllowed()) {
@@ -271,30 +244,23 @@ namespace Hide {
                 } else {
                     names_to_remove.emplace(self_path);
                 }
-                names_to_wipe.emplace(self_path);
             } else if (module->supportHide) {
                 if (!module->isLoaded()) {
                     LOGD("%s is unloaded", module->id);
                     continue;
                 }
-                if (module->apiVersion <= 24) {
+                if (module->apiVersion < 24) {
                     LOGW("%s is too old to hide so", module->id);
                 } else {
                     names_to_remove.emplace(module->path);
                 }
-                names_to_wipe.emplace(module->path);
             } else {
                 LOGD("module %s does not support hide", module->id);
-                names_to_wipe.emplace(module->path);
             }
         }
 
         if (AndroidProp::GetApiLevel() >= 23 && !names_to_remove.empty()) {
             RemoveFromSoList(names_to_remove);
-        }
-
-        if (!names_to_wipe.empty()) {
-            HideFromSoList(names_to_wipe);
         }
     }
 
