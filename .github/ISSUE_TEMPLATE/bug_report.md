@@ -13,11 +13,11 @@ Please report bugs of Riru itself. Always use **the latest debug version** of Ri
 
 **Information:**
 
+- Except Riru itself, all other Magisk modules are disabled: [Yes, No]
 - Riru version: 
 - Magisk version: 
-- All other modules are disabled: [Yes, No]
+- Android version:
 - Device: (optional)
-- OS: (optional)
 
 **Logs:**
 
