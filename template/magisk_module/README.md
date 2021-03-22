@@ -18,6 +18,14 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ## Changelog
 
+### Important changes from the last stable version (v23.9)
+    
+- Unify the Riru API version and Riru version, Riru 25 stands for API version 25
+- For modules that have adapted Riru API 24+, lib files are loaded from the Magisk path directly, they don't need to be mounted to `/system` anymore
+- Support unload self and modules, leaving no trace for unrelated processes (requires module changes)
+- Support remove self and modules from `dl_iterate_phdr`
+- `/data/adb/riru/modules` is no longer used, you can remove it when all modules are updated to Riru API 24+
+
 ### v25.3.2 (2021-03-22)
 
 - New way to get realpath on old systems
