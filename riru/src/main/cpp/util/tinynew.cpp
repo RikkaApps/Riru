@@ -36,26 +36,20 @@ void operator delete[](void* ptr) {
    rather than just eliminate exceptions.
  */
 
-void* operator new(std::size_t size, const std::nothrow_t&) {
+void* operator new(std::size_t size, const std::nothrow_t&) noexcept {
     return malloc(size);
 }
 
-void* operator new[](std::size_t size, const std::nothrow_t&) {
+void* operator new[](std::size_t size, const std::nothrow_t&) noexcept {
     return malloc(size);
 }
 
-void operator delete(void* ptr, const std::nothrow_t&) {
+void operator delete(void* ptr, const std::nothrow_t&) noexcept {
     free(ptr);
 }
 
-void operator delete[](void* ptr, const std::nothrow_t&) {
+void operator delete[](void* ptr, const std::nothrow_t&) noexcept {
     free(ptr);
 }
 
 //eof
-
-__attribute__((__visibility__("default")))
-std::terminate_handler __cxa_terminate_handler = abort;
-
-__attribute__((__visibility__("default")))
-std::unexpected_handler __cxa_unexpected_handler = abort;
