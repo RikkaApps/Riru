@@ -18,6 +18,11 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ## Changelog
 
+### v25.3.2 (2021-03-22)
+
+- New way to get realpath on old systems
+- Fix next offset on Android 9
+
 ### v25.3.1 (2021-03-20)
 
 - Fix crash on Android 8
