@@ -104,8 +104,10 @@ namespace Hide {
             static bool setup(const SandHook::ElfImg &linker) {
                 get_realpath_sym = reinterpret_cast<decltype(get_realpath_sym)>(linker.getSymbAddress(
                         "__dl__ZNK6soinfo12get_realpathEv"));
+                auto vsdo = *reinterpret_cast<soinfo **>(linker.getSymbAddress("__dl__ZL4vdso"));
                 for (size_t i = 0; i < 1024 / sizeof(void *); i++) {
-                    if (*(void **) ((uintptr_t) solist + i * sizeof(void *)) == somain) {
+                    auto *possible_next = *(void **) ((uintptr_t) solist + i * sizeof(void *));
+                    if (possible_next == somain || (vsdo != nullptr && possible_next == vsdo)) {
                         solist_next_offset = i * sizeof(void *);
                         return AndroidProp::GetApiLevel() < 26 || get_realpath_sym != nullptr;
                     }
