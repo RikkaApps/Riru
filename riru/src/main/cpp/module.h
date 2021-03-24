@@ -35,7 +35,8 @@ private:
     std::unique_ptr<int> _allowUnload;
 
 public:
-    explicit RiruModule(const char *id, const char *path, const char *magisk_module_path, uint32_t token = 0, std::unique_ptr<int> allowUnload = nullptr) :
+    explicit RiruModule(const char *id, const char *path, const char *magisk_module_path, uint32_t token = 0,
+                        std::unique_ptr<int> allowUnload = nullptr) :
             id(id), path(path), magisk_module_path(magisk_module_path), token(token ? token : (uintptr_t) id) {
 
         apiVersion = 0;
@@ -78,7 +79,8 @@ public:
     }
 
     bool allowUnload() {
-        return _allowUnload && *_allowUnload != 0;
+        return apiVersion >= 25
+               && ((_allowUnload && *_allowUnload != 0) || !hasAppFunctions());
     }
 
     void resetAllowUnload() {
@@ -115,6 +117,13 @@ public:
 
     bool hasSpecializeAppProcessPost() {
         return _specializeAppProcessPost != nullptr;
+    }
+
+    bool hasAppFunctions() {
+        return hasForkAndSpecializePre()
+               || hasForkAndSpecializePost()
+               || hasSpecializeAppProcessPre()
+               || hasSpecializeAppProcessPost();
     }
 
     void onModuleLoaded() {

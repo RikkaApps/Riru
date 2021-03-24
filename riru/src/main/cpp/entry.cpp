@@ -83,7 +83,7 @@ void Entry::Unload(jboolean is_child_zygote) {
             continue;
         }
 
-        if (module->allowUnload() != 0) {
+        if (module->allowUnload()) {
             LOGD("%s: unload", module->id);
             module->unload();
         } else {

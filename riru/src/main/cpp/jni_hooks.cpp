@@ -12,15 +12,12 @@
 #include "module.h"
 #include "entry.h"
 
-namespace JNI {
-
-    namespace Zygote {
+namespace JNI::Zygote {
         const char* classname = "com/android/internal/os/Zygote";
         JNINativeMethod *nativeForkAndSpecialize = nullptr;
         JNINativeMethod *nativeSpecializeAppProcess = nullptr;
         JNINativeMethod *nativeForkSystemServer = nullptr;
     }
-}
 
 static int shouldSkipUid(int uid) {
     int appId = uid % 100000;
