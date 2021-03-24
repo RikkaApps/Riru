@@ -47,7 +47,7 @@ ext {
     gitCommitCount = Integer.parseInt('git rev-list --count HEAD'.execute([], project.rootDir).text.trim())
 
     versionNameMinor = 3
-    versionNamePatch = 3
+    versionNamePatch = 4
 }
 
 def aarVersion = "${riruApiVersion}.0.0"

@@ -18,6 +18,10 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ## Changelog
 
+### v25.3.4 (2021-03-24)
+
+- Don't use temporary buffers when parsing PID maps in pmparser ([#202](https://github.com/RikkaApps/Riru/pull/202))
+
 ### v25.3.3 (2021-03-22)
 
 - Fix crash on Android 8.0 again
