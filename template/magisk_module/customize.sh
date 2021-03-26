@@ -103,14 +103,12 @@ ui_print "- Setting permissions"
 set_perm_recursive "$MODPATH" 0 0 0755 0644
 
 ui_print "- Moving rirud"
-rm "$MODPATH/rirud.new"
-mv "$MODPATH/librirud.so" "$MODPATH/rirud.new"
-set_perm "$MODPATH/rirud.new" 0 0 0700
+mv "$MODPATH/librirud.so" "$MODPATH/rirud"
+set_perm "$MODPATH/rirud" 0 0 0700
 
 ui_print "- Extracting rirud.dex"
 extract "$ZIPFILE" "classes.dex" "$MODPATH"
-rm "$MODPATH/rirud.dex.new"
-mv "$MODPATH/classes.dex" "$MODPATH/rirud.dex.new"
+mv "$MODPATH/classes.dex" "$MODPATH/rirud.dex"
 set_perm "$MODPATH/rirud.dex.new" 0 0 0600
 
 ui_print "- Removing old files"
