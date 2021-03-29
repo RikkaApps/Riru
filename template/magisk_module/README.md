@@ -20,7 +20,9 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ### v25.3.4 (2021-03-24)
 
+- Unload API 25+ modules in the app process if the module does not provide related functions
 - Don't use temporary buffers when parsing PID maps in pmparser ([#202](https://github.com/RikkaApps/Riru/pull/202))
+- Use self-compiled libcxx (https://github.com/topjohnwu/libcxx)
 
 ### v25.3.3 (2021-03-22)
 
