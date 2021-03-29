@@ -35,7 +35,8 @@ android {
                 arguments "-DRIRU_VERSION_NAME:STRING=$versionNameShort",
                         "-DRIRU_VERSION_CODE:STRING=$versionCode",
                         "-DRIRU_API_VERSION=$apiVersion",
-                        "-DRIRU_MIN_API_VERSION=$minApiVersion"
+                        "-DRIRU_MIN_API_VERSION=$minApiVersion",
+                        "-DANDROID_STL=none"
             }
         }
         multiDexEnabled false
@@ -65,12 +66,13 @@ android {
 }
 
 repositories {
-    maven { url 'https://dl.bintray.com/rikkaw/Libraries' }
+    mavenLocal()
 }
 
 dependencies {
     implementation 'dev.rikka.ndk.thirdparty:xhook:1.2.0'
-    implementation 'androidx.annotation:annotation:1.1.0'
+    implementation 'dev.rikka.ndk.thirdparty:cxx:1.1.0'
+    implementation 'androidx.annotation:annotation:1.2.0'
     compileOnly project(':stub')
 }
 
@@ -93,7 +95,7 @@ android.applicationVariants.all { variant ->
 
     def is_windows = OperatingSystem.current().isWindows()
 
-    task ("zip${variantCapped}", type: Zip) {
+    task("zip${variantCapped}", type: Zip) {
         dependsOn("assemble${variantCapped}")
         from magiskDir
         archiveName zipName
@@ -158,7 +160,7 @@ android.applicationVariants.all { variant ->
         task.finalizedBy("zip${variantCapped}")
     }
 
-    task ("push${variantCapped}", type: Exec) {
+    task("push${variantCapped}", type: Exec) {
         dependsOn("assemble${variantCapped}")
         workingDir outDir
         def commands = [android.adbExecutable, "push",

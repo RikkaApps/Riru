@@ -43,6 +43,7 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LINKER_FLAGS}")
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LINKER_FLAGS}")
 
 find_package(xhook REQUIRED CONFIG)
+find_package(cxx REQUIRED CONFIG)
 
 include_directories(include)
 include_directories(include_riru)
@@ -54,11 +55,12 @@ add_library(utils STATIC
         util/pmparser.c
         util/selinux.cpp
         util/socket.cpp
-        util/tinynew.cpp
+        #util/tinynew.cpp
         util/plt.c
         util/elf_util.cpp
         util/dl.cpp
         util/rirud.cpp)
+target_link_libraries(utils cxx::cxx)
 
 add_library(riru SHARED
         entry.cpp
@@ -68,24 +70,24 @@ add_library(riru SHARED
         magisk.cpp
         daemon/daemon_utils.cpp)
 target_include_directories(riru PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(riru log utils xhook::xhook)
+target_link_libraries(riru log utils xhook::xhook cxx::cxx)
 
 add_library(riruhide SHARED hide/hide.cpp)
 target_include_directories(riruhide PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(riruhide log utils)
+target_link_libraries(riruhide log utils cxx::cxx)
 
 if ("${ANDROID_ABI}" STREQUAL "x86" OR "${ANDROID_ABI}" STREQUAL "x86_64")
     add_definitions(-DHAS_NATIVE_BRIDGE)
 endif ()
 
 add_library(riruloader SHARED loader/loader.cpp)
-target_link_libraries(riruloader log utils)
+target_link_libraries(riruloader log utils cxx::cxx)
 
 add_executable(librirud.so
         daemon/daemon.cpp
         daemon/setproctitle.c
         daemon/daemon_utils.cpp)
-target_link_libraries(librirud.so log utils)
+target_link_libraries(librirud.so log utils cxx::cxx)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     add_custom_command(TARGET riru POST_BUILD
