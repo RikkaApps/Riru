@@ -19,7 +19,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.1.2'
+        classpath 'com.android.tools.build:gradle:4.1.3'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
@@ -32,13 +32,10 @@ allprojects {
     }
 }
 
-task clean(type: Delete) {
-    delete rootProject.buildDir
-}
-
 ext {
     minSdkVersion = 23
     targetSdkVersion = 30
+    ndkVersion = '21.4.7075529'
 
     riruApiVersion = 25
     riruMinApiVersion = 9
@@ -48,6 +45,12 @@ ext {
 
     versionNameMinor = 3
     versionNamePatch = 4
+
+    outDir = file("$rootDir/out")
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir, outDir
 }
 
 def aarVersion = "${riruApiVersion}.0.0"
