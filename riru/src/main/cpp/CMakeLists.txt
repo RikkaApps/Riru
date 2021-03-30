@@ -44,6 +44,7 @@ set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LINKER_FLAGS}")
 
 find_package(xhook REQUIRED CONFIG)
 find_package(cxx REQUIRED CONFIG)
+find_package(proc-maps-parser REQUIRED CONFIG)
 
 include_directories(include)
 include_directories(include_riru)
@@ -52,7 +53,6 @@ add_library(utils STATIC
         util/android_prop.cpp
         util/misc.cpp
         util/wrap.cpp
-        util/pmparser.c
         util/selinux.cpp
         util/socket.cpp
         #util/tinynew.cpp
@@ -70,11 +70,11 @@ add_library(riru SHARED
         magisk.cpp
         daemon/daemon_utils.cpp)
 target_include_directories(riru PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(riru log utils xhook::xhook cxx::cxx)
+target_link_libraries(riru log utils xhook::xhook cxx::cxx proc-maps-parser::proc-maps-parser)
 
 add_library(riruhide SHARED hide/hide.cpp)
 target_include_directories(riruhide PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(riruhide log utils cxx::cxx)
+target_link_libraries(riruhide log utils cxx::cxx proc-maps-parser::proc-maps-parser)
 
 if ("${ANDROID_ABI}" STREQUAL "x86" OR "${ANDROID_ABI}" STREQUAL "x86_64")
     add_definitions(-DHAS_NATIVE_BRIDGE)

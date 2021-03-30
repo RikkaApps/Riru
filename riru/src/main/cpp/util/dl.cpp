@@ -15,9 +15,6 @@
     if (!func) \
     func = (func##_t *) plt_dlsym(#func, nullptr);
 
-FUNC_DEF(void, android_get_LD_LIBRARY_PATH, char *buffer, size_t buffer_size)
-FUNC_DEF(void, android_update_LD_LIBRARY_PATH, const char *ld_library_path)
-
 FUNC_DEF(android_namespace_t*, android_create_namespace,
          const char *name,
          const char *ld_library_path,
