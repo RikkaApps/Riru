@@ -6,7 +6,7 @@
 #include <syscall.h>
 #include <cstdio>
 #include <sys/xattr.h>
-#include <plt.h>
+#include "elf_util.h"
 
 static int setsockcreatecon_builtin_impl(const char *ctx) {
     int fd = open("/proc/thread-self/attr/sockcreate", O_RDWR | O_CLOEXEC);
@@ -46,7 +46,8 @@ static int stub(const char *, const char *) {
     return 0;
 }
 
-static int stub(const char *scon, const char *tcon, const char *tclass, const char *perm, void *auditdata) {
+static int
+stub(const char *scon, const char *tcon, const char *tclass, const char *perm, void *auditdata) {
     return 0;
 }
 
@@ -62,12 +63,14 @@ void selinux_builtin_impl() {
 }
 
 void dload_selinux() {
-    if (access("/system/lib/libselinux.so", F_OK) != 0 && access("/system/lib64/libselinux.so", F_OK) != 0) {
+    const char *lib_path = LIB_PATH "libselinux.so";
+
+    if (access(lib_path, F_OK) != 0) {
         return;
     }
 
-    selinux_builtin_impl();
-    auto _selinux_check_access = (plt_dlsym("selinux_check_access", nullptr));
-    if (_selinux_check_access)
-        selinux_check_access = (int (*)(const char *, const char *, const char *, const char *, void *)) _selinux_check_access;
+    if (auto handle = dlopen(lib_path, 0)) {
+        selinux_check_access = reinterpret_cast<decltype(selinux_check_access)>(
+                dlsym(handle, "selinux_check_access"));
+    }
 }

@@ -13,6 +13,7 @@
 #include "hide_utils.h"
 #include "magisk.h"
 #include "dl.h"
+#include "elf_util.h"
 
 using namespace std;
 
@@ -205,12 +206,7 @@ void Modules::Load() {
         for (const auto &it : dirs) {
             char path[PATH_MAX];
             auto name = it.c_str();
-#ifdef __LP64__
-            snprintf(path, PATH_MAX, "/system/lib64/libriru_%s.so", name);
-#else
-            snprintf(path, PATH_MAX, "/system/lib/libriru_%s.so", name);
-
-#endif
+            snprintf(path, PATH_MAX, LIB_PATH "libriru_%s.so", name);
             LoadModule(name, path, "");
         }
     }

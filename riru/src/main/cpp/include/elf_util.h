@@ -28,6 +28,12 @@
 
 #define SHT_GNU_HASH 0x6ffffff6
 
+#ifdef __LP64__
+#define LIB_PATH "/system/lib64/"
+#else
+#define LIB_PATH "/system/lib/"
+#endif
+
 namespace SandHook {
     class ElfImg {
     public:

@@ -16,12 +16,6 @@ extern "C" {
 int riru_hide(const std::set<std::string_view> &) EXPORT;
 }
 
-#ifdef __LP64__
-#define LIB_PATH "/system/lib64/"
-#else
-#define LIB_PATH "/system/lib/"
-#endif
-
 struct hide_struct {
     procmaps_struct *original;
     uintptr_t backup_address;

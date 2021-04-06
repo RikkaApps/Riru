@@ -15,12 +15,6 @@
 #include "logging.h"
 #include "misc.h"
 
-#ifdef __LP64__
-#define LIB_PATH "/system/lib64/"
-#else
-#define LIB_PATH "/system/lib/"
-#endif
-
 #ifdef DEBUG
 #ifndef HAS_NATIVE_BRIDGE
 #define HAS_NATIVE_BRIDGE

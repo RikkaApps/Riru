@@ -56,7 +56,6 @@ add_library(utils STATIC
         util/selinux.cpp
         util/socket.cpp
         #util/tinynew.cpp
-        util/plt.c
         util/elf_util.cpp
         util/dl.cpp
         util/rirud.cpp)
