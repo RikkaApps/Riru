@@ -18,6 +18,17 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ## Changelog
 
+### v25.4.0 (2021-04-10)
+
+- Report incorrect SELinux rule in app
+- Install the app when installing the module (If the file `/data/adb/modules/riru-core/dont_install_app` exists, the app will not be installed)
+
+There a lot "Riru not work" reports show that some third-party ROMs have incorrect SELinux rule (`allow init system_file:dir relabelfrom`). **This rule does not exist in AOSP.**
+
+For Riru, this will make `zygote` not able to access necessary files from Magisk module folders since the folders are relabeled to `adb_data_file` and `zygote` is not allowed to access `adb_data_file`.
+
+If your ROM have such problem, our recommendation is to ask your ROM maintainer to not to do this. Or you can switch to other ROMs without this problem.
+
 ### v25.3.4 (2021-03-24)
 
 - Unload API 25+ modules in the app process if the module does not provide related functions

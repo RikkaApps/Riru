@@ -26,11 +26,23 @@ Android 6.0+ devices rooted with [Magisk](https://github.com/topjohnwu/Magisk)
 
 * "Riru" app (show Riru status)
 
-  [Download](https://github.com/RikkaApps/Riru/releases/download/v25.2.0/riru-v25.2.0.apk)
+  From v25.4.0, the app is automatically installed. If you don't want this, create an empty file named `/data/adb/modules/riru-core/dont_install_app`.
 
-**If you are using other modules that change `ro.dalvik.vm.native.bridge`, Riru will not work.** (Riru will automatically set it back)
+### Common problems
 
-A typical example is, some "optimize" modules change this property. Since changing this property is meaningless for "optimization", their quality is very questionable. In fact, changing properties for optimization is a joke.
+* Have low quality module that changes `ro.dalvik.vm.native.bridge` installed
+
+  **If you are using other modules that change `ro.dalvik.vm.native.bridge`, Riru will not work.** (Riru will automatically set it back)
+
+  A typical example is, some "optimize" modules change this property. Since changing this property is meaningless for "optimization", their quality is very questionable. In fact, changing properties for optimization is a joke.
+
+* Third-party ROMs have incorrect SELinux rule
+
+  There a lot "Riru not work" reports show that some third-party ROMs have incorrect SELinux rule (`allow init system_file:dir relabelfrom`). **This rule does not exist in AOSP.**
+
+  For Riru, this will make `zygote` not able to access necessary files from Magisk module folders since the folders are relabeled to `adb_data_file` and `zygote` is not allowed to access `adb_data_file`.
+
+  If your ROM have such problem, our recommendation is to ask your ROM maintainer to not to do this. Or you can switch to other ROMs without this problem.
 
 ## How Riru works?
 
