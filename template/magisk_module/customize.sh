@@ -119,9 +119,9 @@ else
   ui_print "- The app is used to check Riru status and report incorrectly configurations done by your ROM (if you are using third-party ROM)."
   ui_print "- If you don't want the app, create an empty file named /data/adb/modules/riru-core/dont_install_app, so that the app will not be automatically installed."
   extract "$ZIPFILE" "app.apk" "/data/local/tmp"
-  set_perm "/data/local/tmp/app.apk" 2000 1000 0600
-  /system/bin/pm install -r "/data/local/tmp/app.apk"
-  rm "/data/local/tmp/app.apk"
+  set_perm "/data/local/tmp/app.apk" 2000 1000 0660
+  su 1000 -c '/system/bin/pm install -r /data/local/tmp/app.apk'
+  rm /data/local/tmp/app.apk
 fi
 
 ui_print "- Removing old files"
