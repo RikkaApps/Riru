@@ -118,7 +118,7 @@ if [ $? -eq 1 ]; then
   ui_print "! Your ROM has incorrect SELinux rules"
   ui_print "! Open detailed explain page in 5s..."
   sleep 5
-  /system/bin/am start -a android.intent.action.VIEW -c android.intent.category.BROWSABLE -d "https://github.com/RikkaApps/Riru/wiki/Explain-about-incorrect-SELinux-rules-from-third-party-ROMs-cause-Riru-not-working"
+  /system/bin/am start -a android.intent.action.VIEW -c android.intent.category.BROWSABLE -d "https://github.com/RikkaApps/Riru/wiki/Explanation-about-incorrect-SELinux-rules-from-third-party-ROMs-cause-Riru-not-working"
   abort
 fi
 

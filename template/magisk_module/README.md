@@ -23,7 +23,7 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 - Report incorrect SELinux rule [1]
 - Bundle app with the module (Create file `/data/adb/modules/riru-core/allow_install_app` to allow the module to install the app)
 
-[1] <https://github.com/RikkaApps/Riru/wiki/Explain-about-incorrect-SELinux-rules-from-third-party-ROMs-cause-Riru-not-working>
+[1] <https://github.com/RikkaApps/Riru/wiki/Explanation-about-incorrect-SELinux-rules-from-third-party-ROMs-cause-Riru-not-working>
 
 ### v25.3.4 (2021-03-24)
 

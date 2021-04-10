@@ -49,7 +49,7 @@ class Service : RootService() {
                         SELinux.checkSELinuxAccess("u:r:init:s0", "u:object_r:system_file:s0", "dir", "relabelfrom")).let {
                     if (it) {
                         message.append("Your ROM has incorrect SELinux which will fially make Riru not working.\n\n" +
-                                "Visit https://github.com/RikkaApps/Riru/wiki/Explain-about-incorrect-SELinux-rules-from-third-party-ROMs-cause-Riru-not-working for details.")
+                                "Visit https://github.com/RikkaApps/Riru/wiki/Explanation-about-incorrect-SELinux-rules-from-third-party-ROMs-cause-Riru-not-working for details.")
                         return
                     } else {
                         message.append("SELinux is enforcing and there are no incorrect rules related to Riru.\n\n")
