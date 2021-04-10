@@ -109,19 +109,30 @@ set_perm "$MODPATH/rirud" 0 0 0700
 ui_print "- Extracting rirud.dex"
 extract "$ZIPFILE" "classes.dex" "$MODPATH"
 mv "$MODPATH/classes.dex" "$MODPATH/rirud.dex"
-set_perm "$MODPATH/rirud.dex.new" 0 0 0600
+set_perm "$MODPATH/rirud.dex" 0 0 0600
 
-if [ -f "/data/adb/modules/riru-core/dont_install_app" ]; then
-  touch $MAGISK_CURRENT_MODULE_PATH/dont_install_app
-  ui_print "- Skip install app"
-else
+ui_print "- Checking if your ROM has incorrect SELinux rules"
+/system/bin/app_process -Djava.class.path="$MODPATH/rirud.dex" /system/bin --nice-name=riru_installer riru.Daemon --check-selinux
+
+if [ $? -eq 1 ]; then
+  ui_print "! Your ROM has incorrect SELinux rules"
+  ui_print "! Open detailed explain page in 5s..."
+  sleep 5
+  /system/bin/am start -a android.intent.action.VIEW -c android.intent.category.BROWSABLE -d "https://github.com/RikkaApps/Riru/wiki/Explain-about-incorrect-SELinux-rules-from-third-party-ROMs-cause-Riru-not-working"
+  abort
+fi
+
+if [ -f "/data/adb/modules/riru-core/allow_install_app" ]; then
+  touch $MAGISK_CURRENT_MODULE_PATH/allow_install_app
   ui_print "- Installing app"
-  ui_print "- The app is used to check Riru status and report incorrectly configurations done by your ROM (if you are using third-party ROM)."
-  ui_print "- If you don't want the app, create an empty file named /data/adb/modules/riru-core/dont_install_app, so that the app will not be automatically installed."
   extract "$ZIPFILE" "app.apk" "/data/local/tmp"
   set_perm "/data/local/tmp/app.apk" 2000 1000 0660
   su 1000 -c '/system/bin/pm install -r /data/local/tmp/app.apk'
   rm /data/local/tmp/app.apk
+else
+  ui_print "- Skip install app"
+  ui_print "  The app is used to check Riru status and report incorrectly configurations done by your ROM (if you are using third-party ROM)."
+  ui_print "  To allow the module install the app, create a file named /data/adb/modules/riru-core/allow_install_app."
 fi
 
 ui_print "- Removing old files"

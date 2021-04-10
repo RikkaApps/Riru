@@ -48,9 +48,8 @@ class Service : RootService() {
                 (SELinux.checkSELinuxAccess("u:r:init:s0", "u:object_r:system_file:s0", "file", "relabelfrom") ||
                         SELinux.checkSELinuxAccess("u:r:init:s0", "u:object_r:system_file:s0", "dir", "relabelfrom")).let {
                     if (it) {
-                        message.append("Your ROM allows init to reset the SELinux label for system_file.\n\n" +
-                                "This will finally make Riru and other Magisk modules not working.\n\n" +
-                                "Please ask your ROM maintainers to not do this since AOSP does NOT have such rules. Or you can switch to other ROMs that doing this correctly.\n\n")
+                        message.append("Your ROM has incorrect SELinux which will fially make Riru not working.\n\n" +
+                                "Visit https://github.com/RikkaApps/Riru/wiki/Explain-about-incorrect-SELinux-rules-from-third-party-ROMs-cause-Riru-not-working for details.")
                         return
                     } else {
                         message.append("SELinux is enforcing and there are no incorrect rules related to Riru.\n\n")

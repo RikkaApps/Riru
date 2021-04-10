@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.RemoteException;
+import android.os.SELinux;
 import android.os.SystemProperties;
 import android.text.TextUtils;
 import android.util.Log;
@@ -81,8 +82,23 @@ public class Daemon {
         }
     }
 
+    private static void checkSELinux() {
+        if (SELinux.isSELinuxEnabled() && SELinux.isSELinuxEnforced()
+                && (SELinux.checkSELinuxAccess("u:r:init:s0", "u:object_r:system_file:s0", "file", "relabelfrom")
+                || SELinux.checkSELinuxAccess("u:r:init:s0", "u:object_r:system_file:s0", "dir", "relabelfrom"))) {
+            System.exit(1);
+        }
+    }
+
     @Keep
     public static void main(String[] args) {
+        for (String arg : args) {
+            if ("--check-selinux".equals(arg)) {
+                checkSELinux();
+                return;
+            }
+        }
+
         String originalNativeBridge = DaemonUtils.readOriginalNativeBridge();
         Log.i(TAG, "Original native bridge is " + originalNativeBridge);
 

@@ -26,7 +26,7 @@ Android 6.0+ devices rooted with [Magisk](https://github.com/topjohnwu/Magisk)
 
 * "Riru" app (show Riru status)
 
-  From v25.4.0, the app is automatically installed. If you don't want this, create an empty file named `/data/adb/modules/riru-core/dont_install_app`.
+  From v25.4.0, the app is bundled with the module. Create file `/data/adb/modules/riru-core/allow_install_app` to allow the module to install the app.
 
 ### Common problems
 
@@ -38,12 +38,8 @@ Android 6.0+ devices rooted with [Magisk](https://github.com/topjohnwu/Magisk)
 
 * Third-party ROMs have incorrect SELinux rule
 
-  There a lot "Riru not work" reports show that some third-party ROMs have incorrect SELinux rule (`allow init system_file:dir relabelfrom`). **This rule does not exist in AOSP.**
-
-  For Riru, this will make `zygote` not able to access necessary files from Magisk module folders since the folders are relabeled to `adb_data_file` and `zygote` is not allowed to access `adb_data_file`.
-
-  If your ROM have such problem, our recommendation is to ask your ROM maintainer to not to do this. Or you can switch to other ROMs without this problem.
-
+  <https://github.com/RikkaApps/Riru/wiki/Explain-about-incorrect-SELinux-rules-from-third-party-ROMs-cause-Riru-not-working>
+  
 ## How Riru works?
 
 * How to inject into the zygote process?
