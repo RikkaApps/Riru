@@ -45,7 +45,7 @@ android {
 
 android.applicationVariants.all { variant ->
     variant.outputs.all {
-        outputFileName = "riru-v${variant.versionName}.apk"
+        outputFileName = "riru.apk"
         if (variant.getBuildType().isMinifyEnabled()) {
             def outDir = new File(rootDir, "out")
             variant.assembleProvider.get().doLast {

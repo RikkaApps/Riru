@@ -111,6 +111,18 @@ extract "$ZIPFILE" "classes.dex" "$MODPATH"
 mv "$MODPATH/classes.dex" "$MODPATH/rirud.dex"
 set_perm "$MODPATH/rirud.dex.new" 0 0 0600
 
+if [ -f "/data/adb/modules/riru-core/dont_install_app" ]; then
+  touch $MAGISK_CURRENT_MODULE_PATH/dont_install_app
+  ui_print "- Skip install app"
+else
+  ui_print "- Installing app"
+  ui_print "- The app is used to check Riru status and report incorrectly configurations done by your ROM (if you are using third-party ROM)."
+  ui_print "- If you don't want the app, create an empty file named /data/adb/modules/riru-core/dont_install_app, so that the app will not be automatically installed."
+  extract "$ZIPFILE" "app.apk" "/data/local/tmp"
+  set_perm "/data/local/tmp/app.apk" 2000 1000 0600
+  /system/bin/pm install -r "/data/local/tmp/app.apk"
+fi
+
 ui_print "- Removing old files"
 rm -rf /data/adb/riru/bin
 rm /data/adb/riru/native_bridge

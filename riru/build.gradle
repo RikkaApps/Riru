@@ -107,6 +107,12 @@ afterEvaluate {
                 delete { delete magiskDir }
 
                 copy {
+                    println "$rootDir/app/build/outputs/apk/$variantLowered/riru.apk"
+                    from "$rootDir/app/build/outputs/apk/$variantLowered/riru.apk"
+                    into magiskDir.path
+                    rename { "app.apk" }
+                }
+                copy {
                     from "$rootDir/template/magisk_module"
                     into magiskDir.path
                     exclude 'customize.sh', 'util_functions.sh'
@@ -196,6 +202,7 @@ afterEvaluate {
             }
         }
 
+        variant.assembleProvider.get().dependsOn(":app:assemble${variantCapped}")
         variant.assembleProvider.get().finalizedBy("zip${variantCapped}")
     }
 }
