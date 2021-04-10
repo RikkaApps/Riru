@@ -26,7 +26,7 @@ Android 6.0+ devices rooted with [Magisk](https://github.com/topjohnwu/Magisk)
 
 * "Riru" app (show Riru status)
 
-  From v25.4.0, the app is bundled with the module. Create file `/data/adb/modules/riru-core/allow_install_app` to allow the module to install the app.
+  From v25.4.1, the app is bundled with the module. Create file `/data/adb/modules/riru-core/allow_install_app` to allow the module to install the app.
 
 ### Common problems
 
