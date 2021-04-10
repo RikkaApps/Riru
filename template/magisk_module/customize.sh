@@ -121,6 +121,7 @@ else
   extract "$ZIPFILE" "app.apk" "/data/local/tmp"
   set_perm "/data/local/tmp/app.apk" 2000 1000 0600
   /system/bin/pm install -r "/data/local/tmp/app.apk"
+  rm "/data/local/tmp/app.apk"
 fi
 
 ui_print "- Removing old files"
