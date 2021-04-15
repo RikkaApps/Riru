@@ -44,6 +44,13 @@ class Service : RootService() {
 
             // --------------------------------------------
 
+            if ("1" == SystemProperties.get("ro.maple.enable")) {
+                message.append("Prop ro.maple.enable is 1, try reinstall the module.")
+                return
+            }
+
+            // --------------------------------------------
+
             if (SELinux.isSELinuxEnabled() && SELinux.isSELinuxEnforced()) {
                 (SELinux.checkSELinuxAccess("u:r:init:s0", "u:object_r:system_file:s0", "file", "relabelfrom") ||
                         SELinux.checkSELinuxAccess("u:r:init:s0", "u:object_r:system_file:s0", "dir", "relabelfrom")).let {
