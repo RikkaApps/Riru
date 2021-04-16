@@ -25,7 +25,7 @@ check_riru_version() {
 }
 
 enforce_install_from_magisk_app() {
-  if $BOOTMOE; then
+  if $BOOTMODE; then
     ui_print "- Installing from Magisk app"
   else
     ui_print "*********************************************************"
