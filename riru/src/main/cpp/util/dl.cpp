@@ -47,7 +47,7 @@ void *dlopen_ext(const char *path, int flags) {
 
     auto handle = android_dlopen_ext(path, flags, &info);
     if (handle) {
-        LOGD("dloepn %s: %p", path, handle);
+        LOGD("dlopen %s: %p", path, handle);
     } else {
         LOGE("dlopen %s: %s", path, dlerror());
     }
