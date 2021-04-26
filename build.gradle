@@ -53,7 +53,7 @@ task clean(type: Delete) {
     delete rootProject.buildDir, outDir
 }
 
-def aarVersion = "${riruApiVersion}.0.0"
+def aarVersion = "${riruApiVersion}.0.1"
 def aarDir = "out/aar/dev/rikka/ndk/riru/${aarVersion}"
 
 task generateLibraryAar(type: Zip) {
