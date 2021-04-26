@@ -36,10 +36,11 @@ using RegisterNatives_t = jint(JNIEnv *, jclass, const JNINativeMethod *, jint);
 static SetTableOverride_t *setTableOverride = nullptr;
 static RegisterNatives_t *old_RegisterNatives = nullptr;
 
-static JNINativeMethod *onRegisterZygote(const char *className, const JNINativeMethod *methods, int numMethods) {
+static std::unique_ptr<JNINativeMethod[]>
+onRegisterZygote(const char *className, const JNINativeMethod *methods, int numMethods) {
 
-    auto *newMethods = new JNINativeMethod[numMethods];
-    memcpy(newMethods, methods, sizeof(JNINativeMethod) * numMethods);
+    auto newMethods = std::make_unique<JNINativeMethod[]>(numMethods);
+    memcpy(newMethods.get(), methods, sizeof(JNINativeMethod) * numMethods);
 
     JNINativeMethod method;
     for (int i = 0; i < numMethods; ++i) {
@@ -126,7 +127,8 @@ static JNINativeMethod *onRegisterZygote(const char *className, const JNINativeM
     return newMethods;
 }
 
-static JNINativeMethod *handleRegisterNative(const char *className, const JNINativeMethod *methods, int numMethods) {
+static std::unique_ptr<JNINativeMethod[]>
+handleRegisterNative(const char *className, const JNINativeMethod *methods, int numMethods) {
     if (strcmp("com/android/internal/os/Zygote", className) == 0) {
         return onRegisterZygote(className, methods, numMethods);
     } else {
@@ -147,12 +149,12 @@ NEW_FUNC_DEF(int, jniRegisterNativeMethods, JNIEnv *env, const char *className,
              const JNINativeMethod *methods, int numMethods) {
     LOGD("jniRegisterNativeMethods %s", className);
 
-    JNINativeMethod *newMethods = handleRegisterNative(className, methods, numMethods);
-    int res = old_jniRegisterNativeMethods(env, className, newMethods ? newMethods : methods, numMethods);
+    auto newMethods = handleRegisterNative(className, methods, numMethods);
+    int res = old_jniRegisterNativeMethods(env, className, newMethods ? newMethods.get() : methods,
+                                           numMethods);
     /*if (!newMethods) {
         NativeMethod::jniRegisterNativeMethodsPost(env, className, methods, numMethods);
     }*/
-    delete newMethods;
     return res;
 }
 
@@ -184,9 +186,8 @@ static int new_RegisterNative(JNIEnv *env, jclass cls, const JNINativeMethod *me
         className = "";
     }
 
-    JNINativeMethod *newMethods = handleRegisterNative(className, methods, numMethods);
-    auto res = old_RegisterNatives(env, cls, newMethods ? newMethods : methods, numMethods);
-    delete newMethods;
+    auto newMethods = handleRegisterNative(className, methods, numMethods);
+    auto res = old_RegisterNatives(env, cls, newMethods ? newMethods.get() : methods, numMethods);
     return res;
 }
 

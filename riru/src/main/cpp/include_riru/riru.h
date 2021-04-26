@@ -8,6 +8,7 @@ extern "C" {
 #include <stdint.h>
 #include <jni.h>
 #include <sys/types.h>
+#include <stddef.h>
 
 // ---------------------------------------------------------
 
@@ -21,8 +22,10 @@ typedef void(nativeForkAndSpecializePre_v9)(
         JNIEnv *env, jclass cls, jint *uid, jint *gid, jintArray *gids, jint *runtimeFlags,
         jobjectArray *rlimits, jint *mountExternal, jstring *seInfo, jstring *niceName,
         jintArray *fdsToClose, jintArray *fdsToIgnore, jboolean *is_child_zygote,
-        jstring *instructionSet, jstring *appDataDir, jboolean *isTopApp, jobjectArray *pkgDataInfoList,
-        jobjectArray *whitelistedDataInfoList, jboolean *bindMountAppDataDirs, jboolean *bindMountAppStorageDirs);
+        jstring *instructionSet, jstring *appDataDir, jboolean *isTopApp,
+        jobjectArray *pkgDataInfoList,
+        jobjectArray *whitelistedDataInfoList, jboolean *bindMountAppDataDirs,
+        jboolean *bindMountAppStorageDirs);
 
 typedef void(nativeForkAndSpecializePost_v9)(JNIEnv *env, jclass cls, jint res);
 
@@ -78,16 +81,23 @@ typedef RiruVersionedModuleInfo *(RiruInit_t)(Riru *);
 #ifdef RIRU_MODULE
 #define RIRUD_ADDRESS "rirud"
 
-#define RIRU_EXPORT __attribute__((visibility("default"))) __attribute__((used))
 
-RiruVersionedModuleInfo *init(Riru *riru) RIRU_EXPORT;
+#if __cplusplus < 201103L
+#define RIRU_EXPORT __attribute__((visibility("default"))) __attribute__((used))
+#else
+#define RIRU_EXPORT [[gnu::visibility("default")]] [[gnu::used]]
+#endif
+
+RIRU_EXPORT RiruVersionedModuleInfo *init(Riru *riru) ;
 
 extern int riru_api_version;
 extern const char *riru_magisk_module_path;
 extern int *riru_allow_unload;
 
-#if !defined(__cplusplus)
-#define RIRU_INLINE __attribute__((always_inline))
+#if !__cplusplus && __STDC_VERSION__ < 199409L
+#define RIRU_INLINE __attribute__((weak)) __inline__
+#elif !__cplusplus
+#define RIRU_INLINE  __attribute__((weak)) inline extern
 #else
 #define RIRU_INLINE inline
 #endif
@@ -104,6 +114,7 @@ RIRU_INLINE void riru_set_unload_allowed(int allowed) {
         *riru_allow_unload = allowed;
     }
 }
+#undef RIRU_INLINE
 
 #endif
 
