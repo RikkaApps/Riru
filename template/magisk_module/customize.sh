@@ -127,7 +127,7 @@ if [ -f "/data/adb/modules/riru-core/allow_install_app" ]; then
   ui_print "- Installing app"
   extract "$ZIPFILE" "app.apk" "/data/local/tmp"
   set_perm "/data/local/tmp/app.apk" 2000 1000 0660
-  su 1000 -c '/system/bin/pm install -r /data/local/tmp/app.apk'
+  su -c '/system/bin/pm install -r /data/local/tmp/app.apk'
   rm /data/local/tmp/app.apk
 else
   ui_print "- Skip install app"
