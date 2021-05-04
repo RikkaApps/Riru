@@ -30,8 +30,10 @@
 
 #ifdef __LP64__
 #define LIB_PATH "/system/lib64/"
+#define LINKER_PATH "/system/bin/linker64"
 #else
 #define LIB_PATH "/system/lib/"
+#define LINKER_PATH "/system/bin/linker"
 #endif
 
 namespace SandHook {

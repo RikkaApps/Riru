@@ -16,22 +16,6 @@
 
 namespace Hide {
     namespace {
-        const char *GetLinkerPath() {
-#if __LP64__
-            if (AndroidProp::GetApiLevel() >= 29) {
-                return "/apex/com.android.runtime/bin/linker64";
-            } else {
-                return "/system/bin/linker64";
-            }
-#else
-            if (AndroidProp::GetApiLevel() >= 29) {
-                return "/apex/com.android.runtime/bin/linker";
-            } else {
-                return "/system/bin/linker";
-            }
-#endif
-        }
-
         class ProtectedDataGuard {
 
         public:
@@ -163,7 +147,7 @@ namespace Hide {
         }
 
         const auto initialized = []() {
-            SandHook::ElfImg linker(GetLinkerPath());
+            SandHook::ElfImg linker(LINKER_PATH);
             return ProtectedDataGuard::setup(linker) &&
                    (solist = getStaticVariable<soinfo>(linker, "__dl__ZL6solist")) != nullptr &&
                    (sonext = getStaticVariable<soinfo>(linker, "__dl__ZL6sonext")) != nullptr &&

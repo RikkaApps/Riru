@@ -12,16 +12,16 @@ void *dlopen_ext(const char *path, int flags) {
     if (AndroidProp::GetApiLevel() >= 28) {
         static auto android_create_namespace = reinterpret_cast<android_namespace_t *(*)(
                 const char *, const char *, const char *, uint64_t, const char *,
-                android_namespace_t *)>((AndroidProp::GetApiLevel() >= 29 ? SandHook::ElfImg(
-                LIB_PATH "libdl_android.so") : SandHook::ElfImg(LIB_PATH "libdl.so"))
-                .getSymbAddress("android_create_namespace"));
+                android_namespace_t *, const void *)>(SandHook::ElfImg(LINKER_PATH)
+                .getSymbAddress("__loader_android_create_namespace"));
 
         LOGD("create namespace %p", android_create_namespace);
         if (android_create_namespace) {
             auto dir = dirname(path);
             auto ns = android_create_namespace(path, dir, nullptr,
                                                2/*ANDROID_NAMESPACE_TYPE_SHARED*/, nullptr,
-                                               nullptr);
+                                               nullptr,
+                                               reinterpret_cast<const void *>(&dlopen_ext));
             if (ns) {
                 info.flags = ANDROID_DLEXT_USE_NAMESPACE;
                 info.library_namespace = ns;
