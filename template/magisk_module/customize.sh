@@ -126,7 +126,7 @@ if [ $? -eq 1 ]; then
 fi
 
 if [ -f "/data/adb/modules/riru-core/allow_install_app" ]; then
-  touch $MAGISK_CURRENT_MODULE_PATH/allow_install_app
+  touch $MODPATH/allow_install_app
   ui_print "- Installing app"
   extract "$ZIPFILE" "app.apk" "/data/local/tmp"
   set_perm "/data/local/tmp/app.apk" 2000 1000 0660
