@@ -43,6 +43,9 @@ if [ ! -f "$TMPDIR/verify.sh" ]; then
 fi
 . $TMPDIR/verify.sh
 
+extract "$ZIPFILE" 'customize.sh' "$TMPDIR/.vunzip"
+extract "$ZIPFILE" 'verify.sh' "$TMPDIR/.vunzip"
+
 ui_print "- Extracting Magisk files"
 
 if [ "$MAGISK_VER_CODE" -ge 21000 ]; then

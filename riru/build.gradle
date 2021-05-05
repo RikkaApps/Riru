@@ -152,9 +152,7 @@ afterEvaluate {
                     into magiskDir
                 }
 
-                fileTree("$magiskDir").matching {
-                    exclude "README.md", "META-INF"
-                }.visit { f ->
+                fileTree("$magiskDir").visit { f ->
                     if (f.directory) return
                     file(f.file.path + ".sha256sum").text = sha256sum(f.file)
                 }
