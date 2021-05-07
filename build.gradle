@@ -43,7 +43,7 @@ ext {
     gitCommitCount = Integer.parseInt('git rev-list --count HEAD'.execute([], project.rootDir).text.trim())
 
     versionNameMinor = 4
-    versionNamePatch = 3
+    versionNamePatch = 4
 
     outDir = file("$rootDir/out")
 }
