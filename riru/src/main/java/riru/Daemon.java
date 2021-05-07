@@ -14,7 +14,7 @@ import androidx.annotation.Keep;
 /**
  * A "daemon" that controls native bridge prop and "rirud" socket.
  */
-public class Daemon {
+public class Daemon implements IBinder.DeathRecipient {
 
     public static final String TAG = "rirud_java";
 
@@ -25,6 +25,8 @@ public class Daemon {
     private final String name;
     private final String originalNativeBridge;
 
+    private IBinder systemServerBinder;
+
     public Daemon(String name, String originalNativeBridge) {
         this.handler = new Handler(Looper.myLooper());
         this.name = name;
@@ -33,8 +35,25 @@ public class Daemon {
         handler.post(() -> startWait(true, true));
     }
 
+    @Override
+    public void binderDied() {
+        systemServerBinder.unlinkToDeath(this, 0);
+        systemServerBinder = null;
+
+        Log.i(TAG, "Zygote is probably dead, delete existing /dev/riru folders...");
+        DaemonUtils.deleteDevFolder();
+
+        Log.i(TAG, "Zygote is probably dead, reset native bridge to " + RIRU_LOADER + "...");
+        DaemonUtils.resetNativeBridgeProp(RIRU_LOADER);
+
+        Log.i(TAG, "Zygote is probably dead, restart rirud socket...");
+        DaemonUtils.startSocket(DaemonUtils.findNativeDaemonPid());
+
+        handler.post(() -> startWait(true, false));
+    }
+
     private void startWait(boolean allowRestart, boolean isFirst) {
-        IBinder binder = DaemonUtils.waitForSystemService(name);
+        systemServerBinder = DaemonUtils.waitForSystemService(name);
 
         if (!DaemonUtils.isRiruLoaded()) {
             Log.w(TAG, "Riru is not loaded.");
@@ -65,18 +84,7 @@ public class Daemon {
         DaemonUtils.stopSocket(DaemonUtils.findNativeDaemonPid());
 
         try {
-            binder.linkToDeath(() -> {
-                Log.i(TAG, "Zygote is probably dead, delete existing /dev/riru folders...");
-                DaemonUtils.deleteDevFolder();
-
-                Log.i(TAG, "Zygote is probably dead, reset native bridge to " + RIRU_LOADER + "...");
-                DaemonUtils.resetNativeBridgeProp(RIRU_LOADER);
-
-                Log.i(TAG, "Zygote is probably dead, restart rirud socket...");
-                DaemonUtils.startSocket(DaemonUtils.findNativeDaemonPid());
-
-                handler.post(() -> startWait(true, false));
-            }, 0);
+            systemServerBinder.linkToDeath(this, 0);
         } catch (RemoteException e) {
             Log.w(TAG, "linkToDeath", e);
         }
