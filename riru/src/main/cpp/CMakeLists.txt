@@ -96,5 +96,5 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
     add_custom_command(TARGET riruloader POST_BUILD
             COMMAND ${CMAKE_STRIP} --strip-all --remove-section=.comment "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libriruloader.so")
     add_custom_command(TARGET librirud.so POST_BUILD
-            COMMAND ${CMAKE_STRIP} --strip-all --remove-section=.comment "librirud.so")
+            COMMAND ${CMAKE_STRIP} --strip-all --remove-section=.comment "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/librirud.so")
 endif ()
