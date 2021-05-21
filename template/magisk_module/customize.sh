@@ -59,6 +59,7 @@ extract "$ZIPFILE" 'post-fs-data.sh' "$MODPATH"
 extract "$ZIPFILE" 'service.sh' "$MODPATH"
 extract "$ZIPFILE" 'system.prop' "$MODPATH"
 extract "$ZIPFILE" 'util_functions.sh' "$MODPATH"
+extract "$ZIPFILE" 'uninstall.sh' "$MODPATH"
 
 mkdir $MAGISK_CURRENT_MODULE_PATH
 rm "$MAGISK_CURRENT_MODULE_PATH"/util_functions.sh
