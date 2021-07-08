@@ -1,12 +1,14 @@
+import org.apache.tools.ant.DirectoryScanner
 import org.apache.tools.ant.filters.FixCrLfFilter
 import org.apache.tools.ant.filters.ReplaceTokens
 
-import java.nio.file.Files
 import java.security.MessageDigest
 
 plugins {
     id 'com.android.application'
 }
+
+DirectoryScanner.removeDefaultExclude('**/.gitattributes')
 
 def versionNameShort = "v${riruApiVersion}.${versionNameMinor}.${versionNamePatch}"
 def versionName = "${versionNameShort}.r${gitCommitCount}.${gitCommitId}"
@@ -128,9 +130,9 @@ afterEvaluate {
             }
             from(zipTree(file("build/outputs/apk/${variant.name}/${project.name}.apk")).matching { include 'classes.dex' }.singleFile)
             doLast {
-                Files.copy(file("$rootDir/template/magisk_module/.gitattributes").toPath(), file("${magiskDir.path}/.gitattributes").toPath())
                 fileTree("$magiskDir").visit { f ->
                     if (f.directory) return
+                    if (f.file.name == '.gitattributes') return
 
                     def md = MessageDigest.getInstance("SHA-256")
                     f.file.eachByte 4096, { bytes, size ->
