@@ -1,4 +1,5 @@
 import org.apache.tools.ant.filters.FixCrLfFilter
+import org.apache.tools.ant.filters.ReplaceTokens
 import org.gradle.internal.os.OperatingSystem
 
 import java.nio.file.Files
@@ -14,7 +15,7 @@ def versionCode = gitCommitCount
 
 def apiVersion = rootProject.ext.riruApiVersion
 def minApiVersion = rootProject.ext.riruMinApiVersion
-def moduleProp = [
+def moduleProps = [
         id         : "riru-core",
         name       : "Riru",
         version    : "$versionName",
@@ -115,27 +116,31 @@ afterEvaluate {
                 copy {
                     from "$rootDir/template/magisk_module"
                     into magiskDir.path
-                    exclude 'customize.sh', 'util_functions.sh'
+                    exclude 'customize.sh', 'util_functions.sh', 'module.prop'
                 }
                 copy {
-                    from file("$rootDir/template/magisk_module/customize.sh"), file("$rootDir/template/magisk_module/util_functions.sh")
+                    from "$rootDir/template/magisk_module"
                     into magiskDir.path
-                    filter { line ->
-                        line.replaceAll('%%%RIRU_API%%%', apiVersion.toString())
-                                .replaceAll('%%%RIRU_VERSION_CODE%%%', versionCode.toString())
-                                .replaceAll('%%%RIRU_VERSION_NAME%%%', versionName)
-                    }
+                    include 'customize.sh', 'util_functions.sh'
+                    filter(ReplaceTokens.class, tokens: [
+                            "RIRU_API"         : apiVersion.toString(),
+                            "RIRU_VERSION_CODE": versionCode.toString(),
+                            "RIRU_VERSION_NAME": versionName.toString()
+                    ])
+                    filter(FixCrLfFilter.class,
+                            eol: FixCrLfFilter.CrLf.newInstance("lf"))
+                }
+                copy {
+                    from "$rootDir/template/magisk_module"
+                    into magiskDir.path
+                    include 'module.prop'
+                    expand moduleProps
                     filter(FixCrLfFilter.class,
                             eol: FixCrLfFilter.CrLf.newInstance("lf"))
                 }
 
                 // copy .git files manually since gradle exclude it by default
                 Files.copy(file("$rootDir/template/magisk_module/.gitattributes").toPath(), file("${magiskDir.path}/.gitattributes").toPath())
-
-                def modulePropText = ""
-                moduleProp.each { k, v -> modulePropText += "$k=$v\n" }
-                modulePropText = modulePropText.trim()
-                file("$magiskDir/module.prop").text = modulePropText
             }
 
             def nativeOutDir = file("build/intermediates/cmake/$variant.name/obj")
