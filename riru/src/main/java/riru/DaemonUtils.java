@@ -1,29 +1,54 @@
 package riru;
 
-import android.net.LocalSocket;
-import android.net.LocalSocketAddress;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.ServiceManager;
+import android.os.SystemProperties;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
 import android.text.TextUtils;
 import android.util.Log;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Objects;
+import java.io.InputStreamReader;
+import java.io.InterruptedIOException;
+import java.security.SecureRandom;
+import java.util.Locale;
+
+import static riru.Daemon.TAG;
 
 public class DaemonUtils {
 
     private static Boolean has32Bit = null, has64Bit = null;
+    private static String originalNativeBridge;
+    private static String devRandom;
+    private static int magiskVersionCode = -1;
+    private static String magiskTmpfsPath;
+
+    static {
+        originalNativeBridge = SystemProperties.get("ro.dalvik.vm.native.bridge");
+
+        if (TextUtils.isEmpty(originalNativeBridge)) {
+            originalNativeBridge = "0";
+        }
+    }
+
+    public static void killParentProcess() {
+        int ppid = Os.getppid();
+        try {
+            Os.kill(ppid, OsConstants.SIGKILL);
+            Log.i(TAG, "Killed parent process " + ppid);
+        } catch (ErrnoException e) {
+            Log.e(TAG, "Failed kill parent process " + ppid);
+        }
+    }
 
     public static boolean has32Bit() {
         if (has32Bit == null) {
@@ -39,56 +64,8 @@ public class DaemonUtils {
         return has64Bit;
     }
 
-    public static String readOriginalNativeBridge() {
-        LocalSocket socket = new LocalSocket();
-        InputStream is = null;
-        OutputStream os = null;
-        try {
-            socket.connect(new LocalSocketAddress("rirud"));
-            is = new BufferedInputStream(socket.getInputStream());
-            os = new BufferedOutputStream(socket.getOutputStream());
-
-            byte[] buf = new byte[4096];
-            buf[0] = 3; // uint32 ACTION_READ_NATIVE_BRIDGE = 3
-            os.write(buf, 0, 4);
-            os.flush();
-
-            // int32 size
-            if (is.read(buf, 0, 4) != 4) {
-                throw new IOException("read size");
-            }
-            int size = buf[0] + (buf[1] << 8) + (buf[2] << 16) + (buf[3] << 24);
-            Log.d(Daemon.TAG, "read native_bridge size " + size);
-            if (size < 0 || size > 4096) {
-                throw new IOException("bad size");
-            }
-
-            // char[size]
-            if (is.read(buf, 0, size) != size) {
-                throw new IOException("read buf");
-            }
-            return new String(buf, 0, size);
-        } catch (Throwable e) {
-            Log.w(Daemon.TAG, "Can't read native_bridge.", e);
-        } finally {
-            try {
-                socket.close();
-            } catch (IOException ignored) {
-            }
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException ignored) {
-                }
-            }
-            if (os != null) {
-                try {
-                    os.close();
-                } catch (IOException ignored) {
-                }
-            }
-        }
-        return null;
+    public static String getOriginalNativeBridge() {
+        return originalNativeBridge;
     }
 
     public static void resetNativeBridgeProp(String value) {
@@ -100,9 +77,9 @@ public class DaemonUtils {
         try {
             Process process = pb.start();
             int code = process.waitFor();
-            Log.i(Daemon.TAG, "Exec " + command[0] + " exited with " + code);
+            Log.i(TAG, "Exec " + command[0] + " exited with " + code);
         } catch (Throwable e) {
-            Log.w(Daemon.TAG, "Exec " + command[0], e);
+            Log.w(TAG, "Exec " + command[0], e);
         }
     }
 
@@ -114,7 +91,7 @@ public class DaemonUtils {
                 return binder;
             }
 
-            Log.i(Daemon.TAG, "Service " + name + " not found, wait 1s...");
+            Log.i(TAG, "Service " + name + " not found, wait 1s...");
             try {
                 //noinspection BusyWait
                 Thread.sleep(1000);
@@ -123,22 +100,8 @@ public class DaemonUtils {
         } while (true);
     }
 
-    public static String getRiruRandom() {
-        String devRandom = null;
-        try (BufferedReader br = new BufferedReader(new FileReader(new File("/data/adb/riru/dev_random")))) {
-            char[] buf = new char[4096];
-            int size;
-            if ((size = br.read(buf)) > 0) {
-                devRandom = new String(buf, 0, size);
-            }
-        } catch (IOException e) {
-            Log.w(Daemon.TAG, "Can't read dev_random.", e);
-        }
-        return devRandom;
-    }
-
     public static File getRiruDevFile() {
-        String devRandom = getRiruRandom();
+        String devRandom = getDevRandom();
         if (devRandom == null) {
             return null;
         }
@@ -167,7 +130,7 @@ public class DaemonUtils {
     }
 
     public static void deleteDevFolder() {
-        String devRandom = getRiruRandom();
+        String devRandom = getDevRandom();
         if (devRandom == null) {
             return;
         }
@@ -175,70 +138,175 @@ public class DaemonUtils {
         File file;
 
         file = new File("/dev/riru_" + devRandom);
-        Log.i(Daemon.TAG, "Attempt to delete " + file + "...");
+        Log.i(TAG, "Attempt to delete " + file + "...");
         if (!deleteDir(file)) {
             file.renameTo(new File("/dev/riru_" + devRandom + "_" + System.currentTimeMillis()));
         } else {
-            Log.i(Daemon.TAG, "Deleted " + file);
+            Log.i(TAG, "Deleted " + file);
         }
 
         file = new File("/dev/riru64_" + devRandom);
-        Log.i(Daemon.TAG, "Attempt to delete " + file + "...");
+        Log.i(TAG, "Attempt to delete " + file + "...");
         if (!deleteDir(file)) {
             file.renameTo(new File("/dev/riru_" + devRandom + "_" + System.currentTimeMillis()));
         } else {
-            Log.i(Daemon.TAG, "Deleted " + file + ".");
+            Log.i(TAG, "Deleted " + file + ".");
         }
     }
 
-    public static int findNativeDaemonPid() {
-        File proc = new File("/proc");
 
-        String[] names = proc.list();
-        if (names == null) return -1;
+    public static int getMagiskVersionCode() {
+        if (magiskVersionCode != -1) {
+            return magiskVersionCode;
+        }
 
-        for (String name : names) {
-            if (!TextUtils.isDigitsOnly(name)) continue;
+        try {
+            ProcessBuilder ps = new ProcessBuilder("magisk", "-V");
+            ps.redirectErrorStream(true);
+            Process pr = ps.start();
 
-            try (BufferedReader br = new BufferedReader(new FileReader(new File(String.format("/proc/%s/cmdline", name))))) {
-                String[] args = br.readLine().split("\0");
-                if (args.length >= 1 && (Objects.equals("rirud", args[0]) || args[0].endsWith("riru-core/rirud"))) {
-                    Log.i(Daemon.TAG, "Found rirud " + name);
-                    return Integer.parseInt(name);
+            BufferedReader in = new BufferedReader(new InputStreamReader(pr.getInputStream()));
+            String line = in.readLine();
+            Log.i(TAG, "Exec magisk -V: " + line);
+            magiskVersionCode = Integer.parseInt(line);
+            pr.waitFor();
+            in.close();
+            return magiskVersionCode;
+        } catch (Throwable e) {
+            Log.w(TAG, "Exec magisk -V", e);
+            return -1;
+        }
+    }
+
+    public static String getMagiskTmpfsPath() {
+        if (magiskTmpfsPath != null) {
+            return magiskTmpfsPath;
+        }
+
+        if (getMagiskVersionCode() < 21000) {
+            return "/sbin";
+        }
+
+        try {
+            ProcessBuilder ps = new ProcessBuilder("magisk", "--path");
+            ps.redirectErrorStream(true);
+            Process pr = ps.start();
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(pr.getInputStream()));
+            magiskTmpfsPath = in.readLine();
+            Log.i(TAG, "Exec magisk --path: " + magiskTmpfsPath);
+            pr.waitFor();
+            in.close();
+            return magiskTmpfsPath;
+        } catch (Throwable e) {
+            Log.w(TAG, "Exec magisk --path", e);
+            return "";
+        }
+    }
+
+    public static boolean hasSELinux() {
+        return new File("/system/lib/libselinux.so").exists()
+                || new File("/system/lib64/libselinux.so").exists();
+    }
+
+    public static boolean setSocketCreateContext(String context) {
+        FileDescriptor fd = null;
+        try {
+            fd = Os.open("/proc/thread-self/attr/sockcreate", OsConstants.O_RDWR, 0);
+        } catch (ErrnoException e) {
+            if (e.errno == OsConstants.ENOENT) {
+                int tid = Os.gettid();
+                try {
+                    fd = Os.open(String.format(Locale.ENGLISH, "/proc/self/task/%d/attr/sockcreate", tid), OsConstants.O_RDWR, 0);
+                } catch (ErrnoException ignored) {
                 }
-            } catch (Throwable ignored) {
-                try (BufferedReader br = new BufferedReader(new FileReader(new File(String.format("/proc/%s/comm", name))))) {
-                    String[] args = br.readLine().split("\0");
-                    if (args.length >= 1 && (Objects.equals("rirud", args[0]) || args[0].endsWith("riru-core/rirud"))) {
-                        Log.i(Daemon.TAG, "Found rirud " + name);
-                        return Integer.parseInt(name);
-                    }
-                } catch (Throwable ignored2) {
+            }
+        }
+
+        if (fd == null) {
+            return false;
+        }
+
+        byte[] bytes;
+        int length;
+        int remaining;
+        if (!TextUtils.isEmpty(context)) {
+            byte[] stringBytes = context.getBytes();
+            bytes = new byte[stringBytes.length + 1];
+            System.arraycopy(stringBytes, 0, bytes, 0, stringBytes.length);
+            bytes[stringBytes.length] = '\0';
+
+            length = bytes.length;
+            remaining = bytes.length;
+        } else {
+            bytes = null;
+            length = 0;
+            remaining = 0;
+        }
+
+        do {
+            try {
+                remaining -= Os.write(fd, bytes, length - remaining, remaining);
+                if (remaining <= 0) {
+                    break;
                 }
+            } catch (ErrnoException e) {
+                break;
+            } catch (InterruptedIOException e) {
+                remaining -= e.bytesTransferred;
             }
-        }
+        } while (true);
 
-        Log.w(Daemon.TAG, "Can't find rirud.");
-        return -1;
+        try {
+            Os.close(fd);
+        } catch (ErrnoException e) {
+            e.printStackTrace();
+        }
+        return true;
     }
 
-    public static void startSocket(int pid) {
-        if (pid != -1) {
-            try {
-                Os.kill(pid, OsConstants.SIGUSR2);
-            } catch (ErrnoException e) {
-                Log.w(Daemon.TAG, Log.getStackTraceString(e));
-            }
+    public static String getDevRandom() {
+        if (devRandom != null) {
+            return devRandom;
         }
-    }
 
-    public static void stopSocket(int pid) {
-        if (pid != -1) {
-            try {
-                Os.kill(pid, OsConstants.SIGUSR1);
-            } catch (ErrnoException e) {
-                Log.w(Daemon.TAG, Log.getStackTraceString(e));
+        File dir = new File("/data/adb/riru");
+        if (!dir.exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            dir.mkdir();
+        }
+
+        File file = new File(dir, "dev_random");
+
+        if (file.exists()) {
+            try (FileInputStream in = new FileInputStream(file)) {
+                byte[] buffer = new byte[8192];
+                if (in.read(buffer, 0, 8192) > 0) {
+                    devRandom = new String(buffer).trim();
+                    Log.i(TAG, "Read dev random " + devRandom);
+                    return devRandom;
+                }
+            } catch (IOException e) {
+                Log.w(TAG, "Read dev random", e);
             }
         }
+
+        String charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        SecureRandom rnd = new SecureRandom();
+        StringBuilder sb = new StringBuilder(7);
+        for (int i = 0; i < 7; i++) {
+            sb.append(charset.charAt(rnd.nextInt(charset.length())));
+        }
+
+        devRandom = sb.toString();
+        Log.i(TAG, "Generated dev random " + devRandom);
+
+        try (FileOutputStream out = new FileOutputStream(file)) {
+            out.write(devRandom.getBytes());
+        } catch (IOException e) {
+            Log.w(TAG, "Write dev random", e);
+        }
+
+        return devRandom;
     }
 }

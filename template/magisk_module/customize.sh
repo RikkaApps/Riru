@@ -56,7 +56,6 @@ fi
 
 extract "$ZIPFILE" 'module.prop' "$MODPATH"
 extract "$ZIPFILE" 'post-fs-data.sh' "$MODPATH"
-extract "$ZIPFILE" 'service.sh' "$MODPATH"
 extract "$ZIPFILE" 'system.prop' "$MODPATH"
 extract "$ZIPFILE" 'util_functions.sh' "$MODPATH"
 extract "$ZIPFILE" 'uninstall.sh' "$MODPATH"
@@ -82,9 +81,6 @@ if [ "$ARCH" = "x86" ] || [ "$ARCH" = "x64" ]; then
     extract "$ZIPFILE" 'lib/x86_64/libriru.so' "$MODPATH/lib64" true
     extract "$ZIPFILE" 'lib/x86_64/libriruhide.so' "$MODPATH/lib64" true
     extract "$ZIPFILE" 'lib/x86_64/libriruloader.so' "$MODPATH/system/lib64" true
-    extract "$ZIPFILE" 'lib/x86_64/librirud.so' "$MODPATH" true
-  else
-    extract "$ZIPFILE" 'lib/x86/librirud.so' "$MODPATH" true
   fi
 else
   ui_print "- Extracting arm libraries"
@@ -97,26 +93,20 @@ else
     extract "$ZIPFILE" 'lib/arm64-v8a/libriru.so' "$MODPATH/lib64" true
     extract "$ZIPFILE" 'lib/arm64-v8a/libriruhide.so' "$MODPATH/lib64" true
     extract "$ZIPFILE" 'lib/arm64-v8a/libriruloader.so' "$MODPATH/system/lib64" true
-    extract "$ZIPFILE" 'lib/arm64-v8a/librirud.so' "$MODPATH" true
-  else
-    extract "$ZIPFILE" 'lib/armeabi-v7a/librirud.so' "$MODPATH" true
   fi
 fi
 
 ui_print "- Setting permissions"
 set_perm_recursive "$MODPATH" 0 0 0755 0644
 
-ui_print "- Moving rirud"
-mv "$MODPATH/librirud.so" "$MODPATH/rirud"
+ui_print "- Extracting rirud"
+extract "$ZIPFILE" "rirud" "$MODPATH"
+extract "$ZIPFILE" "rirud.dex" "$MODPATH"
 set_perm "$MODPATH/rirud" 0 0 0700
-
-ui_print "- Extracting rirud.dex"
-extract "$ZIPFILE" "classes.dex" "$MODPATH"
-mv "$MODPATH/classes.dex" "$MODPATH/rirud.dex"
 set_perm "$MODPATH/rirud.dex" 0 0 0600
 
 ui_print "- Checking if your ROM has incorrect SELinux rules"
-/system/bin/app_process -Djava.class.path="$MODPATH/rirud.dex" /system/bin --nice-name=riru_installer riru.Daemon --check-selinux
+/system/bin/app_process -Djava.class.path="$MODPATH/rirud.dex" /system/bin --nice-name=riru_installer riru.Installer --check-selinux
 
 if [ $? -eq 1 ]; then
   ui_print "! Your ROM has incorrect SELinux rules"

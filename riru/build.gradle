@@ -42,6 +42,9 @@ android {
             }
         }
         multiDexEnabled false
+        buildConfigField "int", "RIRU_API_VERSION", "$apiVersion"
+        buildConfigField "int", "RIRU_VERSION_CODE", "$versionCode"
+        buildConfigField "String", "RIRU_VERSION_NAME", "\"$versionNameShort\""
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -75,6 +78,7 @@ dependencies {
     implementation 'dev.rikka.ndk.thirdparty:xhook:1.2.0'
     implementation 'dev.rikka.ndk.thirdparty:cxx:1.1.0'
     implementation 'dev.rikka.ndk.thirdparty:proc-maps-parser:1.0.0'
+    implementation 'dev.rikka.rikkax.io:little-endian-data-stream:1.0.1'
     implementation 'androidx.annotation:annotation:1.2.0'
     compileOnly project(':stub')
 }
@@ -124,11 +128,15 @@ afterEvaluate {
                 filter(FixCrLfFilter.class,
                         eol: FixCrLfFilter.CrLf.newInstance("lf"))
             }
-            from("build/intermediates/cmake/$variant.name/obj") {
+            from("$buildDir/intermediates/stripped_native_libs/$variantLowered/out/lib") {
                 into 'lib'
-                exclude "**/*.txt"
             }
-            from(zipTree(file("build/outputs/apk/${variant.name}/${project.name}.apk")).matching { include 'classes.dex' }.singleFile)
+            from((variantLowered == "release") ?
+                    "$buildDir/intermediates/dex/$variantLowered/minify${variantCapped}WithR8" :
+                    "$buildDir/intermediates/dex/$variantLowered/mergeDex$variantCapped") {
+                include 'classes.dex'
+                rename { 'rirud.dex' }
+            }
             doLast {
                 fileTree("$magiskDir").visit { f ->
                     if (f.directory) return
@@ -162,7 +170,7 @@ afterEvaluate {
             commandLine android.adbExecutable, "shell", "su", "-c", "magisk --install-module /data/local/tmp/${zipName}"
         }
 
-        task("flashAndReoot${variantCapped}", type: Exec) {
+        task("flashAndReboot${variantCapped}", type: Exec) {
             dependsOn("flash${variantCapped}")
             commandLine android.adbExecutable, "shell", "reboot"
         }

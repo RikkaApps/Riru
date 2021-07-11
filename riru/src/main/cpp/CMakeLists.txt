@@ -67,8 +67,7 @@ add_library(riru SHARED
         jni_hooks.cpp
         hide_utils.cpp
         module.cpp
-        magisk.cpp
-        daemon/daemon_utils.cpp)
+        magisk.cpp)
 target_include_directories(riru PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(riru log utils xhook::xhook cxx::cxx proc-maps-parser::proc-maps-parser)
 
@@ -83,12 +82,6 @@ endif ()
 add_library(riruloader SHARED loader/loader.cpp)
 target_link_libraries(riruloader log utils cxx::cxx)
 
-add_executable(librirud.so
-        daemon/daemon.cpp
-        daemon/setproctitle.c
-        daemon/daemon_utils.cpp)
-target_link_libraries(librirud.so log utils cxx::cxx)
-
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     add_custom_command(TARGET riru POST_BUILD
             COMMAND ${CMAKE_STRIP} --strip-all --remove-section=.comment "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libriru.so")
@@ -96,6 +89,4 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
             COMMAND ${CMAKE_STRIP} --strip-all --remove-section=.comment "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libriruhide.so")
     add_custom_command(TARGET riruloader POST_BUILD
             COMMAND ${CMAKE_STRIP} --strip-all --remove-section=.comment "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libriruloader.so")
-    add_custom_command(TARGET librirud.so POST_BUILD
-            COMMAND ${CMAKE_STRIP} --strip-all --remove-section=.comment "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/librirud.so")
 endif ()
