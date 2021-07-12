@@ -106,7 +106,7 @@ static void LoadModule(const char *id, const char *path, const char *magisk_modu
 
     auto allowUnload = std::make_unique<int>(0);
     auto riru = new Riru{
-            .riruApiVersion = RIRU_API_VERSION,
+            .riruApiVersion = riru::apiVersion,
             .unused = (void *) legacyApiStub,
             .magiskModulePath = magisk_module_path,
             .allowUnload = allowUnload.get()
@@ -120,7 +120,7 @@ static void LoadModule(const char *id, const char *path, const char *magisk_modu
     }
 
     auto apiVersion = moduleInfo->moduleApiVersion;
-    if (apiVersion < RIRU_MIN_API_VERSION || apiVersion > RIRU_API_VERSION) {
+    if (apiVersion < riru::minApiVersion || apiVersion > riru::apiVersion) {
         LOGW("unsupported API %s: %d", name, apiVersion);
         Cleanup(handle);
         return;

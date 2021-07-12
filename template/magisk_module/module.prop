@@ -1,0 +1,8 @@
+id=${id}
+name=${name}
+version=${version}
+versionCode=${versionCode}
+author=${author}
+description=${description}
+riruApi=${riruApi}
+riruMinApi=${riruMinApi}

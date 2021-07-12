@@ -88,25 +88,29 @@ void rirud::WriteModules(const std::vector<Module> &modules) {
 #else
     uint8_t is64bit = 0;
 #endif
-    uint8_t reply;
     uint32_t count = modules.size();
-    uint32_t size = count * sizeof(rirud::Module);
-    auto data = modules.data();
 
     if (write_full(fd, &rirud::ACTION_WRITE_STATUS, sizeof(rirud::ACTION_WRITE_STATUS)) != 0
         || write_full(fd, &is64bit, sizeof(is64bit)) != 0
-        || write_full(fd, &count, sizeof(count)) != 0
-        || write_full(fd, data, size) != 0) {
+        || write_full(fd, &count, sizeof(count)) != 0) {
         PLOGE("write %s", SOCKET_ADDRESS);
         return;
     }
 
-    if (read_full(fd, &reply, sizeof(reply))) {
-        PLOGE("read %s", SOCKET_ADDRESS);
-        return;
-    }
+    for (const auto &module : modules) {
+        uint32_t id_len = strlen(module.id);
+        write_full(fd, &id_len, sizeof(id_len));
+        write_full(fd, module.id, id_len);
 
-    LOGD("socket reply: %u", reply);
+        write_full(fd, &module.apiVersion, sizeof(module.apiVersion));
+        write_full(fd, &module.version, sizeof(module.version));
+
+        uint32_t version_name_len = strlen(module.versionName);
+        write_full(fd, &version_name_len, sizeof(version_name_len));
+        write_full(fd, module.versionName, version_name_len);
+
+        write_full(fd, &module.supportHide, sizeof(module.supportHide));
+    }
 }
 
 bool rirud::ReadDir(const char *path, std::vector<std::string> &dirs) {

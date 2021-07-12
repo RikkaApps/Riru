@@ -1,7 +1,7 @@
 RIRU_MIN_COMPATIBLE_API=9
-RIRU_API="%%%RIRU_API%%%"
-RIRU_VERSION_CODE="%%%RIRU_VERSION_CODE%%%"
-RIRU_VERSION_NAME="%%%RIRU_VERSION_NAME%%%"
+RIRU_API="@RIRU_API@"
+RIRU_VERSION_CODE="@RIRU_VERSION_CODE@"
+RIRU_VERSION_NAME="@RIRU_VERSION_NAME@"
 
 abort_for_requires_new_version() {
   ui_print "*********************************************************"
