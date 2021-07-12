@@ -280,7 +280,7 @@ public class DaemonSocketServerThread extends Thread {
             try {
                 socket = serverSocket.accept();
             } catch (IOException e) {
-                Log.w(TAG, "Accept", e);
+                Log.w(TAG, "Accept failed, server is closed ?", e);
                 return;
             }
 
@@ -317,9 +317,10 @@ public class DaemonSocketServerThread extends Thread {
 
         if (serverSocket != null) {
             try {
+                Os.shutdown(serverSocket.getFileDescriptor(), OsConstants.SHUT_RD);
                 serverSocket.close();
                 Log.i(TAG, "Server stopped");
-            } catch (IOException e) {
+            } catch (IOException | ErrnoException e) {
                 Log.w(TAG, "Close server socket", e);
             }
             serverSocket = null;
@@ -345,9 +346,11 @@ public class DaemonSocketServerThread extends Thread {
     public void run() {
         //noinspection InfiniteLoopStatement
         while (true) {
+            Log.d(TAG, "Start server");
+
             try {
                 startServer();
-            } catch (IOException e) {
+            } catch (Throwable e) {
                 Log.w(TAG, "Start server", e);
             }
 

@@ -4,7 +4,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.RemoteException;
-import android.os.SystemProperties;
 import android.util.Log;
 
 public class Daemon implements IBinder.DeathRecipient {
@@ -34,14 +33,14 @@ public class Daemon implements IBinder.DeathRecipient {
         systemServerBinder.unlinkToDeath(this, 0);
         systemServerBinder = null;
 
-        Log.i(TAG, "Zygote is probably dead, delete existing /dev/riru folders...");
-        DaemonUtils.deleteDevFolder();
+        Log.i(TAG, "Zygote is probably dead, restart rirud socket...");
+        serverThread.restartServer();
 
         Log.i(TAG, "Zygote is probably dead, reset native bridge to " + RIRU_LOADER + "...");
         DaemonUtils.resetNativeBridgeProp(RIRU_LOADER);
 
-        Log.i(TAG, "Zygote is probably dead, restart rirud socket...");
-        serverThread.restartServer();
+        Log.i(TAG, "Zygote is probably dead, delete existing /dev/riru folders...");
+        DaemonUtils.deleteDevFolder();
 
         handler.post(() -> startWait(true, false));
     }
@@ -61,9 +60,9 @@ public class Daemon implements IBinder.DeathRecipient {
                     Log.w(TAG, "Restarting zygote...");
                     if (DaemonUtils.has64Bit() && DaemonUtils.has32Bit()) {
                         // Only devices with both 32-bit and 64-bit support have zygote_secondary
-                        SystemProperties.set("ctl.restart", "zygote_secondary");
+                        DaemonUtils.resetProperty("ctl.restart", "zygote_secondary");
                     } else {
-                        SystemProperties.set("ctl.restart", "zygote");
+                        DaemonUtils.resetProperty("ctl.restart", "zygote");
                     }
                     startWait(false, false);
                 });

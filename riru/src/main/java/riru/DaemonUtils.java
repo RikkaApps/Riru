@@ -15,7 +15,6 @@ import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.InterruptedIOException;
@@ -69,7 +68,11 @@ public class DaemonUtils {
     }
 
     public static void resetNativeBridgeProp(String value) {
-        exec("resetprop", "ro.dalvik.vm.native.bridge", value);
+        resetProperty("ro.dalvik.vm.native.bridge", value);
+    }
+
+    public static void resetProperty(String key, String value) {
+        exec("resetprop", key, value);
     }
 
     public static void exec(String... command) {
