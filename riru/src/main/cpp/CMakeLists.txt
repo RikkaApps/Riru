@@ -27,10 +27,12 @@ if (NOT DEFINED RIRU_MIN_API_VERSION)
     message(FATAL_ERROR "RIRU_MIN_API_VERSION is not set")
 endif ()
 
-add_definitions(-DRIRU_VERSION_NAME="${RIRU_VERSION_NAME}")
-add_definitions(-DRIRU_VERSION_CODE=${RIRU_VERSION_CODE})
-add_definitions(-DRIRU_API_VERSION=${RIRU_API_VERSION})
-add_definitions(-DRIRU_MIN_API_VERSION=${RIRU_MIN_API_VERSION})
+configure_file(template/config.cpp config.cpp)
+
+#add_definitions(-DRIRU_VERSION_NAME="${RIRU_VERSION_NAME}")
+#add_definitions(-DRIRU_VERSION_CODE=${RIRU_VERSION_CODE})
+#add_definitions(-DRIRU_API_VERSION=${RIRU_API_VERSION})
+#add_definitions(-DRIRU_MIN_API_VERSION=${RIRU_MIN_API_VERSION})
 
 set(LINKER_FLAGS "-ffixed-x18 -Wl,--hash-style=both")
 set(C_FLAGS "-Werror=format -fdata-sections -ffunction-sections -fno-exceptions -fno-rtti -fno-threadsafe-statics")
@@ -74,7 +76,8 @@ add_library(riru SHARED
         jni_hooks.cpp
         hide_utils.cpp
         module.cpp
-        magisk.cpp)
+        magisk.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/config.cpp)
 target_include_directories(riru PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(riru log utils xhook::xhook cxx::cxx proc-maps-parser::proc-maps-parser)
 
@@ -86,7 +89,7 @@ if ("${ANDROID_ABI}" STREQUAL "x86" OR "${ANDROID_ABI}" STREQUAL "x86_64")
     add_definitions(-DHAS_NATIVE_BRIDGE)
 endif ()
 
-add_library(riruloader SHARED loader/loader.cpp)
+add_library(riruloader SHARED loader/loader.cpp ${CMAKE_CURRENT_BINARY_DIR}/config.cpp)
 target_link_libraries(riruloader log utils cxx::cxx)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")

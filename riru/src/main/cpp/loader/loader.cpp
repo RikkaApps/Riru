@@ -107,7 +107,7 @@ __used __attribute__((constructor)) void constructor() {
         return;
     }
 
-    LOGI("Riru %s (%d) in %s", RIRU_VERSION_NAME, RIRU_VERSION_CODE, cmdline);
+    LOGI("Riru %s (%d) in %s", riru::versionName, riru::versionCode, cmdline);
     LOGI("Android %s (api %d, preview_api %d)", AndroidProp::GetRelease(), AndroidProp::GetApiLevel(),
          AndroidProp::GetPreviewApiLevel());
 
