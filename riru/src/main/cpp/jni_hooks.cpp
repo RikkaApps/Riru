@@ -238,13 +238,7 @@ void JNI::InstallHooks() {
     if (useTableOverride) {
         LOGI("no jniRegisterNativeMethods");
 
-        SandHook::ElfImg art(
-#ifdef __LP64__
-                "/apex/com.android.art/lib64/libart.so"
-#else
-                "/apex/com.android.art/lib/libart.so"
-#endif
-        );
+        SandHook::ElfImg art("libart.so");
 
         auto *GetJniNativeInterface = (GetJniNativeInterface_t *) art.getSymbAddress(
                 "_ZN3art21GetJniNativeInterfaceEv");

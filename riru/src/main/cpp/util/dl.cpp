@@ -12,7 +12,7 @@ void *dlopen_ext(const char *path, int flags) {
     if (AndroidProp::GetApiLevel() >= 28) {
         static auto android_create_namespace = reinterpret_cast<android_namespace_t *(*)(
                 const char *, const char *, const char *, uint64_t, const char *,
-                android_namespace_t *, const void *)>(SandHook::ElfImg(LINKER_PATH)
+                android_namespace_t *, const void *)>(SandHook::ElfImg("linker")
                 .getSymbAddress("__loader_android_create_namespace"));
 
         LOGD("create namespace %p", android_create_namespace);

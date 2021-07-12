@@ -147,7 +147,7 @@ namespace Hide {
         }
 
         const auto initialized = []() {
-            SandHook::ElfImg linker(LINKER_PATH);
+            SandHook::ElfImg linker("linker");
             return ProtectedDataGuard::setup(linker) &&
                    (solist = getStaticVariable<soinfo>(linker, "__dl__ZL6solist")) != nullptr &&
                    (sonext = getStaticVariable<soinfo>(linker, "__dl__ZL6sonext")) != nullptr &&
