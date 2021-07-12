@@ -23,7 +23,7 @@ android {
     }
     buildTypes {
         debug {
-            signingConfig signingConfigs.sign
+            signingConfig signingConfigs.debug
         }
         release {
             signingConfig signingConfigs.sign

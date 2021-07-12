@@ -144,7 +144,7 @@ afterEvaluate {
 
                     def md = MessageDigest.getInstance("SHA-256")
                     f.file.eachByte 4096, { bytes, size ->
-                        md.update(bytes, 0, size);
+                        md.update(bytes, 0, size)
                     }
                     file(f.file.path + ".sha256sum").text = md.digest().encodeHex()
                 }
