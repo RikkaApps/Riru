@@ -1,5 +1,7 @@
 package riru;
 
+import static riru.Daemon.TAG;
+
 import android.os.Build;
 import android.os.IBinder;
 import android.os.ServiceManager;
@@ -11,17 +13,17 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.InterruptedIOException;
 import java.security.SecureRandom;
 import java.util.Locale;
-
-import static riru.Daemon.TAG;
 
 public class DaemonUtils {
 
@@ -39,6 +41,11 @@ public class DaemonUtils {
         }
     }
 
+    public static void init(String[] args) {
+        magiskVersionCode = Integer.parseInt(args[0]);
+        magiskTmpfsPath = args[1];
+    }
+
     public static void killParentProcess() {
         int ppid = Os.getppid();
         try {
@@ -46,6 +53,25 @@ public class DaemonUtils {
             Log.i(TAG, "Killed parent process " + ppid);
         } catch (ErrnoException e) {
             Log.e(TAG, "Failed kill parent process " + ppid);
+        }
+    }
+
+    public static void writeStatus(String status) {
+        File prop = new File("module.prop");
+        try (BufferedReader br = new BufferedReader(new FileReader(prop))) {
+            StringBuilder sb = new StringBuilder();
+            String line = br.readLine();
+            while (line != null) {
+                sb.append(line.replaceFirst("^description=(\\[.*]\\s*)?", "description=[" + status + "] "));
+                sb.append(System.lineSeparator());
+                line = br.readLine();
+            }
+            String content = sb.toString();
+            try (DataOutputStream os = new DataOutputStream(new FileOutputStream(prop, false))) {
+                os.write(content.getBytes());
+            }
+        } catch (Throwable e) {
+            Log.e(TAG, "fail to write status", e);
         }
     }
 
