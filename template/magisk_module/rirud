@@ -1,5 +1,0 @@
-#!/system/bin/sh
-MODDIR=${0%/*}
-
-export CLASSPATH=$MODDIR/rirud.dex
-exec app_process -Djava.class.path="$MODDIR"/rirud.dex /system/bin --nice-name=rirud riru.Daemon >/dev/null 2>&1

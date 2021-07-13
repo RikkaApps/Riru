@@ -56,6 +56,7 @@ fi
 
 extract "$ZIPFILE" 'module.prop' "$MODPATH"
 extract "$ZIPFILE" 'post-fs-data.sh' "$MODPATH"
+extract "$ZIPFILE" 'service.sh' "$MODPATH"
 extract "$ZIPFILE" 'system.prop' "$MODPATH"
 extract "$ZIPFILE" 'util_functions.sh' "$MODPATH"
 extract "$ZIPFILE" 'uninstall.sh' "$MODPATH"
@@ -100,9 +101,7 @@ ui_print "- Setting permissions"
 set_perm_recursive "$MODPATH" 0 0 0755 0644
 
 ui_print "- Extracting rirud"
-extract "$ZIPFILE" "rirud" "$MODPATH"
 extract "$ZIPFILE" "rirud.dex" "$MODPATH"
-set_perm "$MODPATH/rirud" 0 0 0700
 set_perm "$MODPATH/rirud.dex" 0 0 0600
 
 ui_print "- Checking if your ROM has incorrect SELinux rules"

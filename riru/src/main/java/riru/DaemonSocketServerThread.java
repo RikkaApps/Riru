@@ -15,6 +15,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -191,7 +192,9 @@ public class DaemonSocketServerThread extends Thread {
             }
             if (files == null || index >= size) {
                 out.writeInt(-1);
-                continue;
+                break;
+            } else {
+                out.writeInt(0);
             }
 
             File f = files[index];
@@ -200,13 +203,15 @@ public class DaemonSocketServerThread extends Thread {
             boolean isFile = f.isFile();
             boolean isDir = f.isDirectory();
             if (isFile)
-                out.writeChar(/*DT_REG*/ 8);
+                out.writeByte(/*DT_REG*/ 8);
             else if (isDir)
-                out.writeChar(/*DT_DIR*/ 4);
+                out.writeByte(/*DT_DIR*/ 4);
             else
-                out.writeChar(/*DT_UNKNOWN*/0);
+                out.writeByte(/*DT_UNKNOWN*/0);
 
-            out.write(f.getName().getBytes());
+            byte[] name = Arrays.copyOf(f.getName().getBytes(StandardCharsets.UTF_8), 256);
+            name[255] = 0; // null-terminated
+            out.write(name);
         }
     }
 

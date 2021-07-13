@@ -1,4 +1,3 @@
-import org.apache.tools.ant.DirectoryScanner
 import org.apache.tools.ant.filters.FixCrLfFilter
 import org.apache.tools.ant.filters.ReplaceTokens
 
@@ -7,8 +6,6 @@ import java.security.MessageDigest
 plugins {
     id 'com.android.application'
 }
-
-DirectoryScanner.removeDefaultExclude('**/.gitattributes')
 
 def versionNameShort = "v${riruApiVersion}.${versionNameMinor}.${versionNamePatch}"
 def versionName = "${versionNameShort}.r${gitCommitCount}.${gitCommitId}"
