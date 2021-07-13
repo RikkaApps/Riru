@@ -99,10 +99,6 @@ afterEvaluate {
             dependsOn(":app:assemble$variantCapped")
 
             into magiskDir
-            from("$rootDir/template/magisk_module") {
-                include '.gitattributes'
-                //defaultExcludes: 'no'
-            }
             from("$rootDir/app/build/outputs/apk/$variantLowered/riru.apk") {
                 rename { "app.apk" }
             }
