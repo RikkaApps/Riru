@@ -94,9 +94,9 @@ public class Daemon implements IBinder.DeathRecipient {
                 Log.w(TAG, "Restarting zygote...");
                 if (DaemonUtils.has64Bit() && DaemonUtils.has32Bit()) {
                     // Only devices with both 32-bit and 64-bit support have zygote_secondary
-                    DaemonUtils.resetProperty("ctl.restart", "zygote_secondary");
+                    SystemProperties.set("ctl.restart", "zygote_secondary");
                 } else {
-                    DaemonUtils.resetProperty("ctl.restart", "zygote");
+                    SystemProperties.set("ctl.restart", "zygote");
                 }
                 startWait(false, false);
             });
@@ -153,14 +153,6 @@ public class Daemon implements IBinder.DeathRecipient {
         Log.i(TAG, "Magisk tmpfs path is " + magiskTmpfsPath);
         Log.i(TAG, "Original native bridge is " + DaemonUtils.getOriginalNativeBridge());
         Log.i(TAG, "Dev random is " + DaemonUtils.getDevRandom());
-
-        if (DaemonUtils.hasSELinux()) {
-            if (DaemonUtils.setSocketCreateContext("u:r:zygote:s0")) {
-                Log.i(TAG, "Set socket context to u:r:zygote:s0");
-            } else {
-                Log.w(TAG, "Failed to set socket context");
-            }
-        }
 
         Looper.prepare();
         new Daemon();

@@ -356,6 +356,14 @@ public class DaemonSocketServerThread extends Thread {
 
     @Override
     public void run() {
+        if (DaemonUtils.hasSELinux()) {
+            if (DaemonUtils.setSocketCreateContext("u:r:zygote:s0")) {
+                Log.i(TAG, "Set socket context to u:r:zygote:s0");
+            } else {
+                Log.w(TAG, "Failed to set socket context");
+            }
+        }
+
         //noinspection InfiniteLoopStatement
         while (true) {
             Log.d(TAG, "Start server");
