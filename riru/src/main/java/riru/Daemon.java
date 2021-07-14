@@ -44,6 +44,9 @@ public class Daemon implements IBinder.DeathRecipient {
         DaemonUtils.setIsLoaded(false, false);
         DaemonUtils.setIsLoaded(true, false);
         DaemonUtils.getLoadedModules(false).clear();
+        DaemonUtils.getLoadedModules(true).clear();
+
+        DaemonUtils.writeStatus("Zygote is probably dead, waiting for restart...");
 
         Log.i(TAG, "Zygote is probably dead, restart rirud socket...");
         serverThread.restartServer();
@@ -86,7 +89,7 @@ public class Daemon implements IBinder.DeathRecipient {
         }
 
         if (isFirst) {
-            Log.w(TAG, "https://github.com/RikkaApps/Riru/issues/154#issuecomment-739128851");
+            Log.w(TAG, "Magisk post-fs-data slow?");
         }
 
         if (allowRestart) {
