@@ -115,19 +115,6 @@ if [ $? -eq 1 ]; then
   abort
 fi
 
-if [ -f "/data/adb/modules/riru-core/allow_install_app" ]; then
-  touch $MODPATH/allow_install_app
-  ui_print "- Installing app"
-  extract "$ZIPFILE" "app.apk" "/data/local/tmp"
-  set_perm "/data/local/tmp/app.apk" 2000 1000 0660
-  su -c '/system/bin/pm install -r /data/local/tmp/app.apk'
-  rm /data/local/tmp/app.apk
-else
-  ui_print "- Skip install app"
-  ui_print "  The app is used to check Riru status and report incorrectly configurations done by your ROM (if you are using third-party ROM)."
-  ui_print "  To allow the module install the app, create a file named /data/adb/modules/riru-core/allow_install_app."
-fi
-
 ui_print "- Removing old files"
 rm -rf /data/adb/riru/bin
 rm /data/adb/riru/native_bridge

@@ -96,16 +96,14 @@ afterEvaluate {
 
         task("prepareMagiskFiles${variantCapped}", type: Sync) {
             dependsOn("assemble$variantCapped")
-            dependsOn(":app:assemble$variantCapped")
+
+            def templatePath = "$rootDir/template/magisk_module"
 
             into magiskDir
-            from("$rootDir/app/build/outputs/apk/$variantLowered/riru.apk") {
-                rename { "app.apk" }
-            }
-            from("$rootDir/template/magisk_module") {
+            from(templatePath) {
                 exclude 'customize.sh', 'util_functions.sh', 'module.prop'
             }
-            from("$rootDir/template/magisk_module") {
+            from(templatePath) {
                 include 'customize.sh', 'util_functions.sh'
                 filter(ReplaceTokens.class, tokens: [
                         "RIRU_API"         : apiVersion.toString(),
@@ -115,7 +113,7 @@ afterEvaluate {
                 filter(FixCrLfFilter.class,
                         eol: FixCrLfFilter.CrLf.newInstance("lf"))
             }
-            from("$rootDir/template/magisk_module") {
+            from(templatePath) {
                 include 'module.prop'
                 expand moduleProps
                 filter(FixCrLfFilter.class,
@@ -142,7 +140,6 @@ afterEvaluate {
                     file(f.file.path + ".sha256sum").text = md.digest().encodeHex()
                 }
             }
-
         }
 
         task("zip${variantCapped}", type: Zip) {
@@ -168,7 +165,6 @@ afterEvaluate {
             commandLine android.adbExecutable, "shell", "reboot"
         }
 
-        variant.assembleProvider.get().dependsOn(":app:assemble${variantCapped}")
         variant.assembleProvider.get().finalizedBy("zip${variantCapped}")
     }
 }
