@@ -2,7 +2,10 @@ name: Core
 
 on:
   push:
-
+    branches:
+      - master
+    paths-ignore:
+      - '**/README.md'
 jobs:
   build:
     runs-on: ubuntu-20.04
