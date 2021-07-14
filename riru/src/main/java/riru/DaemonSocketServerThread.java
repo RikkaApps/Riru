@@ -71,6 +71,8 @@ public class DaemonSocketServerThread extends Thread {
         boolean is64Bit = in.readBoolean();
         int count = in.readInt();
 
+        DaemonUtils.setIsLoaded(is64Bit, true);
+
         File parent = new File("/dev/riru" + (is64Bit ? "64" : "") + "_" + DaemonUtils.getDevRandom());
         File modules = new File(parent, "modules");
 
@@ -108,6 +110,11 @@ public class DaemonSocketServerThread extends Thread {
             writeToFile(module, "api", Integer.toString(apiVersion));
             writeToFile(module, "version", Integer.toString(version));
             writeToFile(module, "version_name", versionName);
+
+            int index = id.indexOf('@');
+            if (index != -1 && index < id.length()) {
+                DaemonUtils.getLoadedModules(is64Bit).add(id.substring(index + 1));
+            }
         }
     }
 

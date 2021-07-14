@@ -5,7 +5,7 @@ import android.os.SELinux;
 public class Installer {
 
     private static void checkSELinux() {
-        if (SELinux.isSELinuxEnabled() && SELinux.isSELinuxEnforced()
+        if (DaemonUtils.hasSELinux() && SELinux.isSELinuxEnabled() && SELinux.isSELinuxEnforced()
                 && (SELinux.checkSELinuxAccess("u:r:init:s0", "u:object_r:system_file:s0", "file", "relabelfrom")
                 || SELinux.checkSELinuxAccess("u:r:init:s0", "u:object_r:system_file:s0", "dir", "relabelfrom"))) {
             System.exit(1);

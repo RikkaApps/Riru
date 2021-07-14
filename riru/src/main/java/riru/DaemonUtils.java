@@ -1,7 +1,5 @@
 package riru;
 
-import static riru.Daemon.TAG;
-
 import android.os.Build;
 import android.os.IBinder;
 import android.os.ServiceManager;
@@ -23,7 +21,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.InterruptedIOException;
 import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+
+import static riru.Daemon.TAG;
 
 public class DaemonUtils {
 
@@ -32,6 +34,10 @@ public class DaemonUtils {
     private static String devRandom;
     private static int magiskVersionCode = -1;
     private static String magiskTmpfsPath;
+    private static final boolean[] loaded = new boolean[2];
+
+    @SuppressWarnings("unchecked")
+    private static final List<String>[] loadedModules = new List[]{new ArrayList<>(), new ArrayList<>()};
 
     static {
         originalNativeBridge = SystemProperties.get("ro.dalvik.vm.native.bridge");
@@ -44,6 +50,18 @@ public class DaemonUtils {
     public static void init(String[] args) {
         magiskVersionCode = Integer.parseInt(args[0]);
         magiskTmpfsPath = args[1];
+    }
+
+    public static boolean isLoaded(boolean is64Bit) {
+        return loaded[is64Bit ? 1 : 0];
+    }
+
+    public static void setIsLoaded(boolean is64Bit, boolean riruIsLoaded) {
+        DaemonUtils.loaded[is64Bit ? 1 : 0] = riruIsLoaded;
+    }
+
+    public static List<String> getLoadedModules(boolean is64Bit) {
+        return loadedModules[is64Bit ? 1 : 0];
     }
 
     public static void killParentProcess() {
@@ -140,11 +158,6 @@ public class DaemonUtils {
         } else {
             return new File("/dev/riru_" + devRandom);
         }
-    }
-
-    public static boolean isRiruLoaded() {
-        File file = getRiruDevFile();
-        return file != null && file.exists();
     }
 
     private static boolean deleteDir(File file) {

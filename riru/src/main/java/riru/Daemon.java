@@ -4,7 +4,14 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.RemoteException;
+import android.os.SELinux;
 import android.util.Log;
+
+import java.io.File;
+import java.util.List;
+import java.util.Locale;
+
+import riru.resource.Strings;
 
 public class Daemon implements IBinder.DeathRecipient {
 
@@ -33,6 +40,10 @@ public class Daemon implements IBinder.DeathRecipient {
         systemServerBinder.unlinkToDeath(this, 0);
         systemServerBinder = null;
 
+        DaemonUtils.setIsLoaded(false, false);
+        DaemonUtils.setIsLoaded(true, false);
+        DaemonUtils.getLoadedModules(false).clear();
+
         Log.i(TAG, "Zygote is probably dead, restart rirud socket...");
         serverThread.restartServer();
 
@@ -45,36 +56,51 @@ public class Daemon implements IBinder.DeathRecipient {
         handler.post(() -> startWait(true, false));
     }
 
-    private void startWait(boolean allowRestart, boolean isFirst) {
-        systemServerBinder = DaemonUtils.waitForSystemService(name);
+    private void onRiruNotLoaded(boolean allowRestart, boolean isFirst) {
+        Log.w(TAG, "Riru is not loaded.");
 
-        if (!DaemonUtils.isRiruLoaded()) {
-            Log.w(TAG, "Riru is not loaded.");
-
-            if (isFirst) {
-                Log.w(TAG, "https://github.com/RikkaApps/Riru/issues/154#issuecomment-739128851");
-            }
-
-            if (allowRestart) {
-                handler.post(() -> {
-                    Log.w(TAG, "Restarting zygote...");
-                    if (DaemonUtils.has64Bit() && DaemonUtils.has32Bit()) {
-                        // Only devices with both 32-bit and 64-bit support have zygote_secondary
-                        DaemonUtils.resetProperty("ctl.restart", "zygote_secondary");
-                    } else {
-                        DaemonUtils.resetProperty("ctl.restart", "zygote");
-                    }
-                    startWait(false, false);
-                });
-            }
+        boolean filesMounted = true;
+        if (DaemonUtils.has64Bit()) {
+            filesMounted = new File("/system/lib64/libriruloader.so").exists();
+        }
+        if (DaemonUtils.has32Bit()) {
+            filesMounted &= new File("/system/lib/libriruloader.so").exists();
+        }
+        if (!filesMounted) {
+            DaemonUtils.writeStatus(Strings.get(Strings.files_not_mounted));
             return;
         }
 
+        if (DaemonUtils.hasSELinux() && SELinux.isSELinuxEnabled() && SELinux.isSELinuxEnforced()
+                && (SELinux.checkSELinuxAccess("u:r:init:s0", "u:object_r:system_file:s0", "file", "relabelfrom")
+                || SELinux.checkSELinuxAccess("u:r:init:s0", "u:object_r:system_file:s0", "dir", "relabelfrom"))) {
+            DaemonUtils.writeStatus(Strings.get(Strings.bad_selinux_rule));
+            return;
+        }
+
+        if (isFirst) {
+            Log.w(TAG, "https://github.com/RikkaApps/Riru/issues/154#issuecomment-739128851");
+        }
+
+        if (allowRestart) {
+            handler.post(() -> {
+                Log.w(TAG, "Restarting zygote...");
+                if (DaemonUtils.has64Bit() && DaemonUtils.has32Bit()) {
+                    // Only devices with both 32-bit and 64-bit support have zygote_secondary
+                    DaemonUtils.resetProperty("ctl.restart", "zygote_secondary");
+                } else {
+                    DaemonUtils.resetProperty("ctl.restart", "zygote");
+                }
+                startWait(false, false);
+            });
+        }
+    }
+
+    private void onRiruLoad() {
         Log.i(TAG, "Riru loaded, reset native bridge to " + DaemonUtils.getOriginalNativeBridge() + "...");
         DaemonUtils.resetNativeBridgeProp(DaemonUtils.getOriginalNativeBridge());
 
         Log.i(TAG, "Riru loaded, stop rirud socket...");
-        DaemonUtils.writeStatus("Riru is loaded normally");
         serverThread.stopServer();
 
         try {
@@ -82,12 +108,37 @@ public class Daemon implements IBinder.DeathRecipient {
         } catch (RemoteException e) {
             Log.w(TAG, "linkToDeath", e);
         }
+
+        List<String> loadedModules = DaemonUtils.getLoadedModules(DaemonUtils.has64Bit());
+
+        StringBuilder sb = new StringBuilder();
+        if (loadedModules.isEmpty()) {
+            sb.append("empty");
+        } else {
+            sb.append(loadedModules.get(0));
+            for (int i = 1; i < loadedModules.size(); i++) {
+                sb.append(", ");
+                sb.append(loadedModules.get(i));
+            }
+        }
+
+        DaemonUtils.writeStatus(String.format(Locale.ENGLISH, Strings.get(Strings.loaded), loadedModules.size(), sb));
+    }
+
+    private void startWait(boolean allowRestart, boolean isFirst) {
+        systemServerBinder = DaemonUtils.waitForSystemService(name);
+
+        if (!DaemonUtils.isLoaded(DaemonUtils.has64Bit())) {
+            onRiruNotLoaded(allowRestart, isFirst);
+        } else {
+            onRiruLoad();
+        }
     }
 
     public static void main(String[] args) {
         DaemonUtils.init(args);
         DaemonUtils.killParentProcess();
-        DaemonUtils.writeStatus("app_process launched");
+        DaemonUtils.writeStatus("\uD83E\uDD14 app_process launched");
         int magiskVersionCode = DaemonUtils.getMagiskVersionCode();
         String magiskTmpfsPath = DaemonUtils.getMagiskTmpfsPath();
 

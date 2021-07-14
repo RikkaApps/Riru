@@ -16,6 +16,10 @@ A typical example is, some "optimize" modules changes this property. Since chang
 
 Many TWRP has broken implementations, which will finally cause Riru and Riru modules "installed" but not working.
 
+### Incorrect SELinux rules problem
+
+<https://github.com/RikkaApps/Riru/wiki/Explanation-about-incorrect-SELinux-rules-from-third-party-ROMs-cause-Riru-not-working>
+
 ## Changelog
 
 ### v25.4.4 (2021-05-07)
