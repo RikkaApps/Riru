@@ -5,6 +5,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.RemoteException;
 import android.os.SELinux;
+import android.os.SystemProperties;
 import android.util.Log;
 
 import java.io.File;
@@ -66,6 +67,7 @@ public class Daemon implements IBinder.DeathRecipient {
         if (DaemonUtils.has32Bit()) {
             filesMounted &= new File("/system/lib/libriruloader.so").exists();
         }
+
         if (!filesMounted) {
             DaemonUtils.writeStatus(Strings.get(Strings.files_not_mounted));
             return;
@@ -75,6 +77,11 @@ public class Daemon implements IBinder.DeathRecipient {
                 && (SELinux.checkSELinuxAccess("u:r:init:s0", "u:object_r:system_file:s0", "file", "relabelfrom")
                 || SELinux.checkSELinuxAccess("u:r:init:s0", "u:object_r:system_file:s0", "dir", "relabelfrom"))) {
             DaemonUtils.writeStatus(Strings.get(Strings.bad_selinux_rule));
+            return;
+        }
+
+        if (!"libriruloader.so".equals(SystemProperties.get("ro.dalvik.vm.native.bridge"))) {
+            DaemonUtils.writeStatus(Strings.get(Strings.bad_prop));
             return;
         }
 

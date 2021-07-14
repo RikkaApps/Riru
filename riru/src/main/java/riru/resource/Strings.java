@@ -14,6 +14,7 @@ public class Strings {
     public static final int loaded = 0;
     public static final int files_not_mounted = 1;
     public static final int bad_selinux_rule = 2;
+    public static final int bad_prop = 3;
     private static final int COUNT = 4;
 
     private static Locale locale;
@@ -35,18 +36,21 @@ public class Strings {
         array[loaded] = "\uD83D\uDE0B Riru 正常工作中。已载入 %1$d 个模块（%2$s）。";
         array[files_not_mounted] = "\u26A0\uFE0F 文件未被挂载，Magisk 在此设备上损坏。";
         array[bad_selinux_rule] = "\u26A0\uFE0F 此设备上有错误的 SELinux 规则。此问题不应该由 Riru 解决，请参阅模块自述文件以了解更多。";
+        array[bad_prop] = "\u26A0\uFE0F 系统属性错误。请不要使用“优化”模块，因为通过修改属性来优化非常值得怀疑。";
         Strings.STRINGS.put("zh-CN", array);
 
         array = new String[COUNT];
         array[loaded] = "\uD83D\uDE0B Riru 正常工作中。已載入 %1$d 個模組（%2$s）。";
         array[files_not_mounted] = "\u26A0\uFE0F 檔案未被掛載，Magisk 在此裝置上損壞。";
         array[bad_selinux_rule] = "\u26A0\uFE0F 此裝置上有錯誤的 SELinux 規則。此問題不應該由 Riru 解決，請參閱模組自述檔案以瞭解更多。";
+        array[bad_prop] = "\u26A0\uFE0F 系統屬性錯誤。請不要使用“最佳化”模組，因為透過修改屬性來最佳化非常值得懷疑。";
         Strings.STRINGS.put("zh", array);
 
         array = new String[COUNT];
         array[loaded] = "\uD83D\uDE0B Riru is working normally. Loaded %1$d modules (%2$s).";
         array[files_not_mounted] = "\u26A0\uFE0F Files are not mounted. Magisk is broken on this device.";
         array[bad_selinux_rule] = "\u26A0\uFE0F Incorrect SELinux found on this device. This issue should not be resolved by Riru, please refer to the module README file for more information.";
+        array[bad_prop] = "\u26A0\uFE0F system property is wrong. Please don't use \"optimize\" modules since it's very questionable to optimize by changing properties.";
         Strings.STRINGS.put("en", array);
     }
 
