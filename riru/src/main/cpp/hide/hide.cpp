@@ -4,7 +4,6 @@
 #include <string_view>
 #include <pmparser.h>
 #include "logging.h"
-#include "wrap.h"
 
 /**
  * Magic to hide from /proc/###/maps, the idea is from Haruue Icymoon (https://github.com/haruue)

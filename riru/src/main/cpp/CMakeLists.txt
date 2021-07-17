@@ -60,9 +60,6 @@ include_directories(include_riru)
 
 add_library(utils STATIC
         util/android_prop.cpp
-        util/misc.cpp
-        util/wrap.cpp
-        util/socket.cpp
         util/elf_util.cpp
         util/dl.cpp
         util/rirud.cpp)

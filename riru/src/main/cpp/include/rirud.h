@@ -10,6 +10,7 @@
 
 class RirudSocket {
 public:
+    constexpr static std::string_view RIRUD = "rirud";
 
     enum class Action : uint32_t {
         READ_FILE = 4,

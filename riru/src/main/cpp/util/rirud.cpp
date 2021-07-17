@@ -14,21 +14,6 @@
 #include "module.h"
 #include "finally.h"
 
-static int socket_fd = -1;
-
-namespace {
-    template<typename T>
-    inline std::enable_if_t<std::is_fundamental_v<T> || std::is_enum_v<T>, int>
-    WriteFull(int fd, const T &data) {
-        return write_full(fd, &data, sizeof(T));
-    }
-
-    int WriteFull(int fd, std::string_view data) {
-        return write_full(fd, data.data(), data.size());
-    }
-
-}  // namespace
-
 bool RirudSocket::Write(std::string_view str) const {
     auto count = str.size();
     const auto *buf = str.data();
@@ -52,7 +37,7 @@ RirudSocket::RirudSocket() {
             .sun_family = AF_UNIX,
             .sun_path={0}
     };
-    strcpy(addr.sun_path + 1, "rirud");
+    strncpy(addr.sun_path + 1, RIRUD.data(), RIRUD.size());
     socklen_t socklen = sizeof(sa_family_t) + strlen(addr.sun_path + 1) + 1;
 
     if (connect(fd_, reinterpret_cast<struct sockaddr *>(&addr), socklen) == -1) {

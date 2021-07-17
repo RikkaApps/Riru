@@ -27,7 +27,7 @@
 #include "logging.h"
 #include "elf_util.h"
 
-using namespace SandHook;
+using SandHook::ElfImg;
 
 template<typename T>
 inline constexpr auto offsetOf(ElfW(Ehdr) *head, ElfW(Off) off) {

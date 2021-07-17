@@ -6,7 +6,6 @@
 #include <magisk.h>
 #include <android_prop.h>
 #include "hide_utils.h"
-#include "wrap.h"
 #include "logging.h"
 #include "module.h"
 #include "entry.h"

@@ -51,28 +51,47 @@ __used __attribute__((destructor)) void Destructor() {
 
 #endif
 
+std::string GetSelfCmdline() {
+    std::string cmdline;
+
+    FILE *f = fopen("/proc/self/cmdline", "rb");
+
+    if (!f) {
+        LOGE("Fail to cmdline");
+        return cmdline;
+    }
+    fseek(f, 0, SEEK_END);
+    cmdline.resize(ftell(f));
+    rewind(f);
+    if (cmdline.size() !=
+        fread(cmdline.data(), sizeof(decltype(cmdline)::value_type), cmdline.size(), f)) {
+        LOGE("Read dex failed");
+        cmdline.resize(0);
+    }
+    fclose(f);
+    return cmdline;
+}
+
 __used __attribute__((constructor)) void Constructor() {
-    if (getuid() != 0)
+    if (getuid() != 0) {
         return;
+}
 
-    char cmdline[ARG_MAX + 1];
-    get_self_cmdline(cmdline, 0);
+    auto cmdline = GetSelfCmdline();
 
-    if (strcmp(cmdline, "zygote") != 0
-        && strcmp(cmdline, "zygote32") != 0
-        && strcmp(cmdline, "zygote64") != 0
-        && strcmp(cmdline, "usap32") != 0
-        && strcmp(cmdline, "usap64") != 0) {
-        LOGW("not zygote (cmdline=%s)", cmdline);
+    if (cmdline != "zygote" &&
+        cmdline != "zygote32" &&
+        cmdline != "zygote64" &&
+        cmdline != "usap32" &&
+        cmdline != "usap64") {
+        LOGW("not zygote (cmdline=%s)", cmdline.data());
         return;
     }
 
-    LOGI("Riru %s (%d) in %s", riru::versionName, riru::versionCode, cmdline);
+    LOGI("Riru %s (%d) in %s", riru::versionName, riru::versionCode, cmdline.data());
     LOGI("Android %s (api %d, preview_api %d)", AndroidProp::GetRelease(),
          AndroidProp::GetApiLevel(),
          AndroidProp::GetPreviewApiLevel());
-
-    int retry = 10;
 
     RirudSocket rirud;
 
