@@ -10,46 +10,42 @@
 #include <logging.h>
 #include <config.h>
 #include <rirud.h>
+#include "buff_string.h"
 
-using namespace std;
 using namespace std::string_literals;
 
-namespace Magisk {
+namespace magisk {
 
-    static const char *path_;
+    static std::string path;
 
-    const char *GetPath() {
-        return path_;
+    const auto &GetPath() {
+        return path;
     }
 
-    void SetPath(const char *path) {
-        if (path) path_ = strdup(path);
+    void SetPath(const char *p) {
+        if (p) path = p;
     }
 
-    string GetPathForSelf(const char *name) {
-        string str;
-        str = string(GetPath()) + "/.magisk/modules/riru-core/"s + name;
-        return str;
+    std::string GetPathForSelf(const char *name) {
+        return GetPath() + "/.magisk/modules/riru-core/"s + name;
     }
 
-    string GetPathForSelfLib(const char *name) {
-        string str;
+    std::string GetPathForSelfLib(const char *name) {
 #ifdef __LP64__
-        str = string(GetPath()) + "/.magisk/modules/riru-core/lib64/"s + name;
+        return GetPath() + "/.magisk/modules/riru-core/lib64/"s + name;
 #else
-        str = string(GetPath()) + "/.magisk/modules/riru-core/lib/"s + name;
+        return GetPath() + "/.magisk/modules/riru-core/lib/"s + name;
 #endif
-        return str;
     }
 
-    void ForEachModule(const function<void(const char *)> &fn) {
-        auto root = GetPath();
-        if (!root) return;
+    void ForEachModule(const std::function<void(const char *)> &fn) {
+        const auto &root = GetPath();
+        if (root.empty()) return;
 
-        char buf[PATH_MAX];
-        strcpy(buf, root);
-        strcat(buf, "/.magisk/modules");
-        auto modules_end = buf + strlen(buf);
+        BuffString<PATH_MAX> buf;
+        buf += root;
+        buf += "/.magisk/modules";
+        auto modules_end = buf.size();
 
         DIR *dir;
         struct dirent *entry;
@@ -60,22 +56,24 @@ namespace Magisk {
             if (entry->d_type != DT_DIR) continue;
             if (entry->d_name[0] == '.') continue;
 
-            *modules_end = '\0';
-            strcat(buf, "/");
-            strcat(buf, entry->d_name);
+            buf.size(modules_end);
 
-            auto end = buf + strlen(buf);
-            strcat(buf, "/disable");
-            if (access(buf, F_OK) == 0) continue;
-            *end = '\0';
+            buf += "/";
+            buf += entry->d_name;
 
-            strcat(buf, "/remove");
+            auto end = buf.size();
+
+            buf += "/disable";
             if (access(buf, F_OK) == 0) continue;
-            *end = '\0';
+            buf.size(end);
+
+            buf += "/remove";
+            if (access(buf, F_OK) == 0) continue;
+            buf.size(end);
 
             fn(buf);
         }
 
         closedir(dir);
     }
-}
+}  // namespace magisk

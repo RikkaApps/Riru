@@ -78,29 +78,25 @@ bool Entry::IsSelfUnloadAllowed() {
 void Entry::Unload(jboolean is_child_zygote) {
     self_unload_allowed = true;
 
-    for (auto module : Modules::Get()) {
-        if (strcmp(module->id, MODULE_NAME_CORE) == 0) {
-            continue;
-        }
-
-        if (module->allowUnload()) {
-            LOGD("%s: unload", module->id);
-            module->unload();
+    for (auto &module : modules::Get()) {
+        if (module.allowUnload()) {
+            LOGD("%s: unload", module.id.data());
+            module.unload();
         } else {
-            if (module->apiVersion >= 25)
-                LOGD("%s: unload is not allow for this process", module->id);
+            if (module.apiVersion >= 25)
+                LOGD("%s: unload is not allow for this process", module.id.data());
             else {
-                LOGD("%s: unload is not supported by module (API < 25), self unload is also disabled", module->id);
+                LOGD("%s: unload is not supported by module (API < 25), self unload is also disabled", module.id.data());
                 self_unload_allowed = false;
             }
         }
     }
 
-    Hide::HideFromSoList();
+    hide::HideFromSoList();
 
     // Child zygote (webview zyote or app zygote) has no "execmem" permission
     if (AndroidProp::GetApiLevel() < 29 && !is_child_zygote) {
-        Hide::HideFromMaps();
+        hide::HideFromMaps();
     }
 
     if (self_unload_allowed) {
@@ -111,27 +107,10 @@ void Entry::Unload(jboolean is_child_zygote) {
 extern "C" __attribute__((visibility("default"))) __attribute__((used)) void init(void *handle, const char* magisk_path) {
     self_handle = handle;
 
-    Magisk::SetPath(magisk_path);
-    Hide::PrepareMapsHideLibrary();
-    JNI::InstallHooks();
-    Modules::Load();
+    const RirudSocket rirud;
 
-    std::vector<rirud::Module> modules;
-    for (auto it : Modules::Get()) {
-        if (strcmp(it->id, MODULE_NAME_CORE) == 0) {
-            continue;
-        }
-
-        auto module = rirud::Module{};
-
-        strncpy(module.id, it->id, sizeof(module.id));
-        module.apiVersion = it->apiVersion;
-        module.version = it->version;
-        strncpy(module.versionName, it->versionName, sizeof(module.versionName));
-        module.supportHide = it->supportHide;
-
-        modules.emplace_back(module);
-    }
-    rirud::WriteModules(modules);
-    rirud::CloseSocket();
+    magisk::SetPath(magisk_path);
+    hide::PrepareMapsHideLibrary();
+    jni::InstallHooks();
+    modules::Load(rirud);
 }

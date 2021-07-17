@@ -14,7 +14,7 @@
 #include <elf_util.h>
 #include <set>
 
-namespace Hide {
+namespace hide {
     namespace {
         const char *GetLinkerPath() {
 #if __LP64__
@@ -171,8 +171,8 @@ namespace Hide {
                    soinfo::setup(linker);
         }();
 
-        std::vector<soinfo *> linker_get_solist() {
-            std::vector<soinfo *> linker_solist{};
+        std::list<soinfo *> linker_get_solist() {
+            std::list<soinfo *> linker_solist{};
             for (auto *iter = solist; iter; iter = iter->next()) {
                 linker_solist.push_back(iter);
             }
@@ -211,55 +211,50 @@ namespace Hide {
                 return;
             }
         }
-    }
+    }  // namespace
 
     void HideFromMaps() {
-        auto self_path = Magisk::GetPathForSelfLib("libriru.so");
-        auto modules = Modules::Get();
-        std::set<std::string_view> names{};
-        for (auto module : Modules::Get()) {
-            if (strcmp(module->id, MODULE_NAME_CORE) == 0) {
-                names.emplace(self_path);
-            } else if (module->supportHide) {
-                if (!module->isLoaded()) {
-                    LOGD("%s is unloaded", module->id);
+        auto self_path = magisk::GetPathForSelfLib("libriru.so");
+        std::set<std::string_view> names{self_path};
+        for (const auto &module : modules::Get()) {
+            if (module.supportHide) {
+                if (!module.isLoaded()) {
+                    LOGD("%s is unloaded", module.id.data());
                 } else {
-                    names.emplace(module->path);
+                    names.emplace(module.path);
                 }
             } else {
-                LOGD("module %s does not support hide", module->id);
+                LOGD("module %s does not support hide", module.id.data());
             }
         }
-        if (!names.empty()) Hide::HidePathsFromMaps(names);
+        if (!names.empty()) hide::HidePathsFromMaps(names);
     }
 
     static void RemoveFromSoList(const std::set<std::string_view> &names) {
-        Hide::RemovePathsFromSolist(names);
+        hide::RemovePathsFromSolist(names);
     }
 
     void HideFromSoList() {
-        auto self_path = Magisk::GetPathForSelfLib("libriru.so");
-        auto modules = Modules::Get();
+        auto self_path = magisk::GetPathForSelfLib("libriru.so");
         std::set<std::string_view> names_to_remove{};
-        for (auto module : Modules::Get()) {
-            if (strcmp(module->id, MODULE_NAME_CORE) == 0) {
-                if (Entry::IsSelfUnloadAllowed()) {
-                    LOGD("don't hide self since it will be unloaded");
-                } else {
-                    names_to_remove.emplace(self_path);
-                }
-            } else if (module->supportHide) {
-                if (!module->isLoaded()) {
-                    LOGD("%s is unloaded", module->id);
+        if (Entry::IsSelfUnloadAllowed()) {
+            LOGD("don't hide self since it will be unloaded");
+        } else {
+            names_to_remove.emplace(self_path);
+        }
+        for (const auto &module : modules::Get()) {
+            if (module.supportHide) {
+                if (!module.isLoaded()) {
+                    LOGD("%s is unloaded", module.id.data());
                     continue;
                 }
-                if (module->apiVersion < 24) {
-                    LOGW("%s is too old to hide so", module->id);
+                if (module.apiVersion < 24) {
+                    LOGW("%s is too old to hide so", module.id.data());
                 } else {
-                    names_to_remove.emplace(module->path);
+                    names_to_remove.emplace(module.path);
                 }
             } else {
-                LOGD("module %s does not support hide", module->id);
+                LOGD("module %s does not support hide", module.id.data());
             }
         }
 
@@ -269,20 +264,20 @@ namespace Hide {
     }
 
     void PrepareMapsHideLibrary() {
-        auto hide_lib_path = Magisk::GetPathForSelfLib("libriruhide.so");
+        auto hide_lib_path = magisk::GetPathForSelfLib("libriruhide.so");
 
         // load riruhide.so and run the hide
         LOGD("dlopen libriruhide");
-        riru_hide_handle = dlopen_ext(hide_lib_path.c_str(), 0);
+        riru_hide_handle = DlopenExt(hide_lib_path.c_str(), 0);
         if (!riru_hide_handle) {
             LOGE("dlopen %s failed: %s", hide_lib_path.c_str(), dlerror());
             return;
         }
-        riru_hide_func = (riru_hide_t *) dlsym(riru_hide_handle, "riru_hide");
+        riru_hide_func = reinterpret_cast<riru_hide_t *>(dlsym(riru_hide_handle, "riru_hide"));
         if (!riru_hide_func) {
             LOGE("dlsym failed: %s", dlerror());
             dlclose(riru_hide_handle);
             return;
         }
     }
-}
+}  // namespace Hide

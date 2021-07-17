@@ -4,6 +4,7 @@
 #include <sys/mman.h>
 #include <android_prop.h>
 #include <memory>
+#include "buff_string.h"
 #include <rirud.h>
 #include "module.h"
 #include "wrap.h"
@@ -14,11 +15,12 @@
 #include "magisk.h"
 #include "dl.h"
 
-using namespace std;
+using namespace std::string_literals;
+using namespace std::string_view_literals;
 
-std::vector<RiruModule *> &Modules::Get() {
-    static auto modules = std::vector<RiruModule *>({new RiruModule(strdup(MODULE_NAME_CORE), "", "")});
-    return modules;
+std::list<RiruModule> &modules::Get() {
+    static std::list<RiruModule> kModules;
+    return kModules;
 }
 
 static void Cleanup(void *handle) {
@@ -28,136 +30,86 @@ static void Cleanup(void *handle) {
     }
 }
 
-typedef struct {
-    uint32_t token;
-    void *getFunc;
-    void *getJNINativeMethodFunc;
-    void *setFunc;
-    void *setJNINativeMethodFunc;
-    void *getOriginalJNINativeMethodFunc;
-    void *getGlobalValue;
-    void *putGlobalValue;
-} LegacyApiStub;
-
-namespace LegacyApiStubs {
-
-    const JNINativeMethod *getOriginalNativeMethod(
-            const char *className, const char *name, const char *signature) {
-        return nullptr;
-    }
-
-    void *getFunc(uint32_t token, const char *name) {
-        return nullptr;
-    }
-
-    void *getNativeMethodFunc(
-            uint32_t token, const char *className, const char *name, const char *signature) {
-        return nullptr;
-    }
-
-    void setFunc(uint32_t token, const char *name, void *func) {
-    }
-
-    void setNativeMethodFunc(
-            uint32_t token, const char *className, const char *name, const char *signature, void *func) {
-    }
-
-    void putGlobalValue(const char *key, void *value) {
-    }
-
-    void *getGlobalValue(const char *key) {
-        return nullptr;
-    }
-}
-
-static void LoadModule(const char *id, const char *path, const char *magisk_module_path) {
-    char *name = strdup(id);
-
-    if (access(path, F_OK) != 0) {
-        PLOGE("access %s", path);
+static void
+LoadModule(std::string_view id, std::string_view path, std::string_view magisk_module_path) {
+    if (access(path.data(), F_OK) != 0) {
+        PLOGE("access %s", path.data());
         return;
     }
 
-    auto handle = dlopen_ext(path, 0);
+    auto *handle = DlopenExt(path.data(), 0);
     if (!handle) {
-        LOGE("dlopen %s failed: %s", path, dlerror());
+        LOGE("dlopen %s failed: %s", path.data(), dlerror());
         return;
     }
 
-    auto init = (RiruInit_t *) dlsym(handle, "init");
+    auto init = reinterpret_cast<RiruInit_t *>(dlsym(handle, "init"));
     if (!init) {
-        LOGW("%s does not export init", path);
+        LOGW("%s does not export init", path.data());
         Cleanup(handle);
         return;
     }
 
-    auto token = (uintptr_t) name;
-    auto legacyApiStub = new LegacyApiStub{
-            .token = (uint32_t) token,
-            .getFunc = (void *) LegacyApiStubs::getFunc,
-            .getJNINativeMethodFunc = (void *) LegacyApiStubs::getNativeMethodFunc,
-            .setFunc = (void *) LegacyApiStubs::setFunc,
-            .setJNINativeMethodFunc = (void *) LegacyApiStubs::setNativeMethodFunc,
-            .getOriginalJNINativeMethodFunc = (void *) LegacyApiStubs::getOriginalNativeMethod,
-            .getGlobalValue = (void *) LegacyApiStubs::getGlobalValue,
-            .putGlobalValue = (void *) LegacyApiStubs::putGlobalValue
-    };
-
-    auto allowUnload = std::make_unique<int>(0);
-    auto riru = new Riru{
+    auto allow_unload = std::make_unique<int>();
+    auto riru = std::make_unique<Riru>(Riru{
             .riruApiVersion = riru::apiVersion,
-            .unused = (void *) legacyApiStub,
-            .magiskModulePath = magisk_module_path,
-            .allowUnload = allowUnload.get()
-    };
+            .unused = nullptr,
+            .magiskModulePath = magisk_module_path.data(),
+            .allowUnload = allow_unload.get()
+    });
 
-    auto moduleInfo = init(riru);
-    if (moduleInfo == nullptr) {
-        LOGE("%s requires higher Riru version (or its broken)", path);
+    auto *module_info = init(riru.get());
+    if (module_info == nullptr) {
+        LOGE("%s requires higher Riru version (or its broken)", path.data());
         Cleanup(handle);
         return;
     }
 
-    auto apiVersion = moduleInfo->moduleApiVersion;
-    if (apiVersion < riru::minApiVersion || apiVersion > riru::apiVersion) {
-        LOGW("unsupported API %s: %d", name, apiVersion);
+    auto api_version = module_info->moduleApiVersion;
+    if (api_version < riru::minApiVersion || api_version > riru::apiVersion) {
+        LOGW("unsupported API %s: %d", id.data(), api_version);
         Cleanup(handle);
         return;
     }
 
-    auto module = new RiruModule(name, strdup(path), strdup(magisk_module_path), token, std::move(allowUnload));
-    module->handle = handle;
-    module->apiVersion = apiVersion;
+    LOGI("module loaded: %s (api %d)", id.data(), api_version);
 
-    if (apiVersion >= 24) {
-        module->info(&moduleInfo->moduleInfo);
-    } else {
-        moduleInfo = init((Riru *) legacyApiStub);
-        if (moduleInfo == nullptr) {
-            LOGE("%s returns null on step 2", path);
-            Cleanup(handle);
-            return;
-        }
-        module->info((RiruModuleInfo *) moduleInfo);
-        init(nullptr);
-    }
-
-    Modules::Get().push_back(module);
-
-    LOGI("module loaded: %s (api %d)", module->id, module->apiVersion);
+    modules::Get().emplace_back(id, path, magisk_module_path, api_version, module_info->moduleInfo,
+                                handle,
+                                std::move(allow_unload));
 }
 
-void Modules::Load() {
-    Magisk::ForEachModule([](const char *path) {
-        auto magisk_module_name = basename(path);
-        char buf[PATH_MAX];
+static void WriteModules(const RirudSocket &rirud) {
+    constexpr uint8_t is64bit = sizeof(void *) == 8;
+    auto &modules = modules::Get();
+    uint32_t count = modules.size();
+    if (!rirud.Write(RirudSocket::Action::WRITE_STATUS) || !rirud.Write(is64bit) ||
+        !rirud.Write(count)) {
+        PLOGE("write %s", SOCKET_ADDRESS);
+        return;
+    }
+
+    for (const auto &module : modules) {
+        rirud.Write(module.id);
+        rirud.Write<int32_t>(module.apiVersion);
+        rirud.Write<int32_t>(module.version);
+        rirud.Write(module.versionName);
+        rirud.Write<int32_t>(module.supportHide);
+    }
+
+}
+
+void modules::Load(const RirudSocket &rirud) {
+    magisk::ForEachModule([](const char *path) {
+        const auto *magisk_module_name = basename(path);
+        BuffString<PATH_MAX> buf;
         DIR *dir;
         struct dirent *entry;
 
-        strcpy(buf, path);
-        strcat(buf, "/riru/lib");
+        buf += path;
+        buf += "/riru/lib";
 #ifdef __LP64__
-        strcat(buf, "64");
+        buf += "64";
 #endif
 
         if (access(buf, F_OK) == -1) {
@@ -168,63 +120,70 @@ void Modules::Load() {
 
         if (!(dir = opendir(buf))) return;
 
-        strcat(buf, "/");
+        buf += "/";
+
+        auto end = buf.size();
 
         while ((entry = readdir(dir))) {
             if (entry->d_type != DT_REG) continue;
 
-            auto end = buf + strlen(buf);
-            strcat(buf, entry->d_name);
+            buf += entry->d_name;
 
-            char id[PATH_MAX]{0};
-            strcpy(id, magisk_module_name);
-            strcat(id, "@");
+            BuffString<PATH_MAX> id;
+            id += magisk_module_name;
+            id += "@";
 
+            constexpr auto libriru = "libriru_"sv;
+            constexpr auto lib = "lib"sv;
             // remove "lib" or "libriru_"
-            if (strncmp(entry->d_name, "libriru_", 8) == 0) {
-                strcat(id, entry->d_name + 8);
-            } else if (strncmp(entry->d_name, "lib", 3) == 0) {
-                strcat(id, entry->d_name + 3);
+            std::string_view d_name(entry->d_name);
+            if (d_name.substr(0, libriru.size()) == libriru) {
+                id += entry->d_name + libriru.size();
+            } else if (d_name.substr(0, lib.size()) == lib) {
+                id += entry->d_name + lib.size();
             } else {
-                strcat(id, entry->d_name);
+                id += entry->d_name;
             }
 
             // remove ".so"
-            id[strlen(id) - 3] = '\0';
+            id.size(id.size() - 3);
 
             LoadModule(id, buf, path);
 
-            *end = '\0';
+            buf.size(end);
         }
 
         closedir(dir);
     });
 
     std::vector<std::string> dirs;
-    if (rirud::ReadDir("/data/adb/riru/modules", dirs)) {
-        for (const auto &it : dirs) {
-            char path[PATH_MAX];
-            auto name = it.c_str();
-#ifdef __LP64__
-            snprintf(path, PATH_MAX, "/system/lib64/libriru_%s.so", name);
-#else
-            snprintf(path, PATH_MAX, "/system/lib/libriru_%s.so", name);
+    BuffString<PATH_MAX> path;
 
+#ifdef __LP64__
+    path += "/system/lib64/libriru_";
+#else
+    path += "/system/lib/libriru_";
 #endif
-            LoadModule(name, path, "");
-        }
+
+    auto end = path.size();
+    for (auto iter = rirud.ReadDir("/data/adb/riru/modules"); iter; ++iter) {
+        path += *iter;
+        path += ".so";
+        LoadModule(*iter, path, "");
+        path.size(end);
     }
 
     // On Android 10+, zygote has "execmem" permission, we can use "riru hide" here
-    if (AndroidProp::GetApiLevel() >= 29) {
-        Hide::HideFromMaps();
+    if (AndroidProp::GetApiLevel() >= __ANDROID_API_Q__) {
+        hide::HideFromMaps();
     }
 
-    for (auto module : Modules::Get()) {
-        if (module->hasOnModuleLoaded()) {
-            LOGV("%s: onModuleLoaded", module->id);
-
-            module->onModuleLoaded();
+    for (const auto &module : modules::Get()) {
+        if (module.hasOnModuleLoaded()) {
+            LOGV("%s: onModuleLoaded", module.id.data());
+            module.onModuleLoaded();
         }
     }
+
+    WriteModules(rirud);
 }
