@@ -86,7 +86,8 @@ void Entry::Unload(jboolean is_child_zygote) {
             if (module.apiVersion >= 25)
                 LOGD("%s: unload is not allow for this process", module.id.data());
             else {
-                LOGD("%s: unload is not supported by module (API < 25), self unload is also disabled", module.id.data());
+                LOGD("%s: unload is not supported by module (API < 25), self unload is also disabled",
+                     module.id.data());
                 self_unload_allowed = false;
             }
         }
@@ -104,10 +105,10 @@ void Entry::Unload(jboolean is_child_zygote) {
     }
 }
 
-extern "C" __attribute__((visibility("default"))) __attribute__((used)) void init(void *handle, const char* magisk_path) {
+extern "C" [[gnu::visibility("default")]] [[maybe_unused]] void
+// NOLINTNEXTLINE
+init(void *handle, const char* magisk_path, const RirudSocket& rirud) {
     self_handle = handle;
-
-    const RirudSocket rirud;
 
     magisk::SetPath(magisk_path);
     hide::PrepareMapsHideLibrary();

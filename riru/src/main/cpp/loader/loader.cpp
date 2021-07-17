@@ -102,9 +102,9 @@ __used __attribute__((constructor)) void Constructor() {
 
     auto *handle = DlopenExt(riru_path, 0);
     if (handle) {
-        auto init = reinterpret_cast<void (*)(void *, const char *)>(dlsym(handle, "init"));
+        auto init = reinterpret_cast<void (*)(void *, const char *, const RirudSocket&)>(dlsym(handle, "init"));
         if (init) {
-            init(handle, magisk_path.data());
+            init(handle, magisk_path.data(), rirud);
         } else {
             LOGE("dlsym init %s", dlerror());
         }
