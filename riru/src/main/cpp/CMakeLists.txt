@@ -62,9 +62,7 @@ add_library(utils STATIC
         util/android_prop.cpp
         util/misc.cpp
         util/wrap.cpp
-        util/selinux.cpp
         util/socket.cpp
-        util/plt.c
         util/elf_util.cpp
         util/dl.cpp
         util/rirud.cpp)
