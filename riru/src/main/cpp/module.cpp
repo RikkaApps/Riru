@@ -7,9 +7,7 @@
 #include "buff_string.h"
 #include <rirud.h>
 #include "module.h"
-#include "wrap.h"
 #include "logging.h"
-#include "misc.h"
 #include "config.h"
 #include "hide_utils.h"
 #include "magisk.h"
