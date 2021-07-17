@@ -76,19 +76,15 @@ __used __attribute__((constructor)) void Constructor() {
 
     RirudSocket rirud;
 
-    std::string magisk_path;
-    while (retry > 0) {
-        magisk_path = rirud.ReadMagiskTmpfsPath();
-        if (!magisk_path.empty()) {
-            LOGI("Magisk tmpfs path is %s", magisk_path.data());
-            break;
-        }
-        retry--;
-        LOGI("Failed to read Magisk tmpfs path from socket, %d retires left...", retry);
-        sleep(1);
+    if (!rirud.valid()) {
+        LOGE("rirud connect fails");
+        return;
     }
 
+    std::string magisk_path;
+    magisk_path = rirud.ReadMagiskTmpfsPath();
     if (magisk_path.empty()) {
+        LOGE("failed to obtain magisk path");
         return;
     }
 
@@ -102,7 +98,8 @@ __used __attribute__((constructor)) void Constructor() {
 
     auto *handle = DlopenExt(riru_path, 0);
     if (handle) {
-        auto init = reinterpret_cast<void (*)(void *, const char *, const RirudSocket&)>(dlsym(handle, "init"));
+        auto init = reinterpret_cast<void (*)(void *, const char *, const RirudSocket &)>(dlsym(
+                handle, "init"));
         if (init) {
             init(handle, magisk_path.data(), rirud);
         } else {
@@ -142,7 +139,7 @@ __used __attribute__((constructor)) void Constructor() {
     std::array<char, PROP_VALUE_MAX + 1> value;
     if (__system_property_get("ro.build.version.sdk", value.data()) > 0) {
         sdk = atoi(value.data());
-}
+    }
 
     auto callbacks_size = 0;
     if (sdk >= __ANDROID_API_R__) {
