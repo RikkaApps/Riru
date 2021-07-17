@@ -4,7 +4,7 @@
 #include <cinttypes>
 #include <pmparser.h>
 
-namespace Hide {
+namespace hide {
 
     void PrepareMapsHideLibrary();
 

@@ -2,11 +2,11 @@
 
 #include <functional>
 
-namespace Magisk {
+namespace magisk {
 
     const char* GetPath();
 
-    void SetPath(const char *path);
+    void SetPath(const char *p);
 
     std::string GetPathForSelf(const char *name);
 

@@ -4,9 +4,9 @@
 #include <jni.h>
 #include <riru.h>
 
-namespace JNI {
+namespace jni {
 
-    namespace Zygote {
+    namespace zygote {
         extern const char* classname;
         extern JNINativeMethod *nativeForkAndSpecialize;
         extern JNINativeMethod *nativeSpecializeAppProcess;

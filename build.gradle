@@ -39,7 +39,7 @@ ext {
     ndkVersion = '21.4.7075529'
 
     riruApiVersion = 25
-    riruMinApiVersion = 9
+    riruMinApiVersion = 24
 
     gitCommitId = 'git rev-parse --short HEAD'.execute([], project.rootDir).text.trim()
     gitCommitCount = Integer.parseInt('git rev-list --count HEAD'.execute([], project.rootDir).text.trim())
