@@ -91,9 +91,8 @@ static void WriteModules(const RirudSocket &rirud) {
         rirud.Write<int32_t>(module.apiVersion);
         rirud.Write<int32_t>(module.version);
         rirud.Write(module.versionName);
-        rirud.Write<int32_t>(module.supportHide);
+        rirud.Write<int8_t>(module.supportHide);
     }
-
 }
 
 void modules::Load(const RirudSocket &rirud) {

@@ -21,7 +21,7 @@ bool RirudSocket::Write(std::string_view str) const {
 
 bool RirudSocket::Read(std::string &str) const {
     uint32_t size;
-    if (!Read(size)) return false;
+    if (!Read(size) || size < 0) return false;
     str.resize(size);
     return Read(str.data(), size);
 }
@@ -61,21 +61,17 @@ void RirudSocket::DirIter::ContinueRead() {
     }
 }
 
-std::string RirudSocket::ReadMagiskTmpfsPath() {
-    int32_t size;
+std::string RirudSocket::ReadMagiskTmpfsPath() const {
     std::string result;
-    if (Write(Action::READ_MAGISK_TMPFS_PATH) && Read(size) && size > 0) {
-        result.resize(size);
+    if (Write(Action::READ_MAGISK_TMPFS_PATH)) {
         Read(result);
     }
     return result;
 }
 
-std::string RirudSocket::ReadNativeBridge() {
-    int32_t size;
+std::string RirudSocket::ReadNativeBridge() const {
     std::string result;
-    if (Write(Action::READ_NATIVE_BRIDGE) && Read(size) && size > 0) {
-        result.resize(size);
+    if (Write(Action::READ_NATIVE_BRIDGE)) {
         Read(result);
     }
     return result;
@@ -94,7 +90,7 @@ std::string RirudSocket::ReadFile(std::string_view path) {
     return content;
 }
 
-bool RirudSocket::Write(const char *buf, size_t len) const {
+bool RirudSocket::Write(const void *buf, size_t len) const {
     auto count = len;
     while (count > 0) {
         ssize_t size = write(fd_, buf, count < SSIZE_MAX ? count : SSIZE_MAX);
@@ -102,20 +98,20 @@ bool RirudSocket::Write(const char *buf, size_t len) const {
             if (errno == EINTR) continue;
             else return false;
         }
-        buf = buf + size;
+        buf = static_cast<const char*>(buf) + size;
         count -= size;
     }
     return true;
 }
 
-bool RirudSocket::Read(char *out, size_t len) const {
+bool RirudSocket::Read(void *out, size_t len) const {
     while (len > 0) {
         ssize_t ret = read(fd_, out, len);
         if (ret <= 0) {
             if (errno == EINTR) continue;
             else return false;
         }
-        out = out + ret;
+        out = static_cast<char*>(out) + ret;
         len -= ret;
     }
     return true;

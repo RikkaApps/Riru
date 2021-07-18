@@ -13,6 +13,7 @@
 #include "rirud.h"
 #include "config.h"
 #include "logging.h"
+#include <list>
 #include "buff_string.h"
 
 #ifdef __LP64__
@@ -49,34 +50,38 @@ __used __attribute__((destructor)) void Destructor() {
 }
 
 #endif
-
-std::string GetSelfCmdline() {
-    std::string cmdline;
+std::list<std::string> GetSelfCmdline() {
+    std::list<std::string> cmdlines;
 
     FILE *f = fopen("/proc/self/cmdline", "rb");
 
     if (!f) {
-        LOGE("Fail to cmdline");
-        return cmdline;
+        return cmdlines;
     }
-    fseek(f, 0, SEEK_END);
-    cmdline.resize(ftell(f));
-    rewind(f);
-    if (cmdline.size() !=
-        fread(cmdline.data(), sizeof(decltype(cmdline)::value_type), cmdline.size(), f)) {
-        LOGE("Read dex failed");
-        cmdline.resize(0);
+
+    char *line = nullptr;
+    size_t len = 0;
+
+    while (getdelim(&line, &len, '\0', f) != -1) {
+        cmdlines.emplace_back(line);
     }
+    free(line);
+
     fclose(f);
-    return cmdline;
+    return cmdlines;
 }
 
 __used __attribute__((constructor)) void Constructor() {
     if (getuid() != 0) {
         return;
-}
+    }
 
-    auto cmdline = GetSelfCmdline();
+    auto cmdlines = GetSelfCmdline();
+    if (cmdlines.empty()) {
+        LOGW("failed to get cmdline");
+        return;
+    }
+    auto& cmdline = cmdlines.front();
 
     if (cmdline != "zygote" &&
         cmdline != "zygote32" &&
@@ -99,8 +104,7 @@ __used __attribute__((constructor)) void Constructor() {
         return;
     }
 
-    std::string magisk_path;
-    magisk_path = rirud.ReadMagiskTmpfsPath();
+    std::string magisk_path = rirud.ReadMagiskTmpfsPath();
     if (magisk_path.empty()) {
         LOGE("failed to obtain magisk path");
         return;
