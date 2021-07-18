@@ -11,7 +11,7 @@ idea.module {
 }
 
 buildscript {
-    ext.kotlin_version = '1.5.20'
+    ext.kotlin_version = '1.5.21'
 
     repositories {
         google()
@@ -38,14 +38,14 @@ ext {
     targetSdkVersion = 30
     ndkVersion = '21.4.7075529'
 
-    riruApiVersion = 25
+    riruApiVersion = 26
     riruMinApiVersion = 24
 
     gitCommitId = 'git rev-parse --short HEAD'.execute([], project.rootDir).text.trim()
     gitCommitCount = Integer.parseInt('git rev-list --count HEAD'.execute([], project.rootDir).text.trim())
 
-    versionNameMinor = 4
-    versionNamePatch = 4
+    versionNameMinor = 0
+    versionNamePatch = 0
 
     outDir = file("$rootDir/out")
 }
@@ -54,7 +54,7 @@ task clean(type: Delete) {
     delete rootProject.buildDir, outDir
 }
 
-def aarVersion = "${riruApiVersion}.0.1"
+def aarVersion = "${riruApiVersion}.0.0"
 def aarDir = "out/aar/dev/rikka/ndk/riru/${aarVersion}"
 
 task generateLibraryAar(type: Zip) {
