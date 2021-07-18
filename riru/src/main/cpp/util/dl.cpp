@@ -7,24 +7,26 @@
 #include <android_prop.h>
 
 
-extern "C" [[gnu::weak]]struct android_namespace_t *
+extern "C" [[gnu::weak]] struct android_namespace_t *
 //NOLINTNEXTLINE
-android_create_namespace([[maybe_unused]] const char *name,
-                         [[maybe_unused]] const char *ld_library_path,
-                         [[maybe_unused]] const char *default_library_path,
-                         [[maybe_unused]] uint64_t type,
-                         [[maybe_unused]] const char *permitted_when_isolated_path,
-                         [[maybe_unused]] android_namespace_t *parent) {
-    return nullptr;
-}
+__loader_android_create_namespace([[maybe_unused]] const char *name,
+                                  [[maybe_unused]] const char *ld_library_path,
+                                  [[maybe_unused]] const char *default_library_path,
+                                  [[maybe_unused]] uint64_t type,
+                                  [[maybe_unused]] const char *permitted_when_isolated_path,
+                                  [[maybe_unused]] android_namespace_t *parent,
+                                  [[maybe_unused]] const void *caller_addr);
 
 void *DlopenExt(const char *path, int flags) {
     auto info = android_dlextinfo{};
 
     if (AndroidProp::GetApiLevel() >= __ANDROID_API_Q__) {
         auto *dir = dirname(path);
-        auto *ns = android_create_namespace(path, dir, nullptr, 2/*ANDROID_NAMESPACE_TYPE_SHARED*/,
-                                           nullptr, nullptr);
+        auto *ns = &__loader_android_create_namespace == nullptr ? nullptr :
+                   __loader_android_create_namespace(path, dir, nullptr,
+                                                     2/*ANDROID_NAMESPACE_TYPE_SHARED*/,
+                                                     nullptr, nullptr,
+                                                     reinterpret_cast<void *>(&DlopenExt));
         if (ns) {
             info.flags = ANDROID_DLEXT_USE_NAMESPACE;
             info.library_namespace = ns;

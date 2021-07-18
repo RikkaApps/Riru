@@ -75,9 +75,9 @@ public:
 
     std::string ReadFile(std::string_view path);
 
-    std::string ReadMagiskTmpfsPath();
+    std::string ReadMagiskTmpfsPath() const;
 
-    std::string ReadNativeBridge();
+    std::string ReadNativeBridge() const;
 
     DirIter ReadDir(std::string_view path) const {
         return {path, *this};
@@ -86,7 +86,7 @@ public:
     template<typename T>
     std::enable_if_t<std::is_fundamental_v<T> || std::is_enum_v<T>, bool>
     Read(T &obj) const {
-        return Read(reinterpret_cast<char *>(&obj), sizeof(T));
+        return Read(reinterpret_cast<void *>(&obj), sizeof(T));
     }
 
     bool Read(std::string &str) const;
@@ -94,7 +94,7 @@ public:
     template<typename T>
     std::enable_if_t<std::is_fundamental_v<T> || std::is_enum_v<T>, bool>
     Write(const T &obj) const {
-        return Write(reinterpret_cast<const char *>(&obj), sizeof(T));
+        return Write(&obj, sizeof(T));
     }
 
     bool Write(std::string_view str) const;
@@ -106,9 +106,9 @@ private:
 
     RirudSocket operator=(const RirudSocket &) = delete;
 
-    bool Write(const char *buf, size_t len) const;
+    bool Write(const void *buf, size_t len) const;
 
-    bool Read(char *buf, size_t len) const;
+    bool Read(void *buf, size_t len) const;
 
     int fd_ = -1;
 };
