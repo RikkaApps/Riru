@@ -31,9 +31,9 @@ public:
         constexpr static uint8_t continue_read = true;
         constexpr static size_t MAX_PATH_SIZE = 256u;
     private:
-        DirIter(std::string_view path, const RirudSocket &socket) : socket_(socket) {
+        DirIter(std::string_view path, const RirudSocket &socket) : socket_(socket), path({'\0'}) {
             int32_t reply;
-            if (socket_.Write(Action::READ_DIR) && socket_.Write(path) && socket_.Read(reply)) {
+            if (socket_.Write(Action::READ_DIR) && socket_.Write(path) && socket_.Read(reply) && reply == 0) {
                 ContinueRead();
             }
         }
