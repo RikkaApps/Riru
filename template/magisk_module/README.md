@@ -22,7 +22,7 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ## Changelog
 
-### v26.0.0 (2021-07-18)
+### v26.0.1 (2021-07-18)
 
 - Remove support for pre-v24 modules (it has been more than 4 months and all live modules have upgraded to v24+)
 - Display status on module description in Magisk (app is removed because of this)
