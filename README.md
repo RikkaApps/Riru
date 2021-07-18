@@ -17,18 +17,18 @@ Android 6.0+ devices rooted with [Magisk](https://github.com/topjohnwu/Magisk)
   1. Search "Riru" in Magisk Manager
   2. Install the module named "Riru"
 
-  > The Magisk version requirement is enforced by Magisk Manager. At the time of the release of Magisk v21.1, the requirement is v20.4.
+  > The Magisk version requirement is enforced by Magisk Manager. You can check [Magisk's module installer script](https://github.com/topjohnwu/Magisk/blob/master/scripts/module_installer.sh).
 
 * Manually
 
   1. Download the zip from the [GitHub release](https://github.com/RikkaApps/Riru/releases)
   2. Install in Magisk Manager (Modules - Install from storage - Select downloaded zip)
 
-* "Riru" app (show Riru status)
-
-  From v25.4.1, the app is bundled with the module. Create file `/data/adb/modules/riru-core/allow_install_app` to allow the module to install the app.
-
 ### Common problems
+
+* Third-party ROMs have incorrect SELinux rule
+
+  <https://github.com/RikkaApps/Riru/wiki/Explanation-about-incorrect-SELinux-rules-from-third-party-ROMs-cause-Riru-not-working>
 
 * Have low quality module that changes `ro.dalvik.vm.native.bridge` installed
 
@@ -36,10 +36,6 @@ Android 6.0+ devices rooted with [Magisk](https://github.com/topjohnwu/Magisk)
 
   A typical example is, some "optimize" modules change this property. Since changing this property is meaningless for "optimization", their quality is very questionable. In fact, changing properties for optimization is a joke.
 
-* Third-party ROMs have incorrect SELinux rule
-
-  <https://github.com/RikkaApps/Riru/wiki/Explanation-about-incorrect-SELinux-rules-from-third-party-ROMs-cause-Riru-not-working>
-  
 ## How Riru works?
 
 * How to inject into the zygote process?
