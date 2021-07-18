@@ -5,7 +5,6 @@
 #include <config.h>
 #include <socket.h>
 #include <unistd.h>
-#include <misc.h>
 #include <malloc.h>
 #include <vector>
 #include <string>

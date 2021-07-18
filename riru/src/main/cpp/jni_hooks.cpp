@@ -8,7 +8,6 @@
 
 #include "jni_hooks.h"
 #include "logging.h"
-#include "misc.h"
 #include "module.h"
 #include "entry.h"
 

@@ -13,7 +13,6 @@
 #include "rirud.h"
 #include "config.h"
 #include "logging.h"
-#include "misc.h"
 #include "buff_string.h"
 
 #ifdef __LP64__

@@ -2,7 +2,6 @@
 #include <android_prop.h>
 #include <pthread.h>
 #include <rirud.h>
-#include "misc.h"
 #include "jni_hooks.h"
 #include "logging.h"
 #include "module.h"
