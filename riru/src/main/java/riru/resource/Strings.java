@@ -22,9 +22,9 @@ public class Strings {
 
     static {
         try {
-            String locale = SystemProperties.get("ro.product.locale");
+            String locale = SystemProperties.get("persist.sys.locale");
             if (TextUtils.isEmpty(locale)) {
-                locale = SystemProperties.get("persist.sys.locale");
+                locale = SystemProperties.get("ro.product.locale");
             }
             Strings.locale = Locale.forLanguageTag(locale);
         } catch (Throwable e) {
