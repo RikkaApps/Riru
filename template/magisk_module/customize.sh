@@ -101,11 +101,11 @@ ui_print "- Setting permissions"
 set_perm_recursive "$MODPATH" 0 0 0755 0644
 
 ui_print "- Extracting rirud"
-extract "$ZIPFILE" "rirud.dex" "$MODPATH"
-set_perm "$MODPATH/rirud.dex" 0 0 0600
+extract "$ZIPFILE" "rirud.apk" "$MODPATH"
+set_perm "$MODPATH/rirud.apk" 0 0 0600
 
 ui_print "- Checking if your ROM has incorrect SELinux rules"
-/system/bin/app_process -Djava.class.path="$MODPATH/rirud.dex" /system/bin --nice-name=riru_installer riru.Installer --check-selinux
+/system/bin/app_process -Djava.class.path="$MODPATH/rirud.apk" /system/bin --nice-name=riru_installer riru.Installer --check-selinux
 
 if [ $? -eq 1 ]; then
   ui_print "! Your ROM has incorrect SELinux rules"

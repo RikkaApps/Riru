@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_process">\uD83E\uDD14 app_process 已运行</string>
+    <string name="zygote_dead">受精卵似乎死了，等待重新受精……</string>
+    <string name="files_not_mounted">\u26A0\uFE0F 檔案未被掛載，Magisk 在此裝置上損壞。</string>
+    <string name="bad_selinux_rule">\u26A0\uFE0F 此裝置上有錯誤的 SELinux 規則。此問題不應該由 Riru 解決，請參閱模組自述檔案以瞭解更多。</string>
+    <string name="bad_prop">\u26A0\uFE0F 系統屬性錯誤。請不要使用“最佳化”模組，因為透過修改屬性來最佳化非常值得懷疑。</string>
+    <string name="not_loaded">\u26A0\uFE0F Riru 未被載入，原因未知。</string>
+    <string name="loaded">\uD83D\uDE0B Riru 正常工作中。已載入 %1$d 個模組 %2$s。</string>
+    <string name="empty">無</string>
+</resources>

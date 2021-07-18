@@ -10,9 +10,8 @@ import android.util.Log;
 
 import java.io.File;
 import java.util.List;
-import java.util.Locale;
 
-import riru.resource.Strings;
+import riru.rirud.R;
 
 public class Daemon implements IBinder.DeathRecipient {
 
@@ -46,7 +45,7 @@ public class Daemon implements IBinder.DeathRecipient {
         DaemonUtils.getLoadedModules(false).clear();
         DaemonUtils.getLoadedModules(true).clear();
 
-        DaemonUtils.writeStatus("Zygote is probably dead, waiting for restart...");
+        DaemonUtils.writeStatus(R.string.zygote_dead);
 
         Log.i(TAG, "Zygote is probably dead, restart rirud socket...");
         serverThread.restartServer();
@@ -72,24 +71,23 @@ public class Daemon implements IBinder.DeathRecipient {
         }
 
         if (!filesMounted) {
-            DaemonUtils.writeStatus(Strings.get(Strings.files_not_mounted));
+            DaemonUtils.writeStatus(R.string.files_not_mounted);
             return;
         }
 
         if (DaemonUtils.hasSELinux() && SELinux.isSELinuxEnabled() && SELinux.isSELinuxEnforced()
                 && (SELinux.checkSELinuxAccess("u:r:init:s0", "u:object_r:system_file:s0", "file", "relabelfrom")
                 || SELinux.checkSELinuxAccess("u:r:init:s0", "u:object_r:system_file:s0", "dir", "relabelfrom"))) {
-            DaemonUtils.writeStatus(Strings.get(Strings.bad_selinux_rule));
+            DaemonUtils.writeStatus(R.string.bad_selinux_rule);
             return;
         }
 
         if (!"libriruloader.so".equals(SystemProperties.get("ro.dalvik.vm.native.bridge"))) {
-            DaemonUtils.writeStatus(Strings.get(Strings.bad_prop));
+            DaemonUtils.writeStatus(R.string.bad_prop);
             return;
         }
 
-        DaemonUtils.writeStatus(Strings.get(Strings.not_loaded));
-
+        DaemonUtils.writeStatus(R.string.not_loaded);
         if (isFirst) {
             Log.w(TAG, "Magisk post-fs-data slow?");
         }
@@ -125,7 +123,7 @@ public class Daemon implements IBinder.DeathRecipient {
 
         StringBuilder sb = new StringBuilder();
         if (loadedModules.isEmpty()) {
-            sb.append("empty");
+            sb.append(DaemonUtils.res.getString(R.string.empty));
         } else {
             sb.append(loadedModules.get(0));
             for (int i = 1; i < loadedModules.size(); i++) {
@@ -134,11 +132,13 @@ public class Daemon implements IBinder.DeathRecipient {
             }
         }
 
-        DaemonUtils.writeStatus(String.format(Locale.ENGLISH, Strings.get(Strings.loaded), loadedModules.size(), sb));
+        DaemonUtils.writeStatus(R.string.loaded, loadedModules.size(), sb);
     }
 
     private void startWait(boolean allowRestart, boolean isFirst) {
         systemServerBinder = DaemonUtils.waitForSystemService(name);
+
+        DaemonUtils.reloadLocale();
 
         if (!DaemonUtils.isLoaded(DaemonUtils.has64Bit())) {
             onRiruNotLoaded(allowRestart, isFirst);
@@ -150,7 +150,7 @@ public class Daemon implements IBinder.DeathRecipient {
     public static void main(String[] args) {
         DaemonUtils.init(args);
         DaemonUtils.killParentProcess();
-        DaemonUtils.writeStatus("\uD83E\uDD14 app_process launched");
+        DaemonUtils.writeStatus(R.string.app_process);
         int magiskVersionCode = DaemonUtils.getMagiskVersionCode();
         String magiskTmpfsPath = DaemonUtils.getMagiskTmpfsPath();
 
