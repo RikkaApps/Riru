@@ -145,7 +145,7 @@ void modules::Load(const RirudSocket &rirud) {
 
             // Libraries in /dev do not have stacktrace
             // For debugging purpose, treat file name not end with ".so" as file in /system/lib(64)
-            if (size <= 3 || d_name.substr(size - 3, so.size()) != so) {
+            if (size <= 3 || d_name.substr(size - so.size(), so.size()) != so) {
                 BuffString<PATH_MAX> system;
                 system += "/system/lib";
 #ifdef __LP64__

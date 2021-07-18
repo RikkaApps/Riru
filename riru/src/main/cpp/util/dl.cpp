@@ -20,7 +20,7 @@ __loader_android_create_namespace([[maybe_unused]] const char *name,
 void *DlopenExt(const char *path, int flags) {
     auto info = android_dlextinfo{};
 
-    if (AndroidProp::GetApiLevel() >= __ANDROID_API_Q__) {
+    if (AndroidProp::GetApiLevel() >= __ANDROID_API_P__) {
         auto *dir = dirname(path);
         auto *ns = &__loader_android_create_namespace == nullptr ? nullptr :
                    __loader_android_create_namespace(path, dir, nullptr,
