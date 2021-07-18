@@ -122,17 +122,11 @@ rm /data/adb/riru/api_version.new
 rm /data/adb/riru/version_code.new
 rm /data/adb/riru/version_name.new
 rm /data/adb/riru/enable_hide
+rm /data/adb/riru/api_version
+rm /data/adb/riru/util_functions.sh
 rm /data/misc/riru/api_version
 rm /data/misc/riru/version_code
 rm /data/misc/riru/version_name
-
-# Support for pre-v24 modules
-ui_print "- Writing files for pre-v24 modules"
-mkdir /data/adb/riru
-echo -n "$RIRU_API" >"/data/adb/riru/api_version"
-set_perm "/data/adb/riru/api_version" 0 0 0600
-extract "$ZIPFILE" 'util_functions.sh' "/data/adb/riru"
-set_perm "/data/adb/riru/util_functions.sh" 0 0 0600
 
 # If Huawei's Maple is enabled, system_server is created with a special way which is out of Riru's control
 HUAWEI_MAPLE_ENABLED=$(grep_prop ro.maple.enable)

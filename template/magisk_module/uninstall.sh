@@ -1,9 +1,5 @@
 #!/sbin/sh
-if [ -d /data/adb/riru/modules ]; then
-  # If user has old modules installed, only remove files created by Riru itself
-  rm /data/adb/riru/api_version
-  rm /data/adb/riru/dev_random
-  rm /data/adb/riru/util_functions.sh
-else
+# /data/adb/riru/modules may be used by old modules, remove /data/adb/riru only if /data/adb/riru/modules does not exists
+if [ ! -d /data/adb/riru/modules ]; then
   rm -rf /data/adb/riru
 fi
