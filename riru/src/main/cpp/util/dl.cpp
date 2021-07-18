@@ -22,9 +22,6 @@ void *DlopenExt(const char *path, int flags) {
     auto info = android_dlextinfo{};
 
     if (AndroidProp::GetApiLevel() >= __ANDROID_API_Q__) {
-//        FIND_FUNC(android_create_namespace)
-
-//        if (android_create_namespace) {
         auto *dir = dirname(path);
         auto *ns = android_create_namespace(path, dir, nullptr, 2/*ANDROID_NAMESPACE_TYPE_SHARED*/,
                                            nullptr, nullptr);

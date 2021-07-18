@@ -88,6 +88,8 @@ public class Daemon implements IBinder.DeathRecipient {
             return;
         }
 
+        DaemonUtils.writeStatus(Strings.get(Strings.not_loaded));
+
         if (isFirst) {
             Log.w(TAG, "Magisk post-fs-data slow?");
         }
