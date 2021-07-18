@@ -152,23 +152,6 @@ void modules::Load(const RirudSocket &rirud) {
         closedir(dir);
     });
 
-    std::vector<std::string> dirs;
-    BuffString<PATH_MAX> path;
-
-#ifdef __LP64__
-    path += "/system/lib64/libriru_";
-#else
-    path += "/system/lib/libriru_";
-#endif
-
-    auto end = path.size();
-    for (auto iter = rirud.ReadDir("/data/adb/riru/modules"); iter; ++iter) {
-        path += *iter;
-        path += ".so";
-        LoadModule(*iter, path, "");
-        path.size(end);
-    }
-
     // On Android 10+, zygote has "execmem" permission, we can use "riru hide" here
     if (AndroidProp::GetApiLevel() >= __ANDROID_API_Q__) {
         hide::HideFromMaps();
