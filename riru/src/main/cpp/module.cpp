@@ -123,16 +123,18 @@ void modules::Load(const RirudSocket &rirud) {
         while ((entry = readdir(dir))) {
             if (entry->d_type != DT_REG) continue;
 
-            buf += entry->d_name;
+            constexpr auto lib = "lib"sv;
+            constexpr auto libriru = "libriru_"sv;
+            constexpr auto so = ".so"sv;
+
+            std::string_view d_name(entry->d_name);
+            auto size = d_name.size();
 
             BuffString<PATH_MAX> id;
             id += magisk_module_name;
             id += "@";
 
-            constexpr auto libriru = "libriru_"sv;
-            constexpr auto lib = "lib"sv;
-            // remove "lib" or "libriru_"
-            std::string_view d_name(entry->d_name);
+            // remove "lib"
             if (d_name.substr(0, libriru.size()) == libriru) {
                 id += entry->d_name + libriru.size();
             } else if (d_name.substr(0, lib.size()) == lib) {
@@ -141,10 +143,27 @@ void modules::Load(const RirudSocket &rirud) {
                 id += entry->d_name;
             }
 
-            // remove ".so"
-            id.size(id.size() - 3);
+            // Libraries in /dev do not have stacktrace
+            // For debugging purpose, treat file name not end with ".so" as file in /system/lib(64)
+            if (size <= 3 || d_name.substr(size - 3, so.size()) != so) {
+                BuffString<PATH_MAX> system;
+                system += "/system/lib";
+#ifdef __LP64__
+                system += "64";
+#endif
+                system += "/";
+                system += d_name;
+                system += ".so";
 
-            LoadModule(id, buf, path);
+                LoadModule(id, system, path);
+            } else {
+                buf += d_name;
+
+                // remove ".so"
+                id.size(id.size() - 3);
+
+                LoadModule(id, buf, path);
+            }
 
             buf.size(end);
         }
