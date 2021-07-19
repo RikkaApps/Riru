@@ -1,4 +1,4 @@
-include ':riru', ':stub'
+include ':riru', ':stub', ':rirud'
 
 import org.apache.tools.ant.DirectoryScanner
 

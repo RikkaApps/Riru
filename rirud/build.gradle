@@ -1,0 +1,49 @@
+plugins {
+    id 'com.android.application'
+}
+
+def versionNameShort = "v${riruApiVersion}.${versionNameMinor}.${versionNamePatch}"
+def versionCode = gitCommitCount
+
+def apiVersion = rootProject.ext.riruApiVersion
+
+android {
+    compileSdkVersion rootProject.ext.targetSdkVersion
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        buildConfigField "int", "RIRU_API_VERSION", "$apiVersion"
+        buildConfigField "int", "RIRU_VERSION_CODE", "$versionCode"
+        buildConfigField "String", "RIRU_VERSION_NAME", "\"$versionNameShort\""
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    lintOptions.checkReleaseBuilds false
+    dependenciesInfo.includeInApk false
+}
+
+repositories {
+    mavenLocal()
+}
+
+dependencies {
+    implementation 'dev.rikka.rikkax.io:little-endian-data-stream:1.0.1'
+    implementation 'androidx.annotation:annotation:1.2.0'
+    compileOnly project(':stub')
+}
+
+android.applicationVariants.all { variant ->
+    variant.outputs.all {
+        outputFileName = "rirud.apk"
+    }
+}
+

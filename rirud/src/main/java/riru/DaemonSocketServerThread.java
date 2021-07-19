@@ -23,7 +23,7 @@ import java.util.concurrent.Executors;
 
 import rikka.io.LittleEndianDataInputStream;
 import rikka.io.LittleEndianDataOutputStream;
-import riru.core.BuildConfig;
+import riru.rirud.BuildConfig;
 
 import static riru.Daemon.TAG;
 

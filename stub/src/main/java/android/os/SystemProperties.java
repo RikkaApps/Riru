@@ -6,6 +6,10 @@ public class SystemProperties {
         throw new RuntimeException("STUB");
     }
 
+    public static String get(String key, String def) {
+        throw new RuntimeException("STUB");
+    }
+
     public static void set(String key, String value) {
         throw new RuntimeException("STUB");
     }
