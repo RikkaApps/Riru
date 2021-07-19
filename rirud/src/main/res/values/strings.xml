@@ -4,7 +4,7 @@
     <string name="zygote_dead">Zygote is probably dead, waiting for restart…</string>
     <string name="files_not_mounted">\u26A0\uFE0F Files are not mounted. Magisk is broken on this device.</string>
     <string name="bad_selinux_rule">\u26A0\uFE0F Incorrect SELinux found on this device. This issue should not be resolved by Riru, please refer to the module README file for more information.</string>
-    <string name="bad_prop">\u26A0\uFE0F system property is wrong. Please don\'t use \"optimize\" modules since it\'s very questionable to optimize by changing properties.</string>
+    <string name="bad_prop">\u26A0\uFE0F System property is wrong. Please don\'t use \"optimize\" modules since it\'s very questionable to optimize by changing properties.</string>
     <string name="not_loaded">\u26A0\uFE0F Riru is not loaded and the reason in unknown.</string>
     <string name="loaded">\uD83D\uDE0B Riru is working normally. Loaded %1$d modules, %2$s.</string>
     <string name="empty">none</string>
