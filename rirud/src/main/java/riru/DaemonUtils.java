@@ -152,7 +152,7 @@ public class DaemonUtils {
             StringBuilder sb = new StringBuilder();
             String line = br.readLine();
             while (line != null) {
-                sb.append(line.replaceFirst("^description=(\\[.*]\\s*)?", "description=[" + res.getString(id, args) + "] "));
+                sb.append(line.replaceFirst("^description=(\\[.*]\\s*)?", "description=[ " + res.getString(id, args) + " ] "));
                 sb.append(System.lineSeparator());
                 line = br.readLine();
             }
