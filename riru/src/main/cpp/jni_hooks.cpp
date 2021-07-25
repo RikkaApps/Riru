@@ -223,7 +223,7 @@ void jni::RestoreHooks(JNIEnv *env) {
 }
 
 void jni::InstallHooks() {
-    XHOOK_REGISTER(".*\\libandroid_runtime.so$", jniRegisterNativeMethods);
+    XHOOK_REGISTER(".*\\libandroid_runtime.so$", jniRegisterNativeMethods)
 
     if (xhook_refresh(0) == 0) {
         xhook_clear();

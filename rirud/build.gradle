@@ -17,6 +17,8 @@ android {
         buildConfigField "String", "RIRU_VERSION_NAME", "\"$versionNameShort\""
     }
     compileOptions {
+        coreLibraryDesugaringEnabled = true
+
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
@@ -38,6 +40,7 @@ repositories {
 dependencies {
     implementation 'dev.rikka.rikkax.io:little-endian-data-stream:1.0.1'
     implementation 'androidx.annotation:annotation:1.2.0'
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.5")
     compileOnly project(':stub')
 }
 

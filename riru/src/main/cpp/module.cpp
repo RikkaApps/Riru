@@ -16,6 +16,8 @@
 using namespace std::string_literals;
 using namespace std::string_view_literals;
 
+constexpr uint8_t is64bit = sizeof(void *) == 8;
+
 std::list<RiruModule> &modules::Get() {
     static std::list<RiruModule> kModules;
     return kModules;
@@ -28,7 +30,8 @@ static void Cleanup(void *handle) {
     }
 }
 
-static void LoadModule(std::string_view id, std::string_view path, std::string_view magisk_module_path) {
+static void
+LoadModule(std::string_view id, std::string_view path, std::string_view magisk_module_path) {
     if (access(path.data(), F_OK) != 0) {
         PLOGE("access %s", path.data());
         return;
@@ -77,7 +80,6 @@ static void LoadModule(std::string_view id, std::string_view path, std::string_v
 }
 
 static void WriteModules(const RirudSocket &rirud) {
-    constexpr uint8_t is64bit = sizeof(void *) == 8;
     auto &modules = modules::Get();
     uint32_t count = modules.size();
     if (!rirud.Write(RirudSocket::Action::WRITE_STATUS) || !rirud.Write(is64bit) ||
@@ -96,80 +98,30 @@ static void WriteModules(const RirudSocket &rirud) {
 }
 
 void modules::Load(const RirudSocket &rirud) {
-    magisk::ForEachModule([](const char *path) {
-        const auto *magisk_module_name = basename(path);
-        BuffString<PATH_MAX> buf;
-        DIR *dir;
-        struct dirent *entry;
-
-        buf += path;
-        buf += "/riru/lib";
-#ifdef __LP64__
-        buf += "64";
-#endif
-
-        if (access(buf, F_OK) == -1) {
+    uint32_t num_modules;
+    auto &modules = modules::Get();
+    if (!rirud.Write(RirudSocket::Action::READ_MODULES) ||
+        !rirud.Write(is64bit) || !rirud.Read(num_modules)) {
+        LOGE("Faild to load modules");
+        return;
+    }
+    std::string magisk_module_path;
+    std::string path;
+    std::string id;
+    uint32_t num_libs;
+    while (num_modules-- > 0) {
+        if (!rirud.Read(magisk_module_path) || !rirud.Read(num_libs)) {
+            LOGE("Faild to read module's magisk path");
             return;
         }
-
-        LOGI("Magisk module %s is a Riru module", magisk_module_name);
-
-        if (!(dir = opendir(buf))) return;
-
-        buf += "/";
-
-        auto end = buf.size();
-
-        while ((entry = readdir(dir))) {
-            if (entry->d_type != DT_REG) continue;
-
-            constexpr auto lib = "lib"sv;
-            constexpr auto libriru = "libriru_"sv;
-            constexpr auto so = ".so"sv;
-
-            std::string_view d_name(entry->d_name);
-            auto size = d_name.size();
-
-            BuffString<PATH_MAX> id;
-            id += magisk_module_name;
-            id += "@";
-
-            // remove "lib"
-            if (d_name.substr(0, libriru.size()) == libriru) {
-                id += entry->d_name + libriru.size();
-            } else if (d_name.substr(0, lib.size()) == lib) {
-                id += entry->d_name + lib.size();
-            } else {
-                id += entry->d_name;
+        while (num_libs-- > 0) {
+            if (!rirud.Read(id) || !rirud.Read(path)) {
+                LOGE("Faild to read module's lib path");
+                return;
             }
-
-            // Libraries in /dev do not have stacktrace
-            // For debugging purpose, treat file name not end with ".so" as file in /system/lib(64)
-            if (size <= 3 || d_name.substr(size - so.size(), so.size()) != so) {
-                BuffString<PATH_MAX> system;
-                system += "/system/lib";
-#ifdef __LP64__
-                system += "64";
-#endif
-                system += "/";
-                system += d_name;
-                system += ".so";
-
-                LoadModule(id, system, path);
-            } else {
-                buf += d_name;
-
-                // remove ".so"
-                id.size(id.size() - 3);
-
-                LoadModule(id, buf, path);
-            }
-
-            buf.size(end);
+            LoadModule(id, path, magisk_module_path);
         }
-
-        closedir(dir);
-    });
+    }
 
     // On Android 10+, zygote has "execmem" permission, we can use "riru hide" here
     if (AndroidProp::GetApiLevel() >= __ANDROID_API_Q__) {

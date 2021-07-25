@@ -20,6 +20,8 @@ public:
         WRITE_STATUS = 2,
         READ_NATIVE_BRIDGE = 3,
         READ_MAGISK_TMPFS_PATH = 6,
+
+        READ_MODULES = 7,
     };
 
     enum class CODE : uint8_t {
