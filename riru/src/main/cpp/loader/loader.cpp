@@ -16,12 +16,6 @@
 #include <list>
 #include "buff_string.h"
 
-#ifdef __LP64__
-#define LIB_PATH "/system/lib64/"
-#else
-#define LIB_PATH "/system/lib/"
-#endif
-
 #ifdef DEBUG
 #ifndef HAS_NATIVE_BRIDGE
 #define HAS_NATIVE_BRIDGE
@@ -30,18 +24,11 @@
 
 #ifdef HAS_NATIVE_BRIDGE
 
-#include "native_bridge_23.h"
-#include "native_bridge_24.h"
-#include "native_bridge_25.h"
-#include "native_bridge_26.h"
-#include "native_bridge_27.h"
-#include "native_bridge_28.h"
-#include "native_bridge_29.h"
-#include "native_bridge_30.h"
+#include "native_bridge_callbacks.h"
 
 //NOLINTNEXTLINE
 extern "C" [[gnu::visibility("default")]] uint8_t NativeBridgeItf[
-        sizeof(android30::NativeBridgeCallbacks) * 2]{0};
+        sizeof(NativeBridgeCallbacks<__ANDROID_API_R__>) * 2]{0};
 
 static void *original_bridge = nullptr;
 
@@ -50,6 +37,7 @@ __used __attribute__((destructor)) void Destructor() {
 }
 
 #endif
+
 std::list<std::string> GetSelfCmdline() {
     std::list<std::string> cmdlines;
 
@@ -165,21 +153,21 @@ __used __attribute__((constructor)) void Constructor() {
 
     auto callbacks_size = 0;
     if (sdk >= __ANDROID_API_R__) {
-        callbacks_size = sizeof(android30::NativeBridgeCallbacks);
+        callbacks_size = sizeof(NativeBridgeCallbacks<__ANDROID_API_R__>);
     } else if (sdk == __ANDROID_API_Q__) {
-        callbacks_size = sizeof(android29::NativeBridgeCallbacks);
+        callbacks_size = sizeof(NativeBridgeCallbacks<__ANDROID_API_Q__>);
     } else if (sdk == __ANDROID_API_P__) {
-        callbacks_size = sizeof(android28::NativeBridgeCallbacks);
+        callbacks_size = sizeof(NativeBridgeCallbacks<__ANDROID_API_P__>);
     } else if (sdk == __ANDROID_API_O_MR1__) {
-        callbacks_size = sizeof(android27::NativeBridgeCallbacks);
+        callbacks_size = sizeof(NativeBridgeCallbacks<__ANDROID_API_O_MR1__>);
     } else if (sdk == __ANDROID_API_O__) {
-        callbacks_size = sizeof(android26::NativeBridgeCallbacks);
+        callbacks_size = sizeof(NativeBridgeCallbacks<__ANDROID_API_O__>);
     } else if (sdk == __ANDROID_API_N_MR1__) {
-        callbacks_size = sizeof(android25::NativeBridgeCallbacks);
+        callbacks_size = sizeof(NativeBridgeCallbacks<__ANDROID_API_N_MR1__>);
     } else if (sdk == __ANDROID_API_N__) {
-        callbacks_size = sizeof(android24::NativeBridgeCallbacks);
+        callbacks_size = sizeof(NativeBridgeCallbacks<__ANDROID_API_N__>);
     } else if (sdk == __ANDROID_API_M__) {
-        callbacks_size = sizeof(android23::NativeBridgeCallbacks);
+        callbacks_size = sizeof(NativeBridgeCallbacks<__ANDROID_API_M__>);
     }
 
     memcpy(NativeBridgeItf, original_native_bridge_itf, callbacks_size);
