@@ -1,5 +1,7 @@
 package riru;
 
+import static riru.Daemon.TAG;
+
 import android.net.Credentials;
 import android.net.LocalServerSocket;
 import android.net.LocalSocket;
@@ -7,6 +9,7 @@ import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
 import android.util.Log;
+import android.util.Pair;
 
 import java.io.EOFException;
 import java.io.File;
@@ -17,15 +20,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import rikka.io.LittleEndianDataInputStream;
 import rikka.io.LittleEndianDataOutputStream;
 import riru.rirud.BuildConfig;
-
-import static riru.Daemon.TAG;
 
 public class DaemonSocketServerThread extends Thread {
 
@@ -36,6 +40,8 @@ public class DaemonSocketServerThread extends Thread {
     private static final int ACTION_WRITE_STATUS = 2;
     private static final int ACTION_READ_NATIVE_BRIDGE = 3;
     private static final int ACTION_READ_MAGISK_TMPFS_PATH = 6;
+
+    private static final int ACTION_READ_MODULES = 7;
 
     private static final Executor EXECUTOR = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() / 4 + 1);
 
@@ -67,7 +73,7 @@ public class DaemonSocketServerThread extends Thread {
         }
     }
 
-    private void handleWriteStatus(LittleEndianDataInputStream in, LittleEndianDataOutputStream out) throws IOException {
+    private void handleWriteStatus(LittleEndianDataInputStream in) throws IOException {
         boolean is64Bit = in.readBoolean();
         int count = in.readInt();
 
@@ -167,6 +173,11 @@ public class DaemonSocketServerThread extends Thread {
         }
     }
 
+    static void writeString(LittleEndianDataOutputStream out, String s) throws IOException {
+        out.writeInt(s.length());
+        out.writeBytes(s);
+    }
+
     private void handleReadDir(LittleEndianDataInputStream in, LittleEndianDataOutputStream out) throws IOException {
         int path_size = in.readInt();
         byte[] path_bytes = new byte[path_size];
@@ -222,6 +233,40 @@ public class DaemonSocketServerThread extends Thread {
         }
     }
 
+    static final String LIB_PREFIX = "lib";
+    static final String RIRU_PREFIX = "libriru_";
+    static final String SO_SUFFIX = ".so";
+
+    private void handleReadModules(LittleEndianDataInputStream in, LittleEndianDataOutputStream out) throws IOException {
+        boolean is64 = in.readBoolean();
+        File modulesPath = new File(DaemonUtils.getMagiskTmpfsPath(), ".magisk/modules");
+        Map<File, File> modules = Arrays.stream(Optional.ofNullable(modulesPath.listFiles()).orElse(new File[0])).
+                map(f -> new Pair<>(f, new File(f, "riru/" + (is64 ? "lib64" : "lib")))).
+                filter(p -> p.second.exists()).
+                filter(p -> !new File(p.first, "remove").exists() && !new File(p.first, "disable").exists()).
+                collect(Collectors.toMap(p -> p.first, p -> p.second));
+        out.writeInt(modules.size());
+        for (Map.Entry<File, File> module : modules.entrySet()) {
+            File magiskFile = module.getKey();
+            File libFile = module.getValue();
+            writeString(out, magiskFile.getAbsolutePath());
+            File[] libs = Optional.ofNullable(libFile.listFiles()).orElse(new File[0]);
+            out.writeInt(libs.length);
+            for (File lib : libs) {
+                String name = lib.getName();
+                String id = name;
+                if (id.startsWith(RIRU_PREFIX)) id = id.substring(RIRU_PREFIX.length());
+                else if (id.startsWith(LIB_PREFIX)) id = id.substring(LIB_PREFIX.length());
+                if (id.endsWith(SO_SUFFIX)) id = id.substring(0, id.length() - 3);
+                id = magiskFile.getName() + "@" + id;
+                if (!name.endsWith(SO_SUFFIX))
+                    lib = new File("/system/" + (is64 ? "lib64" : "lib"), name + SO_SUFFIX);
+                writeString(out, id);
+                writeString(out, lib.getAbsolutePath());
+            }
+        }
+    }
+
     private void handleAction(LittleEndianDataInputStream in, LittleEndianDataOutputStream out, int action) throws IOException {
         Log.i(TAG, "Action " + action);
 
@@ -238,7 +283,7 @@ public class DaemonSocketServerThread extends Thread {
             }
             case ACTION_WRITE_STATUS: {
                 Log.i(TAG, "Action: write status");
-                handleWriteStatus(in, out);
+                handleWriteStatus(in);
                 break;
             }
             case ACTION_READ_FILE: {
@@ -251,7 +296,13 @@ public class DaemonSocketServerThread extends Thread {
                 handleReadDir(in, out);
                 break;
             }
+            case ACTION_READ_MODULES: {
+                Log.i(TAG, "Action: read modules");
+                handleReadModules(in, out);
+                break;
+            }
             default:
+                Log.w(TAG, "unknown action");
                 break;
         }
 

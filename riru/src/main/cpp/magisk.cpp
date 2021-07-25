@@ -36,43 +36,4 @@ namespace magisk {
         return GetPath() + "/.magisk/modules/riru-core/lib/"s + name;
 #endif
     }
-
-    void ForEachModule(const std::function<void(const char *)> &fn) {
-        const auto &root = GetPath();
-        if (root.empty()) return;
-
-        BuffString<PATH_MAX> buf;
-        buf += root;
-        buf += "/.magisk/modules";
-        auto modules_end = buf.size();
-
-        DIR *dir;
-        struct dirent *entry;
-
-        if (!(dir = opendir(buf))) return;
-
-        while ((entry = readdir(dir))) {
-            if (entry->d_type != DT_DIR) continue;
-            if (entry->d_name[0] == '.') continue;
-
-            buf.size(modules_end);
-
-            buf += "/";
-            buf += entry->d_name;
-
-            auto end = buf.size();
-
-            buf += "/disable";
-            if (access(buf, F_OK) == 0) continue;
-            buf.size(end);
-
-            buf += "/remove";
-            if (access(buf, F_OK) == 0) continue;
-            buf.size(end);
-
-            fn(buf);
-        }
-
-        closedir(dir);
-    }
 }  // namespace magisk
