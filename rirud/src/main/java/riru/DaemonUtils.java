@@ -12,6 +12,7 @@ import android.system.Os;
 import android.system.OsConstants;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Pair;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -26,13 +27,12 @@ import java.io.InterruptedIOException;
 import java.lang.reflect.Method;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
 import static riru.Daemon.TAG;
-
-import riru.rirud.R;
 
 public class DaemonUtils {
 
@@ -47,6 +47,13 @@ public class DaemonUtils {
 
     private static int lastStatusId = 0;
     private static Object[] lastStatusArgs = new Object[0];
+
+    private static final String LIB_PREFIX = "lib";
+    private static final String RIRU_PREFIX = "libriru_";
+    private static final String SO_SUFFIX = ".so";
+
+    private static final Map<String, List<Pair<String, String>>> modules = new HashMap<>();
+    private static final Map<String, List<Pair<String, String>>> modules64 = new HashMap<>();
 
     @SuppressWarnings("unchecked")
     private static final List<String>[] loadedModules = new List[]{new ArrayList<>(), new ArrayList<>()};
@@ -67,6 +74,22 @@ public class DaemonUtils {
             res = new Resources(am, null, null);
         } catch (Throwable e) {
             Log.e(TAG, "load res", e);
+        }
+
+        try {
+            if (has64Bit()) {
+                collectModules(true);
+            }
+        } catch (Throwable e) {
+            Log.e(TAG, "collect modules 64", e);
+        }
+
+        try {
+            if (has32Bit()) {
+                collectModules(false);
+            }
+        } catch (Throwable e) {
+            Log.e(TAG, "collect modules 32", e);
         }
     }
 
@@ -96,7 +119,6 @@ public class DaemonUtils {
             Log.e(TAG, "Failed kill parent process " + ppid);
         }
     }
-
 
     // from AndroidRuntime.cpp
     private static String readLocale() {
@@ -144,7 +166,7 @@ public class DaemonUtils {
         writeStatus(lastStatusId, lastStatusArgs);
     }
 
-    public static void writeStatus(int id, Object ...args) {
+    public static void writeStatus(int id, Object... args) {
         File prop = new File("module.prop");
         lastStatusId = id;
         lastStatusArgs = args;
@@ -217,19 +239,6 @@ public class DaemonUtils {
             } catch (InterruptedException ignored) {
             }
         } while (true);
-    }
-
-    public static File getRiruDevFile() {
-        String devRandom = getDevRandom();
-        if (devRandom == null) {
-            return null;
-        }
-
-        if (has64Bit()) {
-            return new File("/dev/riru64_" + devRandom);
-        } else {
-            return new File("/dev/riru_" + devRandom);
-        }
     }
 
     private static boolean deleteDir(File file) {
@@ -422,5 +431,50 @@ public class DaemonUtils {
         }
 
         return devRandom;
+    }
+
+    private static void collectModules(boolean is64) {
+        Map<String, List<Pair<String, String>>> m = is64 ? modules64 : modules;
+
+        String riruLibPath = "riru/" + (is64 ? "lib64" : "lib");
+        File[] magiskDirs = new File(DaemonUtils.getMagiskTmpfsPath(), ".magisk/modules").listFiles();
+        if (magiskDirs == null) {
+            return;
+        }
+
+        for (File magiskDir : magiskDirs) {
+            if (new File(magiskDir, "remove").exists()
+                    || new File(magiskDir, "disable").exists())
+                continue;
+
+            File libDir = new File(magiskDir, riruLibPath);
+            if (!libDir.exists())
+                continue;
+
+            File[] libsFiles = libDir.listFiles();
+            if (libsFiles == null) {
+                continue;
+            }
+
+            List<Pair<String, String>> libs = new ArrayList<>();
+            m.put(magiskDir.getAbsolutePath(), libs);
+
+            for (File lib : libsFiles) {
+                String name = lib.getName();
+                String id = name;
+                if (id.startsWith(RIRU_PREFIX)) id = id.substring(RIRU_PREFIX.length());
+                else if (id.startsWith(LIB_PREFIX)) id = id.substring(LIB_PREFIX.length());
+                if (id.endsWith(SO_SUFFIX)) id = id.substring(0, id.length() - 3);
+                id = magiskDir.getName() + "@" + id;
+                if (!name.endsWith(SO_SUFFIX))
+                    lib = new File("/system/" + (is64 ? "lib64" : "lib"), name + SO_SUFFIX);
+
+                libs.add(new Pair<>(id, lib.getAbsolutePath()));
+            }
+        }
+    }
+
+    public static Map<String, List<Pair<String, String>>> getModules(boolean is64) {
+        return is64 ? modules64 : modules;
     }
 }

@@ -7,6 +7,7 @@ import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
 import android.util.Log;
+import android.util.Pair;
 
 import java.io.EOFException;
 import java.io.File;
@@ -18,6 +19,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -231,49 +233,25 @@ public class DaemonSocketServerThread extends Thread {
         }
     }
 
-    static final String LIB_PREFIX = "lib";
-    static final String RIRU_PREFIX = "libriru_";
-    static final String SO_SUFFIX = ".so";
-
     private void handleReadModules(LittleEndianDataInputStream in, LittleEndianDataOutputStream out) throws IOException {
         boolean is64 = in.readBoolean();
-        String riruLibPath = "riru/" + (is64 ? "lib64" : "lib");
-        File[] modulesFiles = new File(DaemonUtils.getMagiskTmpfsPath(), ".magisk/modules").listFiles();
-        if (modulesFiles == null) {
-            out.writeInt(0);
-            return;
-        }
-        Map<File, File> modules = new HashMap<>();
-        for (File module : modulesFiles) {
-            File libPath = new File(module, riruLibPath);
-            if (!libPath.exists()
-                    || new File(libPath, "remove").exists()
-                    || new File(libPath, "disable").exists())
-                continue;
-            modules.put(module, libPath);
-        }
+        Map<String, List<Pair<String, String>>> modules = DaemonUtils.getModules(is64);
+
         out.writeInt(modules.size());
-        for (Map.Entry<File, File> module : modules.entrySet()) {
-            File magiskFile = module.getKey();
-            File libFile = module.getValue();
-            writeString(out, magiskFile.getAbsolutePath());
-            File[] libs = libFile.listFiles();
-            if (libs == null) {
-                out.writeInt(0);
-                continue;
-            }
-            out.writeInt(libs.length);
-            for (File lib : libs) {
-                String name = lib.getName();
-                String id = name;
-                if (id.startsWith(RIRU_PREFIX)) id = id.substring(RIRU_PREFIX.length());
-                else if (id.startsWith(LIB_PREFIX)) id = id.substring(LIB_PREFIX.length());
-                if (id.endsWith(SO_SUFFIX)) id = id.substring(0, id.length() - 3);
-                id = magiskFile.getName() + "@" + id;
-                if (!name.endsWith(SO_SUFFIX))
-                    lib = new File("/system/" + (is64 ? "lib64" : "lib"), name + SO_SUFFIX);
+
+        for (Map.Entry<String, List<Pair<String, String>>> entry : modules.entrySet()) {
+            String magiskModulePath = entry.getKey();
+            List<Pair<String, String>> libs = entry.getValue();
+
+            writeString(out, magiskModulePath);
+            out.writeInt(libs.size());
+
+            for (Pair<String, String> pair:libs){
+                String id = pair.first;
+                String lib = pair.second;
+
                 writeString(out, id);
-                writeString(out, lib.getAbsolutePath());
+                writeString(out, lib);
             }
         }
     }

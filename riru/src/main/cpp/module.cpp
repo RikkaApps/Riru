@@ -30,8 +30,7 @@ static void Cleanup(void *handle) {
     }
 }
 
-static void
-LoadModule(std::string_view id, std::string_view path, std::string_view magisk_module_path) {
+static void LoadModule(std::string_view id, std::string_view path, std::string_view magisk_module_path) {
     if (access(path.data(), F_OK) != 0) {
         PLOGE("access %s", path.data());
         return;
