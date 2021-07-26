@@ -22,6 +22,11 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ## Changelog
 
+### v26.0.2 (2021-07-27)
+
+- Report if the SELinux context of the module are incorrect
+- Use Resources for i18n
+
 ### v26.0.1 (2021-07-18)
 
 - Remove support for pre-v24 modules (it has been more than 4 months and all live modules have upgraded to v24+)
