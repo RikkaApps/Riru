@@ -62,6 +62,11 @@ public class Daemon implements IBinder.DeathRecipient {
     private void onRiruNotLoaded(boolean allowRestart, boolean isFirst) {
         Log.w(TAG, "Riru is not loaded.");
 
+        if (DaemonUtils.hasIncorrectFileContext()) {
+            DaemonUtils.writeStatus(R.string.bad_file_context);
+            return;
+        }
+
         boolean filesMounted = true;
         if (DaemonUtils.has64Bit()) {
             filesMounted = new File("/system/lib64/libriruloader.so").exists();

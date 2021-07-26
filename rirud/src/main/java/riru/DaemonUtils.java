@@ -5,6 +5,7 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.SELinux;
 import android.os.ServiceManager;
 import android.os.SystemProperties;
 import android.system.ErrnoException;
@@ -31,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 import static riru.Daemon.TAG;
 
@@ -58,11 +60,20 @@ public class DaemonUtils {
     @SuppressWarnings("unchecked")
     private static final List<String>[] loadedModules = new List[]{new ArrayList<>(), new ArrayList<>()};
 
+    private static boolean isSELinuxEnforcing = false;
+    private static boolean fileContext = true;
+
     static {
         originalNativeBridge = SystemProperties.get("ro.dalvik.vm.native.bridge");
 
         if (TextUtils.isEmpty(originalNativeBridge)) {
             originalNativeBridge = "0";
+        }
+
+        try {
+            isSELinuxEnforcing = hasSELinux() && SELinux.isSELinuxEnabled() && SELinux.isSELinuxEnforced();
+        } catch (Throwable e) {
+            Log.e(TAG, "read is enforcing", e);
         }
 
         try {
@@ -90,6 +101,22 @@ public class DaemonUtils {
             }
         } catch (Throwable e) {
             Log.e(TAG, "collect modules 32", e);
+        }
+
+        File magiskDir = new File(DaemonUtils.getMagiskTmpfsPath(), ".magisk/modules/riru-core");
+
+        if (has64Bit()) {
+            fileContext &= isSystemFileContextForChildren(new File(magiskDir, "lib64"));
+            fileContext &= isSystemFileContextForParent(new File(magiskDir, "lib64"), magiskDir);
+            fileContext &= isSystemFileContextForChildren(new File(magiskDir, "system/lib64"));
+            fileContext &= isSystemFileContextForParent(new File(magiskDir, "system/lib64"), magiskDir);
+        }
+
+        if (has32Bit()) {
+            fileContext &= isSystemFileContextForChildren(new File(magiskDir, "lib"));
+            fileContext &= isSystemFileContextForParent(new File(magiskDir, "lib"), magiskDir);
+            fileContext &= isSystemFileContextForChildren(new File(magiskDir, "system/lib"));
+            fileContext &= isSystemFileContextForParent(new File(magiskDir, "system/lib"), magiskDir);
         }
     }
 
@@ -433,6 +460,46 @@ public class DaemonUtils {
         return devRandom;
     }
 
+    private static boolean isSystemFileContext(File file) {
+        if (!isSELinuxEnforcing) return true;
+
+        String path = file.getAbsolutePath();
+        try {
+            String context = SELinux.getFileContext(path);
+            if (!Objects.equals("u:object_r:system_file:s0", context)) {
+                Log.w(TAG, "Context for " + path + " is " + context + " rather than u:object_r:system_file:s0");
+                return false;
+            } else {
+                Log.d(TAG, context + " " + path);
+            }
+        } catch (Throwable ignored) {
+        }
+        return true;
+    }
+
+    private static boolean isSystemFileContextForChildren(File folder) {
+        if (!isSELinuxEnforcing) return true;
+
+        File[] files = folder.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                if (!isSystemFileContext(f)) return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isSystemFileContextForParent(File from, File to) {
+        if (!isSELinuxEnforcing) return true;
+
+        do {
+            if (!isSystemFileContext(from)) return false;
+            from = from.getParentFile();
+        } while (from != null && !Objects.equals(from, to));
+
+        return isSystemFileContext(to);
+    }
+
     private static void collectModules(boolean is64) {
         Map<String, List<Pair<String, String>>> m = is64 ? modules64 : modules;
 
@@ -459,6 +526,8 @@ public class DaemonUtils {
             List<Pair<String, String>> libs = new ArrayList<>();
             m.put(magiskDir.getAbsolutePath(), libs);
 
+            Log.d(TAG, magiskDir.getAbsolutePath() + " is a Riru module");
+
             for (File lib : libsFiles) {
                 String name = lib.getName();
                 String id = name;
@@ -470,11 +539,20 @@ public class DaemonUtils {
                     lib = new File("/system/" + (is64 ? "lib64" : "lib"), name + SO_SUFFIX);
 
                 libs.add(new Pair<>(id, lib.getAbsolutePath()));
+                Log.d(TAG, "Path for " + id + " is " + lib.getAbsolutePath());
+
+                fileContext &= isSystemFileContext(lib);
             }
+
+            fileContext &= isSystemFileContextForParent(libDir, magiskDir);
         }
     }
 
     public static Map<String, List<Pair<String, String>>> getModules(boolean is64) {
         return is64 ? modules64 : modules;
+    }
+
+    public static boolean hasIncorrectFileContext() {
+        return !fileContext;
     }
 }

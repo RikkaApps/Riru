@@ -7,5 +7,6 @@
     <string name="bad_prop">\u26A0\uFE0F 系統屬性錯誤。請不要使用“最佳化”模組，因為透過修改屬性來最佳化非常值得懷疑。</string>
     <string name="not_loaded">\u26A0\uFE0F Riru 未被載入，原因未知。</string>
     <string name="loaded">\uD83D\uDE0B Riru 正常工作中。已載入 %1$d 個模組 %2$s。</string>
+    <string name="bad_file_context">\u26A0\uFE0F Riru 和模組檔案的 SELinux 上下文不正確，請嘗試重新安裝 Riru 和所有 Riru 模組。</string>
     <string name="empty">無</string>
 </resources>
