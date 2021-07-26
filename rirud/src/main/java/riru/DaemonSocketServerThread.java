@@ -1,7 +1,5 @@
 package riru;
 
-import static riru.Daemon.TAG;
-
 import android.net.Credentials;
 import android.net.LocalServerSocket;
 import android.net.LocalSocket;
@@ -9,7 +7,6 @@ import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
 import android.util.Log;
-import android.util.Pair;
 
 import java.io.EOFException;
 import java.io.File;
@@ -20,16 +17,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 import rikka.io.LittleEndianDataInputStream;
 import rikka.io.LittleEndianDataOutputStream;
 import riru.rirud.BuildConfig;
+
+import static riru.Daemon.TAG;
 
 public class DaemonSocketServerThread extends Thread {
 
@@ -239,18 +237,31 @@ public class DaemonSocketServerThread extends Thread {
 
     private void handleReadModules(LittleEndianDataInputStream in, LittleEndianDataOutputStream out) throws IOException {
         boolean is64 = in.readBoolean();
-        File modulesPath = new File(DaemonUtils.getMagiskTmpfsPath(), ".magisk/modules");
-        Map<File, File> modules = Arrays.stream(Optional.ofNullable(modulesPath.listFiles()).orElse(new File[0])).
-                map(f -> new Pair<>(f, new File(f, "riru/" + (is64 ? "lib64" : "lib")))).
-                filter(p -> p.second.exists()).
-                filter(p -> !new File(p.first, "remove").exists() && !new File(p.first, "disable").exists()).
-                collect(Collectors.toMap(p -> p.first, p -> p.second));
+        String riruLibPath = "riru/" + (is64 ? "lib64" : "lib");
+        File[] modulesFiles = new File(DaemonUtils.getMagiskTmpfsPath(), ".magisk/modules").listFiles();
+        if (modulesFiles == null) {
+            out.writeInt(0);
+            return;
+        }
+        Map<File, File> modules = new HashMap<>();
+        for (File module : modulesFiles) {
+            File libPath = new File(module, riruLibPath);
+            if (!libPath.exists()
+                    || new File(libPath, "remove").exists()
+                    || new File(libPath, "disable").exists())
+                continue;
+            modules.put(module, libPath);
+        }
         out.writeInt(modules.size());
         for (Map.Entry<File, File> module : modules.entrySet()) {
             File magiskFile = module.getKey();
             File libFile = module.getValue();
             writeString(out, magiskFile.getAbsolutePath());
-            File[] libs = Optional.ofNullable(libFile.listFiles()).orElse(new File[0]);
+            File[] libs = libFile.listFiles();
+            if (libs == null) {
+                out.writeInt(0);
+                continue;
+            }
             out.writeInt(libs.length);
             for (File lib : libs) {
                 String name = lib.getName();
