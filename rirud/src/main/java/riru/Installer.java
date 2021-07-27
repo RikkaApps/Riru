@@ -20,21 +20,18 @@ public class Installer {
             return;
         }
 
-        boolean exit = false;
-        if (SELinux.checkSELinuxAccess("u:r:init:s0", "u:object_r:system_file:s0", "file", "relabelfrom")) {
-            System.out.println("! Your ROM allows init to relabel Magisk module files");
-            System.out.println("- Riru will try to reset the context of modules files, but not guaranteed to always work");
-            exit = true;
-        }
+        boolean file = SELinux.checkSELinuxAccess("u:r:init:s0", "u:object_r:system_file:s0", "file", "relabelfrom");
+        boolean dir = SELinux.checkSELinuxAccess("u:r:init:s0", "u:object_r:system_file:s0", "dir", "relabelfrom");
 
-        if (SELinux.checkSELinuxAccess("u:r:init:s0", "u:object_r:system_file:s0", "dir", "relabelfrom")) {
-            System.out.println("! Your ROM allows init to relabel Magisk module files");
+        if (file || dir) {
+            System.out.println("!!!!!!!!! PLEASE READ !!!!!!!!!!");
+            if (file) {
+                System.out.println("! Your ROM allows init to relabel Magisk module files");
+            }
+            if (dir) {
+                System.out.println("! Your ROM allows init to relabel Magisk module files");
+            }
             System.out.println("- Riru will try to reset the context of modules files, but not guaranteed to always work");
-            exit = true;
-        }
-
-        if (exit) {
-            System.exit(1);
         } else {
             System.out.println("- No problem found");
         }
