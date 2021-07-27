@@ -6,6 +6,16 @@ All other Riru modules requires Riru.
 
 See [https://github.com/RikkaApps/Riru](https://github.com/RikkaApps/Riru) for more details.
 
+### Pre-24 modules are no longer supported
+
+> All live modules have upgraded to v24+ for a long time.
+
+The goal is to eliminate bad designs due to historical reasons.
+
+If you are module developer, it only takes you less than 1 min to switch to v24+ if your module is already v22.
+
+For users, if you find you cannot install a module (the installer will say Riru is not installed) or a module stop working, it means that such modules have stop updating for at least 4 months.
+
 ### Note
 
 If you are use other modules that changes `ro.dalvik.vm.native.bridge`, Riru will not work. (Riru will automatically set it back)
@@ -24,7 +34,7 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ### v26.0.2 (2021-07-27)
 
-- Report if the SELinux context of the module are incorrect
+- Report if the SELinux context of the module files are incorrect
 - Use Resources for i18n
 
 ### v26.0.1 (2021-07-18)
