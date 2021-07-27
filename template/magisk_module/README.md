@@ -32,6 +32,12 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ## Changelog
 
+### v26.0.3 (2021-07-27)
+
+- Reset SELinux context for module files when necessary
+
+  This will not always work since on ROMs with incorrect SELinux rules, the system will reset module file to the incorrect one at the same time
+
 ### v26.0.2 (2021-07-27)
 
 - Report if the SELinux context of the module files are incorrect
