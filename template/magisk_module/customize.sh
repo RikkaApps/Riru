@@ -107,14 +107,6 @@ set_perm "$MODPATH/rirud.apk" 0 0 0600
 ui_print "- Checking if your ROM has incorrect SELinux rules"
 /system/bin/app_process -Djava.class.path="$MODPATH/rirud.apk" /system/bin --nice-name=riru_installer riru.Installer --check-selinux
 
-if [ $? -eq 1 ]; then
-  ui_print "! Your ROM has incorrect SELinux rules"
-  ui_print "! Open detailed explain page in 5s..."
-  sleep 5
-  /system/bin/am start -a android.intent.action.VIEW -c android.intent.category.BROWSABLE -d "https://github.com/RikkaApps/Riru/wiki/Explanation-about-incorrect-SELinux-rules-from-third-party-ROMs-cause-Riru-not-working"
-  abort
-fi
-
 ui_print "- Removing old files"
 rm -rf /data/adb/riru/bin
 rm /data/adb/riru/native_bridge

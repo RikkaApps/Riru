@@ -106,17 +106,17 @@ public class DaemonUtils {
         File magiskDir = new File(DaemonUtils.getMagiskTmpfsPath(), ".magisk/modules/riru-core");
 
         if (has64Bit()) {
-            fileContext &= isSystemFileContextForChildren(new File(magiskDir, "lib64"));
-            fileContext &= isSystemFileContextForParent(new File(magiskDir, "lib64"), magiskDir);
-            fileContext &= isSystemFileContextForChildren(new File(magiskDir, "system/lib64"));
-            fileContext &= isSystemFileContextForParent(new File(magiskDir, "system/lib64"), magiskDir);
+            fileContext &= checkOrResetContextForChildren(new File(magiskDir, "lib64"));
+            fileContext &= checkOrResetContextForForParent(new File(magiskDir, "lib64"), magiskDir);
+            fileContext &= checkOrResetContextForChildren(new File(magiskDir, "system/lib64"));
+            fileContext &= checkOrResetContextForForParent(new File(magiskDir, "system/lib64"), magiskDir);
         }
 
         if (has32Bit()) {
-            fileContext &= isSystemFileContextForChildren(new File(magiskDir, "lib"));
-            fileContext &= isSystemFileContextForParent(new File(magiskDir, "lib"), magiskDir);
-            fileContext &= isSystemFileContextForChildren(new File(magiskDir, "system/lib"));
-            fileContext &= isSystemFileContextForParent(new File(magiskDir, "system/lib"), magiskDir);
+            fileContext &= checkOrResetContextForChildren(new File(magiskDir, "lib"));
+            fileContext &= checkOrResetContextForForParent(new File(magiskDir, "lib"), magiskDir);
+            fileContext &= checkOrResetContextForChildren(new File(magiskDir, "system/lib"));
+            fileContext &= checkOrResetContextForForParent(new File(magiskDir, "system/lib"), magiskDir);
         }
     }
 
@@ -460,7 +460,7 @@ public class DaemonUtils {
         return devRandom;
     }
 
-    private static boolean isSystemFileContext(File file) {
+    private static boolean checkAndResetContextForFile(File file) {
         if (!isSELinuxEnforcing) return true;
 
         String path = file.getAbsolutePath();
@@ -468,6 +468,12 @@ public class DaemonUtils {
             String context = SELinux.getFileContext(path);
             if (!Objects.equals("u:object_r:system_file:s0", context)) {
                 Log.w(TAG, "Context for " + path + " is " + context + " rather than u:object_r:system_file:s0");
+
+                if (SELinux.setFileContext(path, "u:object_r:system_file:s0")) {
+                    Log.i(TAG, path + " -> u:object_r:system_file:s0");
+                } else {
+                    Log.w(TAG, "Failed to reset context.");
+                }
                 return false;
             } else {
                 Log.d(TAG, context + " " + path);
@@ -477,27 +483,30 @@ public class DaemonUtils {
         return true;
     }
 
-    private static boolean isSystemFileContextForChildren(File folder) {
+    private static boolean checkOrResetContextForChildren(File folder) {
         if (!isSELinuxEnforcing) return true;
 
+        boolean res = true;
         File[] files = folder.listFiles();
         if (files != null) {
             for (File f : files) {
-                if (!isSystemFileContext(f)) return false;
+                res &= checkAndResetContextForFile(f);
             }
         }
-        return true;
+        return res;
     }
 
-    private static boolean isSystemFileContextForParent(File from, File to) {
+    private static boolean checkOrResetContextForForParent(File from, File to) {
         if (!isSELinuxEnforcing) return true;
 
+        boolean res = true;
+
         do {
-            if (!isSystemFileContext(from)) return false;
+            res &= checkAndResetContextForFile(from);
             from = from.getParentFile();
         } while (from != null && !Objects.equals(from, to));
 
-        return isSystemFileContext(to);
+        return res & checkAndResetContextForFile(to);
     }
 
     private static void collectModules(boolean is64) {
@@ -541,10 +550,10 @@ public class DaemonUtils {
                 libs.add(new Pair<>(id, lib.getAbsolutePath()));
                 Log.d(TAG, "Path for " + id + " is " + lib.getAbsolutePath());
 
-                fileContext &= isSystemFileContext(lib);
+                fileContext &= checkAndResetContextForFile(lib);
             }
 
-            fileContext &= isSystemFileContextForParent(libDir, magiskDir);
+            fileContext &= checkOrResetContextForForParent(libDir, magiskDir);
         }
     }
 

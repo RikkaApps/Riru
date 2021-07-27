@@ -23,11 +23,13 @@ public class Installer {
         boolean exit = false;
         if (SELinux.checkSELinuxAccess("u:r:init:s0", "u:object_r:system_file:s0", "file", "relabelfrom")) {
             System.out.println("! Your ROM allows init to relabel Magisk module files");
+            System.out.println("- Riru will try to reset the context of modules files, but not guaranteed to always work");
             exit = true;
         }
 
         if (SELinux.checkSELinuxAccess("u:r:init:s0", "u:object_r:system_file:s0", "dir", "relabelfrom")) {
             System.out.println("! Your ROM allows init to relabel Magisk module files");
+            System.out.println("- Riru will try to reset the context of modules files, but not guaranteed to always work");
             exit = true;
         }
 
