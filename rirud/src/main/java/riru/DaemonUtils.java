@@ -252,9 +252,13 @@ public class DaemonUtils {
     }
 
     public static IBinder waitForSystemService(String name) {
-        IBinder binder;
+        IBinder binder = null;
         do {
-            binder = ServiceManager.getService(name);
+            try {
+                binder = ServiceManager.getService(name);
+            } catch (Throwable ignored) {
+
+            }
             if (binder != null && binder.pingBinder()) {
                 return binder;
             }
