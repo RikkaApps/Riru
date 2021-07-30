@@ -32,6 +32,11 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ## Changelog
 
+### v26.0.4 (2021-07-30)
+- Fix flock not working on some devices
+
+  This is a bug from Magisk's busybox and it will be fixed [here](https://github.com/topjohnwu/ndk-busybox/commit/d75558194ae9c9dfaa21a4e514c91ec6127016f9). As a workaround, we set `SHELL` in the script manually.
+
 ### v26.0.3 (2021-07-27)
 
 - Reset SELinux context for module files when necessary
