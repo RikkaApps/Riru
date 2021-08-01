@@ -32,6 +32,9 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ## Changelog
 
+### v26.0.5 (2021-08-01)
+- Fix killing parent process
+
 ### v26.0.4 (2021-07-30)
 - Fix flock not working on some devices
 
