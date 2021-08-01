@@ -41,6 +41,7 @@ public class DaemonUtils {
     private static Boolean has32Bit = null, has64Bit = null;
     private static String originalNativeBridge;
     private static String devRandom;
+    private static int ppid = -1;
     private static int magiskVersionCode = -1;
     private static String magiskTmpfsPath;
     private static final boolean[] loaded = new boolean[2];
@@ -121,8 +122,9 @@ public class DaemonUtils {
     }
 
     public static void init(String[] args) {
-        magiskVersionCode = Integer.parseInt(args[0]);
-        magiskTmpfsPath = args[1];
+        ppid = Integer.parseInt(args[0]);
+        magiskVersionCode = Integer.parseInt(args[1]);
+        magiskTmpfsPath = args[2];
     }
 
     public static boolean isLoaded(boolean is64Bit) {
@@ -138,7 +140,6 @@ public class DaemonUtils {
     }
 
     public static void killParentProcess() {
-        int ppid = Os.getppid();
         try {
             Os.kill(ppid, OsConstants.SIGKILL);
             Log.i(TAG, "Killed parent process " + ppid);
