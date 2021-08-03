@@ -13,7 +13,7 @@
 #endif
 #endif
 
-#ifdef DEBUG
+#ifndef NDEBUG
 #define LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
 #else
 #define LOGD(...)

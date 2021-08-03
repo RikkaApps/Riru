@@ -16,7 +16,7 @@
 #include <list>
 #include "buff_string.h"
 
-#ifdef DEBUG
+#ifndef NDEBUG
 #ifndef HAS_NATIVE_BRIDGE
 #define HAS_NATIVE_BRIDGE
 #endif

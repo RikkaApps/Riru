@@ -35,18 +35,20 @@ configure_file(template/config.cpp config.cpp)
 #add_definitions(-DRIRU_MIN_API_VERSION=${RIRU_MIN_API_VERSION})
 
 set(LINKER_FLAGS "-ffixed-x18 -Wl,--hash-style=both")
-set(C_FLAGS "-Werror=format -fdata-sections -ffunction-sections -fno-exceptions -fno-rtti -fno-threadsafe-statics")
+set(C_FLAGS "-Werror=format -fdata-sections -ffunction-sections -fno-exceptions -fno-rtti -fno-threadsafe-statics -D__FILE__=__FILE_NAME__ -Wno-builtin-macro-redefined")
 
-if (CMAKE_BUILD_TYPE STREQUAL "Release")
-    set(C_FLAGS "${C_FLAGS} -O2 -fvisibility=hidden -fvisibility-inlines-hidden")
+if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(C_FLAGS "${C_FLAGS} -Os -fvisibility=hidden -fvisibility-inlines-hidden -fno-asynchronous-unwind-tables -fno-unwind-tables")
     set(LINKER_FLAGS "${LINKER_FLAGS} -Wl,-exclude-libs,ALL -Wl,--gc-sections")
 else ()
-    add_definitions(-DDEBUG)
-    set(C_FLAGS "${C_FLAGS} -O0")
+    set(C_FLAGS "${C_FLAGS} -Og")
 endif ()
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${C_FLAGS}")
+string(TOUPPER CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE} CXX_FLAGS_WITH_BUILD_TYPE)
+string(TOUPPER CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE} C_FLAGS_WITH_BUILD_TYPE)
+
+set(${CXX_FLAGS_WITH_BUILD_TYPE} "${C_FLAGS}")
+set(${C_FLAGS_WITH_BUILD_TYPE} "${C_FLAGS}")
 
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LINKER_FLAGS}")
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LINKER_FLAGS}")
@@ -86,7 +88,7 @@ endif ()
 add_library(riruloader SHARED loader/loader.cpp ${CMAKE_CURRENT_BINARY_DIR}/config.cpp)
 target_link_libraries(riruloader log utils cxx::cxx)
 
-if (CMAKE_BUILD_TYPE STREQUAL "Release")
+if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_custom_command(TARGET riru POST_BUILD
             COMMAND ${CMAKE_STRIP} --strip-all --remove-section=.comment "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libriru.so")
     add_custom_command(TARGET riruhide POST_BUILD
