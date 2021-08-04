@@ -56,7 +56,6 @@ android {
     externalNativeBuild {
         cmake {
             path "src/main/cpp/CMakeLists.txt"
-            version "3.10.2"
         }
     }
     lintOptions.checkReleaseBuilds false
@@ -87,7 +86,7 @@ afterEvaluate {
         def variantCapped = variant.name.capitalize()
         def variantLowered = variant.name.toLowerCase()
 
-        def zipName = "riru-${versionNameShort}-${variantLowered}.zip"
+        def zipName = "riru-${versionName}-${variantLowered}.zip"
         def magiskDir = file("$outDir/magisk_module_$variantLowered")
 
         task("prepareMagiskFiles${variantCapped}", type: Sync) {

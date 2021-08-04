@@ -1,4 +1,7 @@
 import org.apache.tools.ant.filters.FixCrLfFilter
+import java.util.stream.StreamSupport
+import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.internal.storage.file.FileRepository
 
 apply plugin: 'idea'
 
@@ -20,6 +23,7 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:7.0.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'org.eclipse.jgit:org.eclipse.jgit:5.10.0.202012080955-r'
     }
 }
 
@@ -35,14 +39,15 @@ allprojects {
 
 ext {
     minSdkVersion = 23
-    targetSdkVersion = 30
-    ndkVersion = '21.4.7075529'
+    targetSdkVersion = 31
 
     riruApiVersion = 26
     riruMinApiVersion = 24
 
-    gitCommitId = 'git rev-parse --short HEAD'.execute([], project.rootDir).text.trim()
-    gitCommitCount = Integer.parseInt('git rev-list --count HEAD'.execute([], project.rootDir).text.trim())
+    repo = new FileRepository(rootProject.file(".git"))
+    gitObjectId = repo.refDatabase.exactRef("refs/remotes/origin/master").objectId
+    gitCommitId = gitObjectId.abbreviate(10).name()
+    gitCommitCount = StreamSupport.stream(new Git(repo).log().add(gitObjectId).call().spliterator(), false).count()
 
     versionNameMinor = 0
     versionNamePatch = 5
