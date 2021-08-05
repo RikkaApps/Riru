@@ -1,0 +1,14 @@
+name: Check Issues
+
+on:
+  issues:
+    types: [opened]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - if: contains(github.event.issue.body, 'edxposed') == true || contains(github.event.issue.title, 'edxposed') == true
+        id: close
+        uses: peter-evans/close-issue@v1
+        with:
+          comment: Automatically closing this issue since it may be EdXposed relative. EdXposed is out of maintenance. If you want to use Xposed Framework, use the original Xposed, [LSPosed](https://lsposed.org) or [Dreamland](https://github.com/canyie/Dreamland) instead.
