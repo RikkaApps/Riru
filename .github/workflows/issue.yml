@@ -11,4 +11,4 @@ jobs:
         id: close
         uses: peter-evans/close-issue@v1
         with:
-          comment: Automatically closing this issue since it may be EdXposed relative. EdXposed is out of maintenance. If you want to use Xposed Framework, use the original Xposed, [LSPosed](https://lsposed.org) or [Dreamland](https://github.com/canyie/Dreamland) instead.
+          comment: Automatically closing this issue since it may be EdXposed relative. EdXposed is out of maintenance. If you want to use Xposed Framework, use the original Xposed, [LSPosed](https://lsposed.org), [Taichi](https://taichi.cool) or [Dreamland](https://github.com/canyie/Dreamland) instead.
