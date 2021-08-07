@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -119,7 +118,7 @@ public class DaemonSocketServerThread extends Thread {
 
             int index = id.indexOf('@');
             if (index != -1 && index < id.length()) {
-                DaemonUtils.getLoadedModules(is64Bit).add(id.substring(index + 1));
+                DaemonUtils.getLoadedModules().add(id.substring(index + 1));
             }
         }
     }

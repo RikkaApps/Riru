@@ -9,7 +9,6 @@ import android.os.SystemProperties;
 import android.util.Log;
 
 import java.io.File;
-import java.util.List;
 
 import riru.rirud.R;
 
@@ -42,8 +41,7 @@ public class Daemon implements IBinder.DeathRecipient {
 
         DaemonUtils.setIsLoaded(false, false);
         DaemonUtils.setIsLoaded(true, false);
-        DaemonUtils.getLoadedModules(false).clear();
-        DaemonUtils.getLoadedModules(true).clear();
+        DaemonUtils.getLoadedModules().clear();
 
         DaemonUtils.writeStatus(R.string.zygote_dead);
 
@@ -124,20 +122,20 @@ public class Daemon implements IBinder.DeathRecipient {
             Log.w(TAG, "linkToDeath", e);
         }
 
-        List<String> loadedModules = DaemonUtils.getLoadedModules(DaemonUtils.has64Bit());
+        var loadedModules = DaemonUtils.getLoadedModules().toArray();
 
         StringBuilder sb = new StringBuilder();
-        if (loadedModules.isEmpty()) {
+        if (loadedModules.length == 0) {
             sb.append(DaemonUtils.res.getString(R.string.empty));
         } else {
-            sb.append(loadedModules.get(0));
-            for (int i = 1; i < loadedModules.size(); i++) {
+            sb.append(loadedModules[0]);
+            for (int i = 1; i < loadedModules.length; ++i) {
                 sb.append(", ");
-                sb.append(loadedModules.get(i));
+                sb.append(loadedModules[i]);
             }
         }
 
-        DaemonUtils.writeStatus(R.string.loaded, loadedModules.size(), sb);
+        DaemonUtils.writeStatus(R.string.loaded, loadedModules.length, sb);
     }
 
     private void startWait(boolean allowRestart, boolean isFirst) {

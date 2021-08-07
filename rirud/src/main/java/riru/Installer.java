@@ -42,6 +42,7 @@ public class Installer {
             if ("--check-selinux".equals(arg)) {
                 System.out.println("- Start checks...");
                 checkSELinux();
+                System.exit(0);
                 return;
             }
         }

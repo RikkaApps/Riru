@@ -1,5 +1,7 @@
 package riru;
 
+import static riru.Daemon.TAG;
+
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -28,13 +30,15 @@ import java.io.InterruptedIOException;
 import java.lang.reflect.Method;
 import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-
-import static riru.Daemon.TAG;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 
 public class DaemonUtils {
 
@@ -55,18 +59,16 @@ public class DaemonUtils {
     private static final String RIRU_PREFIX = "libriru_";
     private static final String SO_SUFFIX = ".so";
 
-    private static final Map<String, List<Pair<String, String>>> modules = new HashMap<>();
-    private static final Map<String, List<Pair<String, String>>> modules64 = new HashMap<>();
+    private static final FutureTask<Map<String, List<Pair<String, String>>>> modules = new FutureTask<>(() -> collectModules(false));
+    private static final FutureTask<Map<String, List<Pair<String, String>>>> modules64 = new FutureTask<>(() -> collectModules(true));
 
-    @SuppressWarnings("unchecked")
-    private static final List<String>[] loadedModules = new List[]{new ArrayList<>(), new ArrayList<>()};
+    private static final Set<String> loadedModules = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private static boolean isSELinuxEnforcing = false;
     private static boolean fileContext = true;
 
     static {
         originalNativeBridge = SystemProperties.get("ro.dalvik.vm.native.bridge");
-
         if (TextUtils.isEmpty(originalNativeBridge)) {
             originalNativeBridge = "0";
         }
@@ -88,20 +90,14 @@ public class DaemonUtils {
             Log.e(TAG, "load res", e);
         }
 
-        try {
-            if (has64Bit()) {
-                collectModules(true);
-            }
-        } catch (Throwable e) {
-            Log.e(TAG, "collect modules 64", e);
+        var service = Executors.newFixedThreadPool(2);
+
+        if (has64Bit()) {
+            service.submit(modules64);
         }
 
-        try {
-            if (has32Bit()) {
-                collectModules(false);
-            }
-        } catch (Throwable e) {
-            Log.e(TAG, "collect modules 32", e);
+        if (has32Bit()) {
+            service.submit(modules);
         }
 
         File magiskDir = new File(DaemonUtils.getMagiskTmpfsPath(), ".magisk/modules/riru-core");
@@ -135,8 +131,8 @@ public class DaemonUtils {
         DaemonUtils.loaded[is64Bit ? 1 : 0] = riruIsLoaded;
     }
 
-    public static List<String> getLoadedModules(boolean is64Bit) {
-        return loadedModules[is64Bit ? 1 : 0];
+    public static Set<String> getLoadedModules() {
+        return loadedModules;
     }
 
     public static void killParentProcess() {
@@ -514,13 +510,13 @@ public class DaemonUtils {
         return res & checkAndResetContextForFile(to);
     }
 
-    private static void collectModules(boolean is64) {
-        Map<String, List<Pair<String, String>>> m = is64 ? modules64 : modules;
+    private static Map<String, List<Pair<String, String>>> collectModules(boolean is64) {
+        Map<String, List<Pair<String, String>>> m = new ConcurrentHashMap<>();
 
         String riruLibPath = "riru/" + (is64 ? "lib64" : "lib");
         File[] magiskDirs = new File(DaemonUtils.getMagiskTmpfsPath(), ".magisk/modules").listFiles();
         if (magiskDirs == null) {
-            return;
+            return Collections.emptyMap();
         }
 
         for (File magiskDir : magiskDirs) {
@@ -560,10 +556,16 @@ public class DaemonUtils {
 
             fileContext &= checkOrResetContextForForParent(libDir, magiskDir);
         }
+        return m;
     }
 
     public static Map<String, List<Pair<String, String>>> getModules(boolean is64) {
-        return is64 ? modules64 : modules;
+        try {
+            return is64 ? modules64.get() : modules.get();
+        } catch (Throwable e) {
+            Log.e(TAG, "get modules", e);
+            return Collections.emptyMap();
+        }
     }
 
     public static boolean hasIncorrectFileContext() {
