@@ -149,6 +149,8 @@ public class Daemon implements IBinder.DeathRecipient {
         }
 
         synchronized (serverThread) {
+            // TODO: actually only consider one zygote
+            //       how about one loaded Riru but the other (others) did not
             if (!DaemonUtils.isLoaded(DaemonUtils.has64Bit())) {
                 onRiruNotLoaded(isFirst);
             } else {
