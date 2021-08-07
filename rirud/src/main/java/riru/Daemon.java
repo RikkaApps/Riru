@@ -108,6 +108,8 @@ public class Daemon implements IBinder.DeathRecipient {
                     SystemProperties.set("ctl.restart", "zygote");
                 }
             });
+        } else {
+            Log.w(TAG, "Restarting zygote does not help");
         }
     }
 

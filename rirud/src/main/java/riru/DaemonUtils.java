@@ -545,13 +545,17 @@ public class DaemonUtils {
                 else if (id.startsWith(LIB_PREFIX)) id = id.substring(LIB_PREFIX.length());
                 if (id.endsWith(SO_SUFFIX)) id = id.substring(0, id.length() - 3);
                 id = magiskDir.getName() + "@" + id;
-                if (!name.endsWith(SO_SUFFIX))
-                    lib = new File("/system/" + (is64 ? "lib64" : "lib"), name + SO_SUFFIX);
+                if (!name.endsWith(SO_SUFFIX)) {
+                    var relativeLibPath = "system/" + (is64 ? "lib64" : "lib");
+                    lib = new File(new File("/", relativeLibPath), name + SO_SUFFIX);
+                    fileContext &= checkAndResetContextForFile(new File(new File(magiskDir, relativeLibPath), name + SO_SUFFIX));
+                } else {
+                    fileContext &= checkAndResetContextForFile(lib);
+                }
 
                 libs.add(new Pair<>(id, lib.getAbsolutePath()));
                 Log.d(TAG, "Path for " + id + " is " + lib.getAbsolutePath());
 
-                fileContext &= checkAndResetContextForFile(lib);
             }
 
             fileContext &= checkOrResetContextForForParent(libDir, magiskDir);
