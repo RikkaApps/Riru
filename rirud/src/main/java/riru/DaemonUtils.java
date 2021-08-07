@@ -411,7 +411,7 @@ public class DaemonUtils {
         try {
             Os.close(fd);
         } catch (ErrnoException e) {
-            e.printStackTrace();
+            Log.w(TAG, Log.getStackTraceString(e));
         }
         return true;
     }

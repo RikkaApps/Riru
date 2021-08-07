@@ -356,7 +356,7 @@ public class DaemonSocketServerThread extends Thread {
                     try {
                         socket.close();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        Log.w(TAG, Log.getStackTraceString(e));
                     }
                 }
             });
@@ -420,7 +420,7 @@ public class DaemonSocketServerThread extends Thread {
                 countDownLatch.await();
                 Log.i(TAG, "Restart server received");
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Log.w(TAG, Log.getStackTraceString(e));
             }
         }
     }

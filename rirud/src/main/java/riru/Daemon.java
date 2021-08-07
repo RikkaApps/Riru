@@ -19,19 +19,19 @@ public class Daemon implements IBinder.DeathRecipient {
     private static final String SERVICE_FOR_TEST = "activity";
     private static final String RIRU_LOADER = "libriruloader.so";
 
-    private final Handler handler;
-    private final String name;
-    private final DaemonSocketServerThread serverThread;
+    private final Handler handler = new Handler(Looper.myLooper());
+    private final DaemonSocketServerThread serverThread = new DaemonSocketServerThread();
+
+    private boolean allowRestart = true;
 
     private IBinder systemServerBinder;
 
     public Daemon() {
-        this.handler = new Handler(Looper.myLooper());
-        this.serverThread = new DaemonSocketServerThread();
-        this.name = SERVICE_FOR_TEST;
-
-        serverThread.start();
-        handler.post(() -> startWait(true, true));
+        // prevent zygote died after system server starts but before onRiruLoaded called
+        synchronized (serverThread) {
+            serverThread.start();
+            handler.post(() -> startWait(true));
+        }
     }
 
     @Override
@@ -46,7 +46,6 @@ public class Daemon implements IBinder.DeathRecipient {
         DaemonUtils.writeStatus(R.string.zygote_dead);
 
         Log.i(TAG, "Zygote is probably dead, restart rirud socket...");
-        serverThread.restartServer();
 
         Log.i(TAG, "Zygote is probably dead, reset native bridge to " + RIRU_LOADER + "...");
         DaemonUtils.resetNativeBridgeProp(RIRU_LOADER);
@@ -54,10 +53,13 @@ public class Daemon implements IBinder.DeathRecipient {
         Log.i(TAG, "Zygote is probably dead, delete existing /dev/riru folders...");
         DaemonUtils.deleteDevFolder();
 
-        handler.post(() -> startWait(true, false));
+        synchronized (serverThread) {
+            serverThread.restartServer();
+            handler.post(() -> startWait(false));
+        }
     }
 
-    private void onRiruNotLoaded(boolean allowRestart, boolean isFirst) {
+    private void onRiruNotLoaded(boolean isFirst) {
         Log.w(TAG, "Riru is not loaded.");
 
         if (DaemonUtils.hasIncorrectFileContext()) {
@@ -96,6 +98,7 @@ public class Daemon implements IBinder.DeathRecipient {
         }
 
         if (allowRestart) {
+            allowRestart = false;
             handler.post(() -> {
                 Log.w(TAG, "Restarting zygote...");
                 if (DaemonUtils.has64Bit() && DaemonUtils.has32Bit()) {
@@ -104,23 +107,17 @@ public class Daemon implements IBinder.DeathRecipient {
                 } else {
                     SystemProperties.set("ctl.restart", "zygote");
                 }
-                startWait(false, false);
             });
         }
     }
 
     private void onRiruLoad() {
+        allowRestart = true;
         Log.i(TAG, "Riru loaded, reset native bridge to " + DaemonUtils.getOriginalNativeBridge() + "...");
         DaemonUtils.resetNativeBridgeProp(DaemonUtils.getOriginalNativeBridge());
 
         Log.i(TAG, "Riru loaded, stop rirud socket...");
         serverThread.stopServer();
-
-        try {
-            systemServerBinder.linkToDeath(this, 0);
-        } catch (RemoteException e) {
-            Log.w(TAG, "linkToDeath", e);
-        }
 
         var loadedModules = DaemonUtils.getLoadedModules().toArray();
 
@@ -138,15 +135,23 @@ public class Daemon implements IBinder.DeathRecipient {
         DaemonUtils.writeStatus(R.string.loaded, loadedModules.length, sb);
     }
 
-    private void startWait(boolean allowRestart, boolean isFirst) {
-        systemServerBinder = DaemonUtils.waitForSystemService(name);
+    private void startWait(boolean isFirst) {
+        systemServerBinder = DaemonUtils.waitForSystemService(SERVICE_FOR_TEST);
 
         DaemonUtils.reloadLocale();
 
-        if (!DaemonUtils.isLoaded(DaemonUtils.has64Bit())) {
-            onRiruNotLoaded(allowRestart, isFirst);
-        } else {
-            onRiruLoad();
+        try {
+            systemServerBinder.linkToDeath(this, 0);
+        } catch (RemoteException e) {
+            Log.w(TAG, "linkToDeath", e);
+        }
+
+        synchronized (serverThread) {
+            if (!DaemonUtils.isLoaded(DaemonUtils.has64Bit())) {
+                onRiruNotLoaded(isFirst);
+            } else {
+                onRiruLoad();
+            }
         }
     }
 
