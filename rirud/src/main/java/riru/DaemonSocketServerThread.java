@@ -1,5 +1,7 @@
 package riru;
 
+import static riru.Daemon.TAG;
+
 import android.net.Credentials;
 import android.net.LocalServerSocket;
 import android.net.LocalSocket;
@@ -19,8 +21,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -28,8 +35,6 @@ import java.util.concurrent.Executors;
 import rikka.io.LittleEndianDataInputStream;
 import rikka.io.LittleEndianDataOutputStream;
 import riru.rirud.BuildConfig;
-
-import static riru.Daemon.TAG;
 
 public class DaemonSocketServerThread extends Thread {
 
@@ -40,13 +45,16 @@ public class DaemonSocketServerThread extends Thread {
     private static final int ACTION_WRITE_STATUS = 2;
     private static final int ACTION_READ_NATIVE_BRIDGE = 3;
     private static final int ACTION_READ_MAGISK_TMPFS_PATH = 6;
-
     private static final int ACTION_READ_MODULES = 7;
+
+    private static final HashSet<Integer> privateActions = new HashSet<>(Arrays.asList(ACTION_WRITE_STATUS, ACTION_READ_NATIVE_BRIDGE, ACTION_READ_MAGISK_TMPFS_PATH, ACTION_READ_MODULES));
 
     private static final Executor EXECUTOR = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() / 4 + 1);
 
     private LocalServerSocket serverSocket;
     private CountDownLatch countDownLatch;
+
+    private final Set<Integer> zygotePid = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private void handleReadOriginalNativeBridge(LittleEndianDataOutputStream out) throws IOException {
         String s = DaemonUtils.getOriginalNativeBridge();
@@ -246,7 +254,7 @@ public class DaemonSocketServerThread extends Thread {
             writeString(out, magiskModulePath);
             out.writeInt(libs.size());
 
-            for (Pair<String, String> pair:libs){
+            for (Pair<String, String> pair : libs) {
                 String id = pair.first;
                 String lib = pair.second;
 
@@ -298,7 +306,7 @@ public class DaemonSocketServerThread extends Thread {
         Log.i(TAG, "Handle action " + action + " finished");
     }
 
-    private void handleSocket(LocalSocket socket) throws IOException {
+    private void handleSocket(LocalSocket socket, boolean privateConnection) throws IOException {
         int action;
         boolean first = true;
 
@@ -317,6 +325,10 @@ public class DaemonSocketServerThread extends Thread {
                     return;
                 }
 
+                if (!privateConnection && privateActions.contains(action)) {
+                    Log.e(TAG, "Unauthorized connection using private action");
+                    return;
+                }
                 handleAction(in, out, action);
                 first = false;
             }
@@ -324,6 +336,7 @@ public class DaemonSocketServerThread extends Thread {
     }
 
     private void startServer() throws IOException {
+        zygotePid.clear();
         serverSocket = new LocalServerSocket("rirud");
 
         while (true) {
@@ -340,7 +353,7 @@ public class DaemonSocketServerThread extends Thread {
             var uid = credentials.getUid();
             var pid = credentials.getPid();
             var context = SELinux.getPidContext(pid);
-            if (uid != 0 || !context.equals("u:r:zygote:s0")) {
+            if (uid != 0 || !Objects.equals(context, "u:r:zygote:s0")) {
                 socket.close();
                 Log.w(TAG, "Unauthorized peer (" +
                         "uid=" + uid + ", " +
@@ -354,16 +367,10 @@ public class DaemonSocketServerThread extends Thread {
                     "context=" + context);
 
             EXECUTOR.execute(() -> {
-                try {
-                    handleSocket(socket);
+                try (socket) {
+                    handleSocket(socket, zygotePid.add(pid));
                 } catch (Throwable e) {
                     Log.w(TAG, "Handle socket", e);
-                } finally {
-                    try {
-                        socket.close();
-                    } catch (IOException e) {
-                        Log.w(TAG, Log.getStackTraceString(e));
-                    }
                 }
             });
         }
@@ -395,6 +402,7 @@ public class DaemonSocketServerThread extends Thread {
         }
 
         if (countDownLatch != null) {
+            zygotePid.clear();
             countDownLatch.countDown();
         }
     }
