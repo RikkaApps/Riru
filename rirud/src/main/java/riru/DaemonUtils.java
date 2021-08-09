@@ -48,7 +48,6 @@ public class DaemonUtils {
     private static int ppid = -1;
     private static int magiskVersionCode = -1;
     private static String magiskTmpfsPath;
-    private static final boolean[] loaded = new boolean[2];
 
     public static Resources res;
 
@@ -66,6 +65,8 @@ public class DaemonUtils {
 
     private static boolean isSELinuxEnforcing = false;
     private static boolean fileContext = true;
+
+    private static final Set<Integer> zygotePid = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     static {
         originalNativeBridge = SystemProperties.get("ro.dalvik.vm.native.bridge");
@@ -123,12 +124,28 @@ public class DaemonUtils {
         magiskTmpfsPath = args[2];
     }
 
-    public static boolean isLoaded(boolean is64Bit) {
-        return loaded[is64Bit ? 1 : 0];
+    public static boolean isLoaded() {
+        var processes = new File("/proc").listFiles((file, s) -> TextUtils.isDigitsOnly(s));
+        if (processes == null) {
+            Log.w(TAG, "Could not list all processes");
+            return false;
+        }
+        for (var process : processes) {
+            var pid = Integer.parseInt(process.getName());
+            if (Objects.equals(SELinux.getPidContext(pid), "u:r:zygote:s0") && !zygotePid.contains(pid)) {
+                Log.w(TAG, "Process " + pid + " has zygote context but did not load riru");
+                return false;
+            }
+        }
+        return true;
     }
 
-    public static void setIsLoaded(boolean is64Bit, boolean riruIsLoaded) {
-        DaemonUtils.loaded[is64Bit ? 1 : 0] = riruIsLoaded;
+    public static void clearLoadedProcess() {
+        zygotePid.clear();
+    }
+
+    public static void recordLoadedProcess(int pid) {
+        zygotePid.add(pid);
     }
 
     public static Set<String> getLoadedModules() {

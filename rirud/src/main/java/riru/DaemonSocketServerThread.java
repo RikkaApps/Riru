@@ -81,11 +81,11 @@ public class DaemonSocketServerThread extends Thread {
         }
     }
 
-    private void handleWriteStatus(LittleEndianDataInputStream in) throws IOException {
+    private void handleWriteStatus(LittleEndianDataInputStream in, Credentials credentials) throws IOException {
         boolean is64Bit = in.readBoolean();
         int count = in.readInt();
 
-        DaemonUtils.setIsLoaded(is64Bit, true);
+        DaemonUtils.recordLoadedProcess(credentials.getPid());
 
         File parent = new File("/dev/riru" + (is64Bit ? "64" : "") + "_" + DaemonUtils.getDevRandom());
         File modules = new File(parent, "modules");
@@ -264,7 +264,7 @@ public class DaemonSocketServerThread extends Thread {
         }
     }
 
-    private void handleAction(LittleEndianDataInputStream in, LittleEndianDataOutputStream out, int action) throws IOException {
+    private void handleAction(LittleEndianDataInputStream in, LittleEndianDataOutputStream out, int action, Credentials credentials) throws IOException {
         Log.i(TAG, "Action " + action);
 
         switch (action) {
@@ -280,7 +280,7 @@ public class DaemonSocketServerThread extends Thread {
             }
             case ACTION_WRITE_STATUS: {
                 Log.i(TAG, "Action: write status");
-                handleWriteStatus(in);
+                handleWriteStatus(in, credentials);
                 break;
             }
             case ACTION_READ_FILE: {
@@ -309,6 +309,7 @@ public class DaemonSocketServerThread extends Thread {
     private void handleSocket(LocalSocket socket, boolean privateConnection) throws IOException {
         int action;
         boolean first = true;
+        var credentials = socket.getPeerCredentials();
 
         try (LittleEndianDataInputStream in = new LittleEndianDataInputStream(socket.getInputStream());
              LittleEndianDataOutputStream out = new LittleEndianDataOutputStream(socket.getOutputStream())) {
@@ -329,7 +330,7 @@ public class DaemonSocketServerThread extends Thread {
                     Log.e(TAG, "Unauthorized connection using private action");
                     return;
                 }
-                handleAction(in, out, action);
+                handleAction(in, out, action, credentials);
                 first = false;
             }
         }

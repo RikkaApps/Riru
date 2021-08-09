@@ -39,8 +39,7 @@ public class Daemon implements IBinder.DeathRecipient {
         systemServerBinder.unlinkToDeath(this, 0);
         systemServerBinder = null;
 
-        DaemonUtils.setIsLoaded(false, false);
-        DaemonUtils.setIsLoaded(true, false);
+        DaemonUtils.clearLoadedProcess();
         DaemonUtils.getLoadedModules().clear();
 
         DaemonUtils.writeStatus(R.string.zygote_dead);
@@ -149,9 +148,7 @@ public class Daemon implements IBinder.DeathRecipient {
         }
 
         synchronized (serverThread) {
-            // TODO: actually only consider one zygote
-            //       how about one loaded Riru but the other (others) did not
-            if (!DaemonUtils.isLoaded(DaemonUtils.has64Bit())) {
+            if (!DaemonUtils.isLoaded()) {
                 onRiruNotLoaded(isFirst);
             } else {
                 onRiruLoad();
