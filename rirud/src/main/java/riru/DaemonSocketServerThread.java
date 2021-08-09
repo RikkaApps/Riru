@@ -3,6 +3,7 @@ package riru;
 import android.net.Credentials;
 import android.net.LocalServerSocket;
 import android.net.LocalSocket;
+import android.os.SELinux;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
@@ -336,16 +337,21 @@ public class DaemonSocketServerThread extends Thread {
             }
 
             Credentials credentials = socket.getPeerCredentials();
-            if (credentials.getUid() != 0) {
+            var uid = credentials.getUid();
+            var pid = credentials.getPid();
+            var context = SELinux.getPidContext(pid);
+            if (uid != 0 || !context.equals("u:r:zygote:s0")) {
                 socket.close();
-                Log.w(TAG, "Accept from non-root (" +
-                        "uid=" + credentials.getUid() + ", " +
-                        "pid=" + credentials.getPid() + ")");
+                Log.w(TAG, "Unauthorized peer (" +
+                        "uid=" + uid + ", " +
+                        "pid=" + pid + ", " +
+                        "context=" + context + ")");
                 continue;
             }
             Log.d(TAG, "Accepted " +
-                    "uid=" + credentials.getUid() + " " +
-                    "pid=" + credentials.getPid());
+                    "uid=" + uid + ", " +
+                    "pid=" + pid + ", " +
+                    "context=" + context);
 
             EXECUTOR.execute(() -> {
                 try {

@@ -11,4 +11,6 @@ public class SELinux {
     public static final native String getFileContext(String path);
 
     public static final native boolean setFileContext(String path, String context);
+
+    public static final native String getPidContext(int pid);
 }
