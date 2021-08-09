@@ -27,6 +27,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.InterruptedIOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -138,6 +139,27 @@ public class DaemonUtils {
             }
         }
         return true;
+    }
+
+    public static void clearServiceManagerCache() {
+        try {
+            //noinspection JavaReflectionMemberAccess
+            Field field = ServiceManager.class.getDeclaredField("sServiceManager");
+            field.setAccessible(true);
+            field.set(null, null);
+
+            //noinspection JavaReflectionMemberAccess
+            field = ServiceManager.class.getDeclaredField("sCache");
+            field.setAccessible(true);
+            Object sCache = field.get(null);
+            if (sCache instanceof Map) {
+                //noinspection rawtypes
+                ((Map) sCache).clear();
+            }
+            Log.i(TAG, "clear ServiceManager");
+        } catch (Throwable e) {
+            Log.w(TAG, "clear ServiceManager: " + Log.getStackTraceString(e));
+        }
     }
 
     public static void clearLoadedProcess() {
@@ -266,6 +288,8 @@ public class DaemonUtils {
     }
 
     public static IBinder waitForSystemService(String name) {
+        clearServiceManagerCache();
+
         IBinder binder = null;
         do {
             try {
