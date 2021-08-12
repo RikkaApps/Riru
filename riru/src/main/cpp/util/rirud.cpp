@@ -27,7 +27,7 @@ bool RirudSocket::Read(std::string &str) const {
 }
 
 
-RirudSocket::RirudSocket() {
+RirudSocket::RirudSocket(unsigned retries) {
     if ((fd_ = socket(PF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0)) < 0) {
         return;
     }
@@ -39,11 +39,13 @@ RirudSocket::RirudSocket() {
     strncpy(addr.sun_path + 1, RIRUD.data(), RIRUD.size());
     socklen_t socklen = sizeof(sa_family_t) + strlen(addr.sun_path + 1) + 1;
 
-    if (connect(fd_, reinterpret_cast<struct sockaddr *>(&addr), socklen) == -1) {
-        close(fd_);
-        fd_ = -1;
-        return;
+    while (retries-- > 0) {
+        if (connect(fd_, reinterpret_cast<struct sockaddr *>(&addr), socklen) != -1) return;
+        LOGW("retrying to connect rirud in 1s");
+        sleep(1);
     }
+    close(fd_);
+    fd_ = -1;
 }
 
 RirudSocket::~RirudSocket() {
@@ -98,7 +100,7 @@ bool RirudSocket::Write(const void *buf, size_t len) const {
             if (errno == EINTR) continue;
             else return false;
         }
-        buf = static_cast<const char*>(buf) + size;
+        buf = static_cast<const char *>(buf) + size;
         count -= size;
     }
     return true;
@@ -111,7 +113,7 @@ bool RirudSocket::Read(void *out, size_t len) const {
             if (errno == EINTR) continue;
             else return false;
         }
-        out = static_cast<char*>(out) + ret;
+        out = static_cast<char *>(out) + ret;
         len -= ret;
     }
     return true;

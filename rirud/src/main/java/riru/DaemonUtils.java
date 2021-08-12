@@ -120,12 +120,11 @@ public class DaemonUtils {
     }
 
     public static void init(String[] args) {
-        ppid = Integer.parseInt(args[0]);
-        magiskVersionCode = Integer.parseInt(args[1]);
-        magiskTmpfsPath = args[2];
+        magiskVersionCode = Integer.parseInt(args[0]);
+        magiskTmpfsPath = args[1];
     }
 
-    public static boolean isLoaded() {
+    public static boolean isLoaded(int[] failedZygote) {
         var processes = new File("/proc").listFiles((file, s) -> TextUtils.isDigitsOnly(s));
         if (processes == null) {
             Log.w(TAG, "Could not list all processes");
@@ -135,6 +134,7 @@ public class DaemonUtils {
             var pid = Integer.parseInt(process.getName());
             if (Objects.equals(SELinux.getPidContext(pid), "u:r:zygote:s0") && !zygotePid.contains(pid)) {
                 Log.w(TAG, "Process " + pid + " has zygote context but did not load riru");
+                failedZygote[0] = pid;
                 return false;
             }
         }
@@ -172,15 +172,6 @@ public class DaemonUtils {
 
     public static Set<String> getLoadedModules() {
         return loadedModules;
-    }
-
-    public static void killParentProcess() {
-        try {
-            Os.kill(ppid, OsConstants.SIGKILL);
-            Log.i(TAG, "Killed parent process " + ppid);
-        } catch (ErrnoException e) {
-            Log.e(TAG, "Failed kill parent process " + ppid);
-        }
     }
 
     // from AndroidRuntime.cpp

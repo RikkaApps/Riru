@@ -69,7 +69,7 @@ __used __attribute__((constructor)) void Constructor() {
         LOGW("failed to get cmdline");
         return;
     }
-    auto& cmdline = cmdlines.front();
+    auto &cmdline = cmdlines.front();
 
     if (cmdline != "zygote" &&
         cmdline != "zygote32" &&
@@ -85,7 +85,8 @@ __used __attribute__((constructor)) void Constructor() {
          AndroidProp::GetApiLevel(),
          AndroidProp::GetPreviewApiLevel());
 
-    RirudSocket rirud;
+    constexpr auto retries = 5U;
+    RirudSocket rirud{retries};
 
     if (!rirud.valid()) {
         LOGE("rirud connect fails");

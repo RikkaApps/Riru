@@ -73,7 +73,7 @@ public:
         return fd_ != -1;
     }
 
-    RirudSocket();
+    RirudSocket(unsigned retries = 1);
 
     std::string ReadFile(std::string_view path);
 
