@@ -61,20 +61,29 @@ public class Daemon implements IBinder.DeathRecipient {
     private void onRiruNotLoaded(boolean isFirst) {
         Log.w(TAG, "Riru is not loaded.");
 
+        if (allowRestart) {
+            allowRestart = false;
+            handler.post(() -> {
+                Log.w(TAG, "Restarting zygote...");
+                if (DaemonUtils.has64Bit() && DaemonUtils.has32Bit()) {
+                    // Only devices with both 32-bit and 64-bit support have zygote_secondary
+                    SystemProperties.set("ctl.restart", "zygote_secondary");
+                } else {
+                    SystemProperties.set("ctl.restart", "zygote");
+                }
+            });
+            return;
+        } else {
+            Log.w(TAG, "Restarting zygote does not help");
+        }
+
         if (DaemonUtils.hasIncorrectFileContext()) {
             DaemonUtils.writeStatus(R.string.bad_file_context);
             return;
         }
 
-        boolean filesMounted = true;
-        if (DaemonUtils.has64Bit()) {
-            filesMounted = new File("/system/lib64/libriruloader.so").exists();
-        }
-        if (DaemonUtils.has32Bit()) {
-            filesMounted &= new File("/system/lib/libriruloader.so").exists();
-        }
-
-        if (!filesMounted) {
+        if ((DaemonUtils.has32Bit() && !new File("/proc/1/root/system/lib/libriruloader.so").exists()) ||
+                (DaemonUtils.has64Bit() && !new File("/proc/1/root/system/lib64/libriruloader.so").exists())) {
             DaemonUtils.writeStatus(R.string.files_not_mounted);
             return;
         }
@@ -94,21 +103,6 @@ public class Daemon implements IBinder.DeathRecipient {
         DaemonUtils.writeStatus(R.string.not_loaded);
         if (isFirst) {
             Log.w(TAG, "Magisk post-fs-data slow?");
-        }
-
-        if (allowRestart) {
-            allowRestart = false;
-            handler.post(() -> {
-                Log.w(TAG, "Restarting zygote...");
-                if (DaemonUtils.has64Bit() && DaemonUtils.has32Bit()) {
-                    // Only devices with both 32-bit and 64-bit support have zygote_secondary
-                    SystemProperties.set("ctl.restart", "zygote_secondary");
-                } else {
-                    SystemProperties.set("ctl.restart", "zygote");
-                }
-            });
-        } else {
-            Log.w(TAG, "Restarting zygote does not help");
         }
     }
 
@@ -158,7 +152,6 @@ public class Daemon implements IBinder.DeathRecipient {
 
     public static void main(String[] args) {
         DaemonUtils.init(args);
-        DaemonUtils.killParentProcess();
         DaemonUtils.writeStatus(R.string.app_process);
         int magiskVersionCode = DaemonUtils.getMagiskVersionCode();
         String magiskTmpfsPath = DaemonUtils.getMagiskTmpfsPath();

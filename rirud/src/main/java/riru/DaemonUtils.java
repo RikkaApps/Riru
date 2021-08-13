@@ -120,9 +120,8 @@ public class DaemonUtils {
     }
 
     public static void init(String[] args) {
-        ppid = Integer.parseInt(args[0]);
-        magiskVersionCode = Integer.parseInt(args[1]);
-        magiskTmpfsPath = args[2];
+        magiskVersionCode = Integer.parseInt(args[0]);
+        magiskTmpfsPath = args[1];
     }
 
     public static boolean isLoaded() {
@@ -172,15 +171,6 @@ public class DaemonUtils {
 
     public static Set<String> getLoadedModules() {
         return loadedModules;
-    }
-
-    public static void killParentProcess() {
-        try {
-            Os.kill(ppid, OsConstants.SIGKILL);
-            Log.i(TAG, "Killed parent process " + ppid);
-        } catch (ErrnoException e) {
-            Log.e(TAG, "Failed kill parent process " + ppid);
-        }
     }
 
     // from AndroidRuntime.cpp
