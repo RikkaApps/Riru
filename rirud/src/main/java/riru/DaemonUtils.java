@@ -124,7 +124,7 @@ public class DaemonUtils {
         magiskTmpfsPath = args[1];
     }
 
-    public static boolean isLoaded(int[] failedZygote) {
+    public static boolean isLoaded() {
         var processes = new File("/proc").listFiles((file, s) -> TextUtils.isDigitsOnly(s));
         if (processes == null) {
             Log.w(TAG, "Could not list all processes");
@@ -134,7 +134,6 @@ public class DaemonUtils {
             var pid = Integer.parseInt(process.getName());
             if (Objects.equals(SELinux.getPidContext(pid), "u:r:zygote:s0") && !zygotePid.contains(pid)) {
                 Log.w(TAG, "Process " + pid + " has zygote context but did not load riru");
-                failedZygote[0] = pid;
                 return false;
             }
         }

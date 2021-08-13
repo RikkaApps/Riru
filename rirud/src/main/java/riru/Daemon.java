@@ -58,7 +58,7 @@ public class Daemon implements IBinder.DeathRecipient {
         }
     }
 
-    private void onRiruNotLoaded(boolean isFirst, int failedZygote) {
+    private void onRiruNotLoaded(boolean isFirst) {
         Log.w(TAG, "Riru is not loaded.");
 
         if (allowRestart) {
@@ -72,6 +72,7 @@ public class Daemon implements IBinder.DeathRecipient {
                     SystemProperties.set("ctl.restart", "zygote");
                 }
             });
+            return;
         } else {
             Log.w(TAG, "Restarting zygote does not help");
         }
@@ -83,10 +84,10 @@ public class Daemon implements IBinder.DeathRecipient {
 
         boolean filesMounted = true;
         if (DaemonUtils.has64Bit()) {
-            filesMounted = new File("/proc/" + failedZygote + "/root/system/lib64/libriruloader.so").exists();
+            filesMounted = new File("/proc/1/root/system/lib64/libriruloader.so").exists();
         }
         if (DaemonUtils.has32Bit()) {
-            filesMounted &= new File("/proc/" + failedZygote + "/root/system/lib/libriruloader.so").exists();
+            filesMounted &= new File("/proc/1/root/system/lib/libriruloader.so").exists();
         }
 
         if (!filesMounted) {
@@ -148,9 +149,8 @@ public class Daemon implements IBinder.DeathRecipient {
         }
 
         synchronized (serverThread) {
-            int[] failedZygote = new int[]{0};
-            if (!DaemonUtils.isLoaded(failedZygote)) {
-                onRiruNotLoaded(isFirst, failedZygote[0]);
+            if (!DaemonUtils.isLoaded()) {
+                onRiruNotLoaded(isFirst);
             } else {
                 onRiruLoad();
             }
