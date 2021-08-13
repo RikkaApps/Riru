@@ -82,15 +82,8 @@ public class Daemon implements IBinder.DeathRecipient {
             return;
         }
 
-        boolean filesMounted = true;
-        if (DaemonUtils.has64Bit()) {
-            filesMounted = new File("/proc/1/root/system/lib64/libriruloader.so").exists();
-        }
-        if (DaemonUtils.has32Bit()) {
-            filesMounted &= new File("/proc/1/root/system/lib/libriruloader.so").exists();
-        }
-
-        if (!filesMounted) {
+        if ((DaemonUtils.has32Bit() && !new File("/proc/1/root/system/lib/libriruloader.so").exists()) ||
+                (DaemonUtils.has64Bit() && !new File("/proc/1/root/system/lib64/libriruloader.so").exists())) {
             DaemonUtils.writeStatus(R.string.files_not_mounted);
             return;
         }
