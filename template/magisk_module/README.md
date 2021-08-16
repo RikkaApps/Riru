@@ -32,6 +32,17 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ## Changelog
 
+### v26.1.0 (2021-08-16)
+
+- Preload modules parallelly to speedup startup
+- Fix status showing after a soft reboot
+- Fix riru is not loading after a soft reboot
+- Prevent modules from using internal interfaces
+- Stricter authorization of Rirud
+- More accurate loaded status
+- Fix status showing on Huawei and Samsung devices
+- Unshare Rirud
+
 ### v26.0.5 (2021-08-01)
 - Fix killing parent process
 
