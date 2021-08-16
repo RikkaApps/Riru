@@ -49,8 +49,8 @@ ext {
     gitCommitId = gitObjectId.abbreviate(10).name()
     gitCommitCount = StreamSupport.stream(new Git(repo).log().add(gitObjectId).call().spliterator(), false).count()
 
-    versionNameMinor = 0
-    versionNamePatch = 5
+    versionNameMinor = 1
+    versionNamePatch = 0
 
     outDir = file("$rootDir/out")
 }
