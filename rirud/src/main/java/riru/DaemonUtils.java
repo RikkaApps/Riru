@@ -46,7 +46,6 @@ public class DaemonUtils {
     private static Boolean has32Bit = null, has64Bit = null;
     private static String originalNativeBridge;
     private static String devRandom;
-    private static int ppid = -1;
     private static int magiskVersionCode = -1;
     private static String magiskTmpfsPath;
 
@@ -70,10 +69,6 @@ public class DaemonUtils {
     private static final Set<Integer> zygotePid = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     static {
-        originalNativeBridge = SystemProperties.get("ro.dalvik.vm.native.bridge");
-        if (TextUtils.isEmpty(originalNativeBridge)) {
-            originalNativeBridge = "0";
-        }
 
         try {
             isSELinuxEnforcing = hasSELinux() && SELinux.isSELinuxEnabled() && SELinux.isSELinuxEnforced();
@@ -122,6 +117,11 @@ public class DaemonUtils {
     public static void init(String[] args) {
         magiskVersionCode = Integer.parseInt(args[0]);
         magiskTmpfsPath = args[1];
+        if (args.length > 2) {
+            originalNativeBridge = args[2];
+        } else {
+            originalNativeBridge = "0";
+        }
     }
 
     public static boolean isLoaded() {
