@@ -32,8 +32,10 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ## Changelog
 
-### v26.1.0 (2021-08-16)
+### v26.1.1 (2021-08-18)
+- Fix reset native bridge
 
+### v26.1.0 (2021-08-16)
 - Preload modules parallelly to speedup startup
 - Fix status showing after a soft reboot
 - Fix riru is not loading after a soft reboot
