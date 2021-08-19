@@ -12,3 +12,8 @@ jobs:
         uses: peter-evans/close-issue@v1
         with:
           comment: Automatically closing this issue since it may be EdXposed relative. EdXposed is out of maintenance. If you want to use Xposed Framework, use the original Xposed, [LSPosed](https://lsposed.org), [Taichi](https://taichi.cool) or [Dreamland](https://github.com/canyie/Dreamland) instead.
+      - if: contains(github.event.issue.body, 'exposed') == true || contains(github.event.issue.title, 'exposed') == true
+        id: close2
+        uses: peter-evans/close-issue@v1
+        with:
+          comment: Automatically closing this issue since Exposed (aka Taichi) does not require Riru.
