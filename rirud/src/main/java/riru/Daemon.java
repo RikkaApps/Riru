@@ -20,16 +20,19 @@ public class Daemon implements IBinder.DeathRecipient {
     private static final String RIRU_LOADER = "libriruloader.so";
 
     private final Handler handler = new Handler(Looper.myLooper());
-    private final DaemonSocketServerThread serverThread = new DaemonSocketServerThread();
+    private static final DaemonSocketServerThread serverThread = new DaemonSocketServerThread();
 
     private boolean allowRestart = true;
 
     private IBinder systemServerBinder;
 
+    static {
+        serverThread.start();
+    }
+
     public Daemon() {
         // prevent zygote died after system server starts but before onRiruLoaded called
         synchronized (serverThread) {
-            serverThread.start();
             handler.post(() -> startWait(true));
         }
     }

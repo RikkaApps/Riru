@@ -1,5 +1,6 @@
 package riru;
 
+import static android.system.OsConstants.EINVAL;
 import static riru.Daemon.TAG;
 
 import android.net.Credentials;
@@ -24,6 +25,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -346,6 +348,11 @@ public class DaemonSocketServerThread extends Thread {
             try {
                 socket = serverSocket.accept();
             } catch (IOException e) {
+                if ((e.getCause() != null && e.getCause() instanceof ErrnoException && ((ErrnoException) e.getCause()).errno == EINVAL) ||
+                        (e.getMessage() != null && (e.getMessage().contains("EINVAL") || e.getMessage().contains(String.format(Locale.ROOT, "errno %d", EINVAL))))) {
+                    Log.i(TAG, "Server shutdown.");
+                    return;
+                }
                 Log.w(TAG, "Accept failed, server is closed ?", e);
                 return;
             }

@@ -68,8 +68,14 @@ public class DaemonUtils {
 
     private static final Set<Integer> zygotePid = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    static {
-
+    public static void init(String[] args) {
+        magiskVersionCode = Integer.parseInt(args[0]);
+        magiskTmpfsPath = args[1];
+        if (args.length > 2) {
+            originalNativeBridge = args[2];
+        } else {
+            originalNativeBridge = "0";
+        }
         try {
             isSELinuxEnforcing = hasSELinux() && SELinux.isSELinuxEnabled() && SELinux.isSELinuxEnforced();
         } catch (Throwable e) {
@@ -111,16 +117,6 @@ public class DaemonUtils {
             fileContext &= checkOrResetContextForForParent(new File(magiskDir, "lib"), magiskDir);
             fileContext &= checkOrResetContextForChildren(new File(magiskDir, "system/lib"));
             fileContext &= checkOrResetContextForForParent(new File(magiskDir, "system/lib"), magiskDir);
-        }
-    }
-
-    public static void init(String[] args) {
-        magiskVersionCode = Integer.parseInt(args[0]);
-        magiskTmpfsPath = args[1];
-        if (args.length > 2) {
-            originalNativeBridge = args[2];
-        } else {
-            originalNativeBridge = "0";
         }
     }
 
