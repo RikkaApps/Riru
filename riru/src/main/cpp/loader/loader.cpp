@@ -38,38 +38,12 @@ __used __attribute__((destructor)) void Destructor() {
 
 #endif
 
-std::list<std::string> GetSelfCmdline() {
-    std::list<std::string> cmdlines;
-
-    FILE *f = fopen("/proc/self/cmdline", "rb");
-
-    if (!f) {
-        return cmdlines;
-    }
-
-    char *line = nullptr;
-    size_t len = 0;
-
-    while (getdelim(&line, &len, '\0', f) != -1) {
-        cmdlines.emplace_back(line);
-    }
-    free(line);
-
-    fclose(f);
-    return cmdlines;
-}
-
 __used __attribute__((constructor)) void Constructor() {
     if (getuid() != 0) {
         return;
     }
 
-    auto cmdlines = GetSelfCmdline();
-    if (cmdlines.empty()) {
-        LOGW("failed to get cmdline");
-        return;
-    }
-    auto &cmdline = cmdlines.front();
+    std::string_view cmdline = getprogname();
 
     if (cmdline != "zygote" &&
         cmdline != "zygote32" &&
