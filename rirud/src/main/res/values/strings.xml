@@ -8,5 +8,6 @@
     <string name="not_loaded">\u26A0\uFE0F Riru is not loaded and the reason in unknown.</string>
     <string name="loaded">\uD83D\uDE0B Riru is working normally. Loaded %1$d modules, %2$s.</string>
     <string name="bad_file_context">\u26A0\uFE0F SELinux context for Riru and modules files are incorrect. Riru has tried to reset them, but you see this prompt means the reset did not work. This is may because your ROM have incorrect SELinux rules. See Riru wiki at GitHub for more.</string>
+    <string name="bad_file_context_loaded">\u26A0\uFE0F SELinux context for Riru and modules files are incorrect. Riru has tried to reset them, but modules may not work properly. This is may because your ROM have incorrect SELinux rules. See Riru wiki at GitHub for more. Loaded %1$d modules, %2$s.</string>
     <string name="empty">none</string>
 </resources>

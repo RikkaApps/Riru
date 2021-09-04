@@ -9,4 +9,5 @@
     <string name="loaded">\uD83D\uDE0B Riru 正常工作中。已载入 %1$d 个模块 %2$s。</string>
     <string name="bad_file_context">\u26A0\uFE0F Riru 和模块文件的 SELinux 上下文不正确。Riru 已尝试重设它们，但您看到了该提示意味着重设没有起作用。这可能是由于您的 ROM 有不正确的 SELinux 规则。请参阅 Riru 在 GitHub 上的 wiki 以了解更多。</string>
     <string name="empty">无</string>
+    <string name="bad_file_context_loaded">\\u26A0\\uFE0F Riru 和模块文件的 SELinux 上下文不正确。Riru 已尝试重设它们，但模块仍可能不能正常工作。这可能是由于您的 ROM 有不正确的 SELinux 规则。请参阅 Riru 在 GitHub 上的 wiki 以了解更多。已载入 %1$d 个模块 %2$s。</string>
 </resources>

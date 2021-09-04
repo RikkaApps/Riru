@@ -130,7 +130,11 @@ public class Daemon implements IBinder.DeathRecipient {
             }
         }
 
-        DaemonUtils.writeStatus(R.string.loaded, loadedModules.length, sb);
+        if (DaemonUtils.hasIncorrectFileContext()) {
+            DaemonUtils.writeStatus(R.string.bad_file_context_loaded, loadedModules.length, sb);
+        } else {
+            DaemonUtils.writeStatus(R.string.loaded, loadedModules.length, sb);
+        }
     }
 
     private void startWait(boolean isFirst) {
