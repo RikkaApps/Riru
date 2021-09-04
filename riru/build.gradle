@@ -18,7 +18,7 @@ def moduleProps = [
         name       : "Riru",
         version    : "$versionName",
         versionCode: "$versionCode",
-        author     : "Rikka",
+        author     : "Rikka, yujincheng08",
         description: "Inject into zygote and run codes from \"Riru\" modules in apps or the system server. Support modules which use Riru API v24+.",
         riruApi    : "$apiVersion",
         riruMinApi : "$minApiVersion"
