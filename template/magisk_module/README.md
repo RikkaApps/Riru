@@ -32,6 +32,12 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ## Changelog
 
+### v26.1.2 (2021-09-04)
+- Speedup Rirud launch
+- Warning about incorrect SELinux policy
+- No warning about Rirud socket closed
+- Use `getprogname` to detect zygote
+
 ### v26.1.1 (2021-08-18)
 - Fix reset native bridge
 

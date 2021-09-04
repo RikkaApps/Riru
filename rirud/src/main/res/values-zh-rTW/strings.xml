@@ -9,5 +9,5 @@
     <string name="loaded">\uD83D\uDE0B Riru 正常工作中。已載入 %1$d 個模組 %2$s。</string>
     <string name="bad_file_context">\u26A0\uFE0F Riru 和模組檔案的 SELinux 上下文不正確。Riru 已嘗試重設它們，但您看到了該提示意味著重設沒有起作用。這可能是由於您的 ROM 有不正確的 SELinux 規則。請參閱 Riru 在 GitHub 上的 wiki 以瞭解更多。</string>
     <string name="empty">無</string>
-    <string name="bad_file_context_loaded">\\u26A0\\uFE0F Riru 和模組檔案的 SELinux 上下文不正確。Riru 已嘗試重設它們，但模組仍可能不能正常運作。這可能是由於您的 ROM 有不正確的 SELinux 規則。請參閱 Riru 在 GitHub 上的 wiki 以瞭解更多。已載入 %1$d 個模組 %2$s。</string>
+    <string name="bad_file_context_loaded">\u26A0\uFE0F Riru 和模組檔案的 SELinux 上下文不正確。Riru 已嘗試重設它們，但模組仍可能不能正常運作。這可能是由於您的 ROM 有不正確的 SELinux 規則。請參閱 Riru 在 GitHub 上的 wiki 以瞭解更多。已載入 %1$d 個模組 %2$s。</string>
 </resources>
