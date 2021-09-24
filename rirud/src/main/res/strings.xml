@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_process">\uD83E\uDD14 app_process lancé</string>
+    <string name="zygote_dead">Zygote est probablement hors service,  en attente de redémarrage…</string>
+    <string name="files_not_mounted">\u26A0\uFE0F Les fichiers ne sont pas montés. Magisk est cassé sur ce périphérique.</string>
+    <string name="bad_selinux_rule">\u26A0\uFE0F SELinux incorrect trouvé sur ce périphérique. Ce problème ne devrait pas être résolu par Riru, veuillez vous référer au fichier README du module pour plus d\’informations.</string>
+    <string name="bad_prop">\u26A0\uFE0F La propriété du système est erronée. N\’utilisez pas les modules d\’optimisation car il est très douteux d\’optimiser en changeant les propriétés.</string>
+    <string name="not_loaded">\u26A0\uFE0F Riru n\’est pas chargé et la raison est inconnue.</string>
+    <string name="loaded">\uD83D\uDE0B Riru fonctionne normalement. %1$d modules chargés.</string>
+    <string name="bad_file_context">\u26A0\uFE0F Le contexte SELinux pour Riru et les fichiers des modules sont incorrects. Riru a essayé de les réinitialiser, mais le fait que vous voyez cette invite signifie que la réinitialisation n\’a pas fonctionné. Cela peut être dû au fait que votre ROM contient des règles SELinux incorrectes. Voir le wiki de Riru sur GitHub pour plus d\’informations.</string>
+    <string name="bad_file_context_loaded">\u26A0\uFE0F Le contexte SELinux pour Riru et les fichiers des modules sont incorrects. Riru à tenté de les réinitialiser, mais les modules pourraient ne pas fonctionner correctement. Cela peut être dû au fait que votre ROM contient des règles SELinux incorrectes. Voir le wiki de Riru sur GitHub pour plus d\’informations. %1$d modules chargés, %2$s.</string>
+    <string name="empty">aucun</string>
+</resources>
