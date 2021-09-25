@@ -55,9 +55,9 @@ __used __attribute__((constructor)) void Constructor() {
     }
 
     LOGI("Riru %s (%d) in %s", riru::versionName, riru::versionCode, cmdline.data());
-    LOGI("Android %s (api %d, preview_api %d)", AndroidProp::GetRelease(),
-         AndroidProp::GetApiLevel(),
-         AndroidProp::GetPreviewApiLevel());
+    LOGI("Android %s (api %d, preview_api %d)", android_prop::GetRelease(),
+         android_prop::GetApiLevel(),
+         android_prop::GetPreviewApiLevel());
 
     constexpr auto retries = 5U;
     RirudSocket rirud{retries};

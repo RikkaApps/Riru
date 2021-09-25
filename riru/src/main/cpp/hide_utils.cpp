@@ -17,13 +17,13 @@ namespace hide {
     namespace {
         const char *GetLinkerPath() {
 #if __LP64__
-            if (AndroidProp::GetApiLevel() >= 29) {
+            if (android_prop::GetApiLevel() >= 29) {
                 return "/apex/com.android.runtime/bin/linker64";
             } else {
                 return "/system/bin/linker64";
             }
 #else
-            if (AndroidProp::GetApiLevel() >= 29) {
+            if (android_prop::GetApiLevel() >= 29) {
                 return "/apex/com.android.runtime/bin/linker";
             } else {
                 return "/system/bin/linker";
@@ -114,12 +114,12 @@ namespace hide {
                     auto *possible_next = *(void **) ((uintptr_t) solist + i * sizeof(void *));
                     if (possible_next == somain || (vsdo != nullptr && possible_next == vsdo)) {
                         solist_next_offset = i * sizeof(void *);
-                        return AndroidProp::GetApiLevel() < 26 || get_realpath_sym != nullptr;
+                        return android_prop::GetApiLevel() < 26 || get_realpath_sym != nullptr;
                     }
                 }
                 LOGW("failed to search next offset");
                 // shortcut
-                return AndroidProp::GetApiLevel() < 26 || get_realpath_sym != nullptr;
+                return android_prop::GetApiLevel() < 26 || get_realpath_sym != nullptr;
             }
 
 #ifdef __LP64__
@@ -257,7 +257,7 @@ namespace hide {
             }
         }
 
-        if (AndroidProp::GetApiLevel() >= 23 && !names_to_remove.empty()) {
+        if (android_prop::GetApiLevel() >= 23 && !names_to_remove.empty()) {
             RemoveFromSoList(names_to_remove);
         }
     }

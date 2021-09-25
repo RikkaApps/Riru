@@ -123,7 +123,7 @@ void modules::Load(const RirudSocket &rirud) {
     }
 
     // On Android 10+, zygote has "execmem" permission, we can use "riru hide" here
-    if (AndroidProp::GetApiLevel() >= __ANDROID_API_Q__) {
+    if (android_prop::GetApiLevel() >= __ANDROID_API_Q__) {
         hide::HideFromMaps();
     }
 

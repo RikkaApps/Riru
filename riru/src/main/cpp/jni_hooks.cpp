@@ -403,9 +403,14 @@ static void nativeForkSystemServer_post(JNIEnv *env, jclass clazz, jint res) {
 
     if (res == 0) jni::RestoreHooks(env);
 
+    if (res == 0 && android_prop::CheckZTE()) {
+        auto *process = env->FindClass("android/os/Process");
+        auto *set_argv0 = env->GetStaticMethodID(process, "setArgV0", "(Ljava/lang/String;)V");
+        env->CallStaticVoidMethod(process, set_argv0, env->NewStringUTF("system_server"));
+    }
+
     for (const auto &module : modules::Get()) {
-        if (!module.hasForkSystemServerPost())
-            continue;
+        if (!module.hasForkSystemServerPost()) continue;
 
         if (res == 0) LOGD("%s: forkSystemServerPost", module.id.data());
         module.forkSystemServerPost(env, clazz, res);

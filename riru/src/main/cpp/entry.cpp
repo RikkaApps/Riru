@@ -95,7 +95,7 @@ void Entry::Unload(jboolean is_child_zygote) {
     hide::HideFromSoList();
 
     // Child zygote (webview zyote or app zygote) has no "execmem" permission
-    if (AndroidProp::GetApiLevel() < 29 && !is_child_zygote) {
+    if (android_prop::GetApiLevel() < 29 && !is_child_zygote) {
         hide::HideFromMaps();
     }
 

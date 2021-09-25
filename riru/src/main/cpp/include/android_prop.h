@@ -1,10 +1,12 @@
 #pragma once
 
-namespace AndroidProp {
+namespace android_prop {
 
     const char* GetRelease();
 
     int GetApiLevel();
 
     int GetPreviewApiLevel();
+
+    bool CheckZTE();
 }
