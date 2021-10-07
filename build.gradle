@@ -14,15 +14,12 @@ idea.module {
 }
 
 buildscript {
-    ext.kotlin_version = '1.5.21'
-
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:7.0.2'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'org.eclipse.jgit:org.eclipse.jgit:5.10.0.202012080955-r'
     }
 }
