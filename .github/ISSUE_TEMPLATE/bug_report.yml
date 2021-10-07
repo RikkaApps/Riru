@@ -1,0 +1,66 @@
+name: Bug report
+description: Report a bug of Riru
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+
+        Please use the latest debug version of Riru, and make sure any other modules are disabled.
+
+        Logs are required, no one can fix the problem without the log. For example, if you have a "Riru module not loaded" problem, a full boot log will be helpful.
+
+        Reports not meet the requirements will be closed.
+  - type: checkboxes
+    id: bug-of-riru
+    attributes:
+      label: This is a bug of Riru itself
+      options:
+        - label: This is a bug of Riru, not a bug of a Riru module or something else
+          required: true
+  - type: checkboxes
+    id: modules-disabled
+    attributes:
+      label: Other modules are disabled
+      options:
+        - label: Except Riru itself, all other Magisk modules are disabled
+          required: true
+  - type: input
+    id: riru-version
+    attributes:
+      label: Riru version
+    validations:
+      required: true
+  - type: input
+    id: android-version
+    attributes:
+      label: Android version
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device
+    validations:
+      required: false
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      placeholder: |
+        A clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: |
+        Please copy and paste any relevant log output.
+
+        If the log is too long, upload the file as the attachment.
+      render: shell
+    validations:
+      required: true
