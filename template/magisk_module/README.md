@@ -32,6 +32,9 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ## Changelog
 
+### v26.1.3 (2021-10-08)
+- Call `android_create_namespace` on Android 8.0+
+
 ### v26.1.2 (2021-09-04)
 - Speedup Rirud launch
 - Warning about incorrect SELinux policy
@@ -109,7 +112,7 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 - Fix crash on Android 8.0 again
 
 ### Important changes from the last stable version (v23.9)
-    
+
 - Unify the Riru API version and Riru version, Riru 25 stands for API version 25
 - For modules that have adapted Riru API 24+, lib files are loaded from the Magisk path directly, they don't need to be mounted to `/system` anymore
 - Support unload self and modules, leaving no trace for unrelated processes (requires module changes)
@@ -278,7 +281,7 @@ Because of this, all modules must change. If your module hasn't updated, ask the
 - Remove jniRegisterNativeMethods hook when entering the app process
 
 ### v19 (21)
-  
+
 - Always reset module files SELinux in case
 
 ### v19 (20)
