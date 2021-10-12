@@ -20,6 +20,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
@@ -349,6 +350,7 @@ public class DaemonSocketServerThread extends Thread {
                 socket = serverSocket.accept();
             } catch (IOException e) {
                 if ((e.getCause() != null && e.getCause() instanceof ErrnoException && ((ErrnoException) e.getCause()).errno == EINVAL) ||
+                        e instanceof SocketException ||
                         (e.getMessage() != null && (e.getMessage().contains("EINVAL") || e.getMessage().contains(String.format(Locale.ROOT, "errno %d", EINVAL))))) {
                     Log.i(TAG, "Server shutdown.");
                     return;
