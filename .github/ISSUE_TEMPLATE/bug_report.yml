@@ -34,7 +34,7 @@ body:
       options:
         - label: I know that Zygisk and Riru are not compatible and Zygisk has been disabled
           required: true
-- type: input
+  - type: input
     id: riru-version
     attributes:
       label: Riru version
