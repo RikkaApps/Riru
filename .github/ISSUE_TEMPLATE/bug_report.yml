@@ -27,7 +27,14 @@ body:
       options:
         - label: Except Riru itself, all other Magisk modules are disabled
           required: true
-  - type: input
+  - type: checkboxes
+    id: zygisk-disabled
+    attributes:
+      label: Zygisk are disabled
+      options:
+        - label: I know that Zygisk and Riru are not compatible and Zygisk has been disabled
+          required: true
+- type: input
     id: riru-version
     attributes:
       label: Riru version
