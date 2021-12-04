@@ -21,11 +21,11 @@
 #define SANDHOOK_ELF_UTIL_H
 
 #include <string_view>
-#include <string>
 #include <unordered_map>
 #include <linux/elf.h>
 #include <sys/types.h>
 #include <link.h>
+#include <string>
 #include "config.h"
 
 #define SHT_GNU_HASH 0x6ffffff6
@@ -50,8 +50,8 @@ namespace SandHook {
         }
 
         template<typename T>
-        constexpr std::enable_if_t<std::is_pointer_v<T>, T>
-        getSymbAddress(std::string_view name) const {
+        requires(std::is_pointer_v<T>)
+        constexpr T getSymbAddress(std::string_view name) const {
             return reinterpret_cast<T>(getSymbAddress(name));
         }
 
@@ -116,7 +116,7 @@ namespace SandHook {
     };
 
     constexpr uint32_t ElfImg::ElfHash(std::string_view name) {
-        uint32_t h = 0, g = 0;
+        uint32_t h = 0, g;
         for (unsigned char p: name) {
             h = (h << 4) + p;
             g = h & 0xf0000000;

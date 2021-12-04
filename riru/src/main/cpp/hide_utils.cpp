@@ -15,22 +15,6 @@
 
 namespace hide {
     namespace {
-        const char *GetLinkerPath() {
-#if __LP64__
-            if (android_prop::GetApiLevel() >= 29) {
-                return "/apex/com.android.runtime/bin/linker64";
-            } else {
-                return "/system/bin/linker64";
-            }
-#else
-            if (android_prop::GetApiLevel() >= 29) {
-                return "/apex/com.android.runtime/bin/linker";
-            } else {
-                return "/system/bin/linker";
-            }
-#endif
-        }
-
         class ProtectedDataGuard {
 
         public:
@@ -82,7 +66,7 @@ namespace hide {
         struct soinfo;
 
         soinfo *solist = nullptr;
-        soinfo *sonext = nullptr;
+        soinfo **sonext = nullptr;
         soinfo *somain = nullptr;
 
         template<typename T>
@@ -152,8 +136,8 @@ namespace hide {
             // prev will never be null, because the first entry in solist is
             // always the static libdl_info.
             prev->next(si->next());
-            if (si == sonext) {
-                sonext = prev;
+            if (si == *sonext) {
+                *sonext = prev;
             }
 
             LOGD("removed soinfo: %s", si->get_realpath());
@@ -162,10 +146,10 @@ namespace hide {
         }
 
         const auto initialized = []() {
-            SandHook::ElfImg linker(GetLinkerPath());
+            SandHook::ElfImg linker("/linker");
             return ProtectedDataGuard::setup(linker) &&
                    (solist = getStaticVariable<soinfo>(linker, "__dl__ZL6solist")) != nullptr &&
-                   (sonext = getStaticVariable<soinfo>(linker, "__dl__ZL6sonext")) != nullptr &&
+                   (sonext = linker.getSymbAddress<soinfo**>("__dl__ZL6sonext")) != nullptr &&
                    (somain = getStaticVariable<soinfo>(linker, "__dl__ZL6somain")) != nullptr &&
                    soinfo::setup(linker);
         }();

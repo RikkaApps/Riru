@@ -9,7 +9,6 @@ endif ()
 
 message("Build type: ${CMAKE_BUILD_TYPE}")
 
-set(CMAKE_CXX_STANDARD 17)
 
 if (NOT DEFINED RIRU_VERSION_NAME)
     message(FATAL_ERROR "RIRU_VERSION_NAME is not set")
