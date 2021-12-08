@@ -9,6 +9,7 @@ def apiVersion = rootProject.ext.riruApiVersion
 
 android {
     compileSdkVersion rootProject.ext.targetSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
@@ -24,20 +25,16 @@ android {
         release {
             minifyEnabled true
             shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            proguardFiles 'proguard-rules.pro'
         }
     }
     lintOptions.checkReleaseBuilds false
     dependenciesInfo.includeInApk false
 }
 
-repositories {
-    mavenLocal()
-}
-
 dependencies {
-    implementation 'dev.rikka.rikkax.io:little-endian-data-stream:1.0.1'
-    implementation 'androidx.annotation:annotation:1.2.0'
+    implementation 'dev.rikka.rikkax.io:little-endian-data-stream:1.0.2'
+    compileOnly 'androidx.annotation:annotation:1.2.0'
     compileOnly project(':stub')
 }
 
@@ -46,4 +43,3 @@ android.applicationVariants.all { variant ->
         outputFileName = "rirud.apk"
     }
 }
-

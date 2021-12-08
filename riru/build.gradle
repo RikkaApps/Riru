@@ -19,13 +19,14 @@ def moduleProps = [
         version    : "$versionName",
         versionCode: "$versionCode",
         author     : "Rikka, yujincheng08",
-        description: "Inject into zygote and run codes from \"Riru\" modules in apps or the system server. Support modules which use Riru API v24+.",
+        description: 'Inject into zygote and run codes from "Riru" modules in apps or the system server. Support modules which use Riru API v24+.',
         riruApi    : "$apiVersion",
         riruMinApi : "$minApiVersion"
 ]
 
 android {
     compileSdkVersion rootProject.ext.targetSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
@@ -49,7 +50,7 @@ android {
         release {
             minifyEnabled true
             shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            proguardFiles 'proguard-rules.pro'
         }
     }
     buildFeatures {
@@ -64,16 +65,12 @@ android {
     dependenciesInfo.includeInApk false
 }
 
-repositories {
-    mavenLocal()
-}
-
 dependencies {
     implementation 'dev.rikka.ndk.thirdparty:xhook:1.2.0'
-    implementation 'dev.rikka.ndk.thirdparty:cxx:1.1.0'
+    implementation 'dev.rikka.ndk.thirdparty:cxx:1.2.0'
     implementation 'dev.rikka.ndk.thirdparty:proc-maps-parser:1.0.0'
-    implementation 'dev.rikka.rikkax.io:little-endian-data-stream:1.0.1'
-    implementation 'androidx.annotation:annotation:1.2.0'
+    implementation 'dev.rikka.rikkax.io:little-endian-data-stream:1.0.2'
+    compileOnly 'androidx.annotation:annotation:1.2.0'
     compileOnly project(':stub')
 }
 
@@ -163,4 +160,3 @@ afterEvaluate {
         variant.assembleProvider.get().finalizedBy("zip${variantCapped}")
     }
 }
-

@@ -1,9 +1,21 @@
 import org.apache.tools.ant.filters.FixCrLfFilter
-import java.util.stream.StreamSupport
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.internal.storage.file.FileRepository
 
-apply plugin: 'idea'
+import java.util.stream.StreamSupport
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.eclipse.jgit:org.eclipse.jgit:5.10.0.202012080955-r'
+    }
+}
+
+plugins {
+    id 'idea'
+}
 
 idea.module {
     excludeDirs += file('out')
@@ -13,30 +25,10 @@ idea.module {
     resourceDirs += file('docs')
 }
 
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:7.0.3'
-        classpath 'org.eclipse.jgit:org.eclipse.jgit:5.10.0.202012080955-r'
-    }
-}
-
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-        maven {
-            url "https://s01.oss.sonatype.org/content/repositories/releases/"
-        }
-    }
-}
-
 ext {
     minSdkVersion = 23
     targetSdkVersion = 31
+    buildToolsVersion = "31.0.0"
 
     riruApiVersion = 26
     riruMinApiVersion = 24

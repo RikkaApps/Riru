@@ -1,3 +1,25 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+    plugins {
+        id 'com.android.application' version '7.0.3'
+        id 'com.android.library' version '7.0.3'
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        maven { url "https://s01.oss.sonatype.org/content/repositories/releases/" }
+        mavenLocal()
+    }
+}
+
 include ':riru', ':stub', ':rirud'
 
 import org.apache.tools.ant.DirectoryScanner
