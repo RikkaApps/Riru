@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_process">\uD83E\uDD14 app_process 已运行</string>
+    <string name="app_process">\uD83E\uDD14 app_process 已執行</string>
     <string name="zygote_dead">Zygote 似乎死了，等待重新啟動……</string>
     <string name="files_not_mounted">\u26A0\uFE0F 檔案未被掛載。Magisk 在此裝置上損壞。</string>
     <string name="bad_selinux_rule">\u26A0\uFE0F 此裝置上有錯誤的 SELinux 規則。此問題不應該由 Riru 解決，請參閱模組自述檔案以瞭解更多。</string>
