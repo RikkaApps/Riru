@@ -70,7 +70,6 @@ dependencies {
     implementation 'dev.rikka.ndk.thirdparty:cxx:1.2.0'
     implementation 'dev.rikka.ndk.thirdparty:proc-maps-parser:1.0.0'
     implementation 'dev.rikka.rikkax.io:little-endian-data-stream:1.0.2'
-    compileOnly 'androidx.annotation:annotation:1.2.0'
     compileOnly project(':stub')
 }
 
