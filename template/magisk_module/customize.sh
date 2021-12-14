@@ -55,6 +55,7 @@ else
 fi
 
 extract "$ZIPFILE" 'module.prop' "$MODPATH"
+cp "$MODPATH/module.prop" "$MODPATH/module.prop.bk"
 extract "$ZIPFILE" 'post-fs-data.sh' "$MODPATH"
 extract "$ZIPFILE" 'service.sh' "$MODPATH"
 extract "$ZIPFILE" 'system.prop' "$MODPATH"
