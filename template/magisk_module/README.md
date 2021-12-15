@@ -32,6 +32,10 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 
 ## Changelog
 
+### v26.1.4 (2021-12-15)
+- Skip launching Rirud when Zygisk is enabled
+- Fix `sonext` update during hiding
+
 ### v26.1.3 (2021-10-08)
 - Call `android_create_namespace` on Android 8.0+
 
