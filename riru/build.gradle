@@ -61,8 +61,10 @@ android {
             path "src/main/cpp/CMakeLists.txt"
         }
     }
-    lintOptions.checkReleaseBuilds false
     dependenciesInfo.includeInApk false
+    lint {
+        checkReleaseBuilds false
+    }
 }
 
 dependencies {

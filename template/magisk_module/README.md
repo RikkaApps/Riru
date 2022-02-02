@@ -1,3 +1,7 @@
+# Deprecated
+
+All Riru users and Riru modules should migrate to Zygisk.
+
 # Riru
 
 Riru only does one thing, inject into zygote in order to allow modules run their codes in apps or the system server.
@@ -31,6 +35,10 @@ Many TWRP has broken implementations, which will finally cause Riru and Riru mod
 <https://github.com/RikkaApps/Riru/wiki/Explanation-about-incorrect-SELinux-rules-from-third-party-ROMs-cause-Riru-not-working>
 
 ## Changelog
+
+### v26.1.5 (2022-2-2)
+- THIS IS THE LAST RELEASE. MODULES AND USERS SHOULD MIGRATE TO ZYGISK.
+- Fix description hint
 
 ### v26.1.4 (2021-12-15)
 - Skip launching Rirud when Zygisk is enabled

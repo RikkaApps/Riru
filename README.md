@@ -1,3 +1,7 @@
+# Deprecated
+
+All Riru users and Riru modules should migrate to Zygisk.
+
 # Riru
 
 Riru only does one thing, inject into zygote in order to allow modules to run their codes in apps or the system server.

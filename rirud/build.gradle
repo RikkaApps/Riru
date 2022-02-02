@@ -28,8 +28,10 @@ android {
             proguardFiles 'proguard-rules.pro'
         }
     }
-    lintOptions.checkReleaseBuilds false
     dependenciesInfo.includeInApk false
+    lint {
+        checkReleaseBuilds false
+    }
 }
 
 dependencies {
