@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.4.1)
 
+project("riru")
+
 find_program(CCACHE ccache)
 
 if (CCACHE)
