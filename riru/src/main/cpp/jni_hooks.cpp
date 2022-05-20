@@ -329,9 +329,9 @@ nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, jboolean is_ch
 // -----------------------------------------------------------------
 
 static void nativeSpecializeAppProcess_pre(
-        JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
-        jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
-        jboolean startChildZygote, jstring instructionSet, jstring appDataDir,
+        JNIEnv *env, jclass clazz, jint &uid, jint &gid, jintArray &gids, jint &runtimeFlags,
+        jobjectArray &rlimits, jint &mountExternal, jstring &seInfo, jstring &niceName,
+        jboolean &startChildZygote, jstring &instructionSet, jstring &appDataDir,
         jboolean &isTopApp, jobjectArray &pkgDataInfoList, jobjectArray &whitelistedDataInfoList,
         jboolean &bindMountAppDataDirs, jboolean &bindMountAppStorageDirs) {
 
