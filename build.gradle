@@ -27,8 +27,8 @@ idea.module {
 
 ext {
     minSdkVersion = 23
-    targetSdkVersion = 32
-    buildToolsVersion = "32.0.0"
+    targetSdkVersion = 33
+    buildToolsVersion = "33.0.0"
 
     riruApiVersion = 26
     riruMinApiVersion = 24
@@ -39,7 +39,7 @@ ext {
     gitCommitCount = StreamSupport.stream(new Git(repo).log().add(gitObjectId).call().spliterator(), false).count()
 
     versionNameMinor = 1
-    versionNamePatch = 6
+    versionNamePatch = 7
 
     outDir = file("$rootDir/out")
 }
