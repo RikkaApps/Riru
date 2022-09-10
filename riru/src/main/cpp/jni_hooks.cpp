@@ -418,7 +418,7 @@ static void nativeForkSystemServer_post(JNIEnv *env, jclass clazz, jint res) {
 }
 
 // -----------------------------------------------------------------
-
+[[clang::no_stack_protector]]
 jint nativeForkAndSpecialize_marshmallow(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint debug_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jstring se_name,
@@ -446,6 +446,7 @@ jint nativeForkAndSpecialize_marshmallow(
     return res;
 }
 
+[[clang::no_stack_protector]]
 jint nativeForkAndSpecialize_oreo(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint debug_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jstring se_name,
@@ -472,6 +473,7 @@ jint nativeForkAndSpecialize_oreo(
     return res;
 }
 
+[[clang::no_stack_protector]]
 jint nativeForkAndSpecialize_p(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtime_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jstring se_name,
@@ -498,6 +500,7 @@ jint nativeForkAndSpecialize_p(
     return res;
 }
 
+[[clang::no_stack_protector]]
 jint nativeForkAndSpecialize_q_alternative(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtime_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jstring se_name,
@@ -523,6 +526,7 @@ jint nativeForkAndSpecialize_q_alternative(
     return res;
 }
 
+[[clang::no_stack_protector]]
 jint nativeForkAndSpecialize_r(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtime_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jstring se_name,
@@ -547,6 +551,7 @@ jint nativeForkAndSpecialize_r(
     return res;
 }
 
+[[clang::no_stack_protector]]
 jint nativeForkAndSpecialize_r_dp3(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtime_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jstring se_name,
@@ -573,6 +578,7 @@ jint nativeForkAndSpecialize_r_dp3(
     return res;
 }
 
+[[clang::no_stack_protector]]
 jint nativeForkAndSpecialize_r_dp2(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtime_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jstring se_name,
@@ -599,6 +605,7 @@ jint nativeForkAndSpecialize_r_dp2(
     return res;
 }
 
+[[clang::no_stack_protector]]
 jint nativeForkAndSpecialize_samsung_p(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtime_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jint category, jint accessInfo,
@@ -626,6 +633,7 @@ jint nativeForkAndSpecialize_samsung_p(
     return res;
 }
 
+[[clang::no_stack_protector]]
 jint nativeForkAndSpecialize_samsung_o(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint debug_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jint category, jint accessInfo,
@@ -653,6 +661,7 @@ jint nativeForkAndSpecialize_samsung_o(
     return res;
 }
 
+[[clang::no_stack_protector]]
 jint nativeForkAndSpecialize_samsung_n(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint debug_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jint category, jint accessInfo,
@@ -681,6 +690,7 @@ jint nativeForkAndSpecialize_samsung_n(
     return res;
 }
 
+[[clang::no_stack_protector]]
 jint nativeForkAndSpecialize_samsung_m(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint debug_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jint category, jint accessInfo,
@@ -709,7 +719,7 @@ jint nativeForkAndSpecialize_samsung_m(
 }
 
 // -----------------------------------------------------------------
-
+[[clang::no_stack_protector]]
 void nativeSpecializeAppProcess_q(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
@@ -733,6 +743,7 @@ void nativeSpecializeAppProcess_q(
     nativeSpecializeAppProcess_post(env, clazz, uid, startChildZygote);
 }
 
+[[clang::no_stack_protector]]
 void nativeSpecializeAppProcess_q_alternative(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
@@ -756,6 +767,7 @@ void nativeSpecializeAppProcess_q_alternative(
     nativeSpecializeAppProcess_post(env, clazz, uid, startChildZygote);
 }
 
+[[clang::no_stack_protector]]
 void nativeSpecializeAppProcess_r(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
@@ -776,6 +788,7 @@ void nativeSpecializeAppProcess_r(
     nativeSpecializeAppProcess_post(env, clazz, uid, startChildZygote);
 }
 
+[[clang::no_stack_protector]]
 void nativeSpecializeAppProcess_r_dp3(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
@@ -798,6 +811,7 @@ void nativeSpecializeAppProcess_r_dp3(
     nativeSpecializeAppProcess_post(env, clazz, uid, startChildZygote);
 }
 
+[[clang::no_stack_protector]]
 void nativeSpecializeAppProcess_r_dp2(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
@@ -820,7 +834,7 @@ void nativeSpecializeAppProcess_r_dp2(
     nativeSpecializeAppProcess_post(env, clazz, uid, startChildZygote);
 }
 
-
+[[clang::no_stack_protector]]
 void nativeSpecializeAppProcess_samsung_q(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jint space, jint accessInfo,
@@ -845,7 +859,7 @@ void nativeSpecializeAppProcess_samsung_q(
 }
 
 // -----------------------------------------------------------------
-
+[[clang::no_stack_protector]]
 jint nativeForkSystemServer(
         JNIEnv *env, jclass clazz, uid_t uid, gid_t gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jlong permittedCapabilities, jlong effectiveCapabilities) {
@@ -862,6 +876,7 @@ jint nativeForkSystemServer(
     return res;
 }
 
+[[clang::no_stack_protector]]
 jint nativeForkSystemServer_samsung_q(
         JNIEnv *env, jclass cls, uid_t uid, gid_t gid, jintArray gids, jint runtimeFlags,
         jint space, jint accessInfo, jobjectArray rlimits, jlong permittedCapabilities,

@@ -30,7 +30,7 @@ android {
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        ndkVersion '23.1.7779620'
+        ndkVersion '25.1.8937393'
         externalNativeBuild {
             cmake {
                 arguments "-DRIRU_VERSION_NAME:STRING=$versionNameShort",

@@ -24,7 +24,7 @@ using nativeForkAndSpecialize_marshmallow_t = jint(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jintArray, jstring, jstring);
 
-jint nativeForkAndSpecialize_marshmallow(
+[[clang::no_stack_protector]] jint nativeForkAndSpecialize_marshmallow(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint debug_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jstring se_name,
         jintArray fdsToClose, jstring instructionSet, jstring appDataDir);
@@ -35,7 +35,7 @@ using nativeForkAndSpecialize_oreo_t = jint(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jintArray, jintArray, jstring, jstring);
 
-jint nativeForkAndSpecialize_oreo(
+[[clang::no_stack_protector]] jint nativeForkAndSpecialize_oreo(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint debug_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jstring se_name,
         jintArray fdsToClose, jintArray fdsToIgnore, jstring instructionSet, jstring appDataDir);
@@ -46,7 +46,7 @@ using nativeForkAndSpecialize_p_t = jint(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jintArray, jintArray, jboolean, jstring, jstring);
 
-jint nativeForkAndSpecialize_p(
+[[clang::no_stack_protector]] jint nativeForkAndSpecialize_p(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtime_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jstring se_name,
         jintArray fdsToClose, jintArray fdsToIgnore, jboolean is_child_zygote,
@@ -58,7 +58,7 @@ using nativeForkAndSpecialize_q_alternative_t = jint(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jintArray, jintArray, jboolean, jstring, jstring, jboolean);
 
-jint nativeForkAndSpecialize_q_alternative(
+[[clang::no_stack_protector]] jint nativeForkAndSpecialize_q_alternative(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtime_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jstring se_name,
         jintArray fdsToClose, jintArray fdsToIgnore, jboolean is_child_zygote,
@@ -71,7 +71,7 @@ using nativeForkAndSpecialize_r_t = jint(
         jintArray, jintArray, jboolean, jstring, jstring, jboolean, jobjectArray, jobjectArray,
         jboolean, jboolean);
 
-jint nativeForkAndSpecialize_r(
+[[clang::no_stack_protector]] jint nativeForkAndSpecialize_r(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtime_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jstring se_name,
         jintArray fdsToClose, jintArray fdsToIgnore, jboolean is_child_zygote,
@@ -84,7 +84,7 @@ using nativeForkAndSpecialize_r_dp2_t = jint(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jintArray, jintArray, jboolean, jstring, jstring, jboolean, jobjectArray);
 
-jint nativeForkAndSpecialize_r_dp2(
+[[clang::no_stack_protector]] jint nativeForkAndSpecialize_r_dp2(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtime_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jstring se_name,
         jintArray fdsToClose, jintArray fdsToIgnore, jboolean is_child_zygote,
@@ -96,7 +96,7 @@ using nativeForkAndSpecialize_r_dp3_t = jint(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jintArray, jintArray, jboolean, jstring, jstring, jboolean, jobjectArray, jboolean);
 
-jint nativeForkAndSpecialize_r_dp3(
+[[clang::no_stack_protector]] jint nativeForkAndSpecialize_r_dp3(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtime_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jstring se_name,
         jintArray fdsToClose, jintArray fdsToIgnore, jboolean is_child_zygote,
@@ -109,7 +109,7 @@ using nativeForkAndSpecialize_samsung_p_t = jint(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jint, jint,
         jstring, jintArray, jintArray, jboolean, jstring, jstring);
 
-jint nativeForkAndSpecialize_samsung_p(
+[[clang::no_stack_protector]] jint nativeForkAndSpecialize_samsung_p(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtime_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jint category, jint accessInfo,
         jstring se_name, jintArray fdsToClose, jintArray fdsToIgnore, jboolean is_child_zygote,
@@ -121,7 +121,7 @@ using nativeForkAndSpecialize_samsung_o_t = jint(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jint, jint,
         jstring, jintArray, jintArray, jstring, jstring);
 
-jint nativeForkAndSpecialize_samsung_o(
+[[clang::no_stack_protector]] jint nativeForkAndSpecialize_samsung_o(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint debug_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jint category, jint accessInfo,
         jstring se_name, jintArray fdsToClose, jintArray fdsToIgnore, jstring instructionSet,
@@ -133,7 +133,7 @@ using nativeForkAndSpecialize_samsung_n_t = jint(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jint, jint,
         jstring, jintArray, jstring, jstring, jint);
 
-jint nativeForkAndSpecialize_samsung_n(
+[[clang::no_stack_protector]] jint nativeForkAndSpecialize_samsung_n(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint debug_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jint category, jint accessInfo,
         jstring se_name, jintArray fdsToClose, jstring instructionSet, jstring appDataDir, jint);
@@ -144,7 +144,7 @@ using nativeForkAndSpecialize_samsung_m_t = jint(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jint, jint,
         jstring, jintArray, jstring, jstring);
 
-jint nativeForkAndSpecialize_samsung_m(
+[[clang::no_stack_protector]] jint nativeForkAndSpecialize_samsung_m(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint debug_flags,
         jobjectArray rlimits, jint mount_external, jstring se_info, jint category, jint accessInfo,
         jstring se_name, jintArray fdsToClose, jstring instructionSet, jstring appDataDir);
@@ -157,7 +157,7 @@ using nativeSpecializeAppProcess_q_t = void(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jboolean, jstring, jstring);
 
-void nativeSpecializeAppProcess_q(
+[[clang::no_stack_protector]] void nativeSpecializeAppProcess_q(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
         jboolean startChildZygote, jstring instructionSet, jstring appDataDir);
@@ -168,7 +168,7 @@ using nativeSpecializeAppProcess_r_t = void(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jboolean, jstring, jstring, jboolean, jobjectArray, jobjectArray, jboolean, jboolean);
 
-void nativeSpecializeAppProcess_r(
+[[clang::no_stack_protector]] void nativeSpecializeAppProcess_r(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
         jboolean startChildZygote, jstring instructionSet, jstring appDataDir,
@@ -181,7 +181,7 @@ using nativeSpecializeAppProcess_r_dp2_t = void(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jboolean, jstring, jstring, jboolean, jobjectArray);
 
-void nativeSpecializeAppProcess_r_dp2(
+[[clang::no_stack_protector]] void nativeSpecializeAppProcess_r_dp2(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
         jboolean startChildZygote, jstring instructionSet, jstring appDataDir,
@@ -193,7 +193,7 @@ using nativeSpecializeAppProcess_r_dp3_t = void(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jboolean, jstring, jstring, jboolean, jobjectArray, jboolean);
 
-void nativeSpecializeAppProcess_r_dp3(
+[[clang::no_stack_protector]] void nativeSpecializeAppProcess_r_dp3(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
         jboolean startChildZygote, jstring instructionSet, jstring appDataDir,
@@ -205,7 +205,7 @@ using nativeSpecializeAppProcess_q_alternative_t = void(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jstring,
         jboolean, jstring, jstring, jboolean);
 
-void nativeSpecializeAppProcess_q_alternative(
+[[clang::no_stack_protector]] void nativeSpecializeAppProcess_q_alternative(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jstring niceName,
         jboolean startChildZygote, jstring instructionSet, jstring appDataDir,
@@ -217,7 +217,7 @@ using nativeSpecializeAppProcess_samsung_t = void(
         JNIEnv *, jclass, jint, jint, jintArray, jint, jobjectArray, jint, jstring, jint,
         jint, jstring, jboolean, jstring, jstring);
 
-void nativeSpecializeAppProcess_samsung_q(
+[[clang::no_stack_protector]] void nativeSpecializeAppProcess_samsung_q(
         JNIEnv *env, jclass clazz, jint uid, jint gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jint mountExternal, jstring seInfo, jint space, jint accessInfo,
         jstring niceName, jboolean startChildZygote, jstring instructionSet, jstring appDataDir);
@@ -229,7 +229,7 @@ const static char *nativeForkSystemServer_sig = "(II[II[[IJJ)I";
 using nativeForkSystemServer_t = jint(
         JNIEnv *, jclass, uid_t, gid_t, jintArray, jint, jobjectArray, jlong, jlong);
 
-jint nativeForkSystemServer(
+[[clang::no_stack_protector]] jint nativeForkSystemServer(
         JNIEnv *env, jclass, uid_t uid, gid_t gid, jintArray gids, jint runtimeFlags,
         jobjectArray rlimits, jlong permittedCapabilities, jlong effectiveCapabilities);
 
@@ -238,7 +238,7 @@ const static char *nativeForkSystemServer_samsung_q_sig = "(II[IIII[[IJJ)I";
 using nativeForkSystemServer_samsung_q_t = jint(
         JNIEnv *, jclass, uid_t, gid_t, jintArray, jint, jint, jint, jobjectArray, jlong, jlong);
 
-jint nativeForkSystemServer_samsung_q(
+[[clang::no_stack_protector]] jint nativeForkSystemServer_samsung_q(
         JNIEnv *env, jclass, uid_t uid, gid_t gid, jintArray gids, jint runtimeFlags,
         jint space, jint accessInfo, jobjectArray rlimits, jlong permittedCapabilities,
         jlong effectiveCapabilities);
