@@ -618,13 +618,13 @@ jint nativeForkAndSpecialize_u(
         jboolean mountSyspropOverrides) {
     
     nativeForkAndSpecialize_pre(env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external,
-                                se_info, se_name, fdsToClose, fdsToIgnore, is_child_zygote,
+                                se_info, nice_name, fdsToClose, fdsToIgnore, is_child_zygote,
                                 instructionSet, appDataDir, isTopApp, pkgDataInfoList,
                                 whitelistedDataInfoList,
                                 bindMountAppDataDirs, bindMountAppStorageDirs);
 
     jint res = ((nativeForkAndSpecialize_u_t *) jni::zygote::nativeForkAndSpecialize->fnPtr)(
-            env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external, se_info, se_name,
+            env, clazz, uid, gid, gids, runtime_flags, rlimits, mount_external, se_info, nice_name,
             fdsToClose, fdsToIgnore, is_child_zygote, instructionSet, appDataDir, isTopApp,
             pkgDataInfoList, whitelistedDataInfoList, bindMountAppDataDirs, 
             bindMountAppStorageDirs, mountSyspropOverrides);
@@ -869,7 +869,7 @@ void nativeSpecializeAppProcess_u(
         jboolean startChildZygote, jstring instructionSet, jstring appDataDir,
         jboolean isTopApp, jobjectArray pkgDataInfoList, 
         jobjectArray whitelistedDataInfoList, jboolean bindMountAppDataDirs, 
-        jboolean bindMountAppDataDirs, jboolean mountSyspropOverrides) {
+        jboolean bindMountAppStorageDirs, jboolean mountSyspropOverrides) {
     nativeSpecializeAppProcess_pre(
             env, clazz, uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName,
             startChildZygote, instructionSet, appDataDir, isTopApp, pkgDataInfoList,
